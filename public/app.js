@@ -20,6 +20,13 @@ function clearUser(){ try { localStorage.removeItem('userId'); } catch {} }
 const authSection = document.getElementById('auth-section');
 const appSection = document.getElementById('app-section');
 const userIdSpan = document.getElementById('user-id');
+const guestActions = document.getElementById('guest-actions');
+const userActions = document.getElementById('user-actions');
+const openAuthBtn = document.getElementById('open-auth-btn');
+const accountBtn = document.getElementById('account-btn');
+const accountInfo = document.getElementById('account-info');
+const ownedIps = document.getElementById('owned-ips');
+const kvStatus = document.getElementById('kv-status');
 
 // Auth step elements
 const registerStep = document.getElementById('register-step');
@@ -35,7 +42,14 @@ const verifyMessage = document.getElementById('verify-message');
 const logoutBtn = document.getElementById('logout-btn');
 
 function showApp(userId){
-  userIdSpan.textContent = userId;
+  if(userId){
+    userIdSpan.textContent = userId;
+    guestActions?.classList.add('hidden');
+    userActions?.classList.remove('hidden');
+  } else {
+    guestActions?.classList.remove('hidden');
+    userActions?.classList.add('hidden');
+  }
   authSection.classList.add('hidden');
   appSection.classList.remove('hidden');
   loadCounts();
@@ -104,6 +118,43 @@ logoutBtn?.addEventListener('click', ()=>{
   showAuth();
 });
 
+// Open auth UI from header button
+openAuthBtn?.addEventListener('click', ()=>{
+  authSection.classList.remove('hidden');
+});
+
+// Load account info (requires login)
+async function loadAccount(){
+  const uid = getUser();
+  if(!uid){
+    accountInfo.textContent = 'برای مشاهده اطلاعات، وارد شوید.';
+    ownedIps.innerHTML = '';
+    return;
+  }
+  try {
+    const me = await fetchJSON('/api/me');
+    accountInfo.textContent = `کاربر: ${me.userId}`;
+    ownedIps.innerHTML = '';
+    if(me.owned && me.owned.length){
+      me.owned.forEach(o => {
+        const row = document.createElement('div');
+        row.className = 'address-item';
+        row.innerHTML = `<div>${o.ip}</div><div class="badge">${o.country}</div>`;
+        ownedIps.appendChild(row);
+      });
+    } else {
+      const none = document.createElement('div');
+      none.className = 'badge';
+      none.textContent = 'هیچ IP فعالی ندارید.';
+      ownedIps.appendChild(none);
+    }
+  } catch(e){
+    accountInfo.textContent = 'خطا در دریافت اطلاعات حساب';
+  }
+}
+
+accountBtn?.addEventListener('click', loadAccount);
+
 // Data loading
 async function loadCounts(){
   try {
@@ -112,7 +163,7 @@ async function loadCounts(){
     document.getElementById('stat-free').textContent = data.freeIPs;
     document.getElementById('stat-used').textContent = data.usedIPs;
   } catch(e){
-    if(e.status === 401){ handleUnauthorized(); }
+    // countries are public; ignore auth errors
   }
 }
 
@@ -161,7 +212,14 @@ async function loadCountries(){
 
       const btn = document.createElement('button');
       btn.textContent = 'مشاهده آدرس‌ها';
-      btn.addEventListener('click', () => loadAddresses(c.code));
+      btn.addEventListener('click', () => {
+        if(!getUser()){
+          // prompt login instead of calling API
+          authSection.classList.remove('hidden');
+          return;
+        }
+        loadAddresses(c.code);
+      });
 
       card.append(header, stats, btn);
       el.appendChild(card);
@@ -202,10 +260,22 @@ function handleUnauthorized(){
 // Boot
 (function init(){
   const uid = getUser();
-  if(uid){ showApp(uid); }
-  else { showAuth(); }
+  // Show app content for everyone; toggle actions based on login
+  showApp(uid || null);
   // refresh stats periodically when logged in
   setInterval(()=>{
     if(!appSection.classList.contains('hidden')) loadCounts();
   }, 5000);
+  // KV health polling
+  async function pollHealth(){
+    try {
+      const r = await fetchJSON('/api/health');
+      if(kvStatus){
+        kvStatus.textContent = r.ok ? 'متصل' : 'قطع';
+        kvStatus.style.background = r.ok ? 'rgba(74,222,128,.18)' : 'rgba(239,68,68,.18)';
+      }
+    } catch { if(kvStatus){ kvStatus.textContent = 'نامشخص'; } }
+  }
+  pollHealth();
+  setInterval(pollHealth, 15000);
 })();

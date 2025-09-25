@@ -8,7 +8,7 @@
 </head>
 <body>
   <!-- Authentication Section -->
-  <div id="auth-section">
+  <div id="auth-section" class="hidden">
     <div class="auth-container">
       <div class="auth-card">
         <h2 class="auth-title">ورود به سیستم DNS</h2>
@@ -41,19 +41,24 @@
   </div>
 
   <!-- Main App Section -->
-  <div id="app-section" class="hidden">
+  <div id="app-section">
     <header class="container">
       <div class="header-brand">
         <img src="public/dns.png" alt="DNS Logo" class="logo" />
         <h1>Mini DataBase DNS</h1>
       </div>
       <nav>
-        <div class="user-info">
+        <div id="guest-actions" class="user-info">
+          <span>مهمان</span>
+          <button id="open-auth-btn" class="btn-primary" style="width:auto;padding:8px 16px;font-size:14px;">ورود/ثبت‌نام</button>
+        </div>
+        <div id="user-actions" class="user-info hidden">
           <span>کاربر: </span>
           <span id="user-id"></span>
+          <button id="account-btn" class="btn-primary" style="width:auto;padding:8px 16px;font-size:14px;">حساب کاربری</button>
+          <button id="logout-btn" class="btn-primary" style="width:auto;padding:8px 16px;font-size:14px;">خروج</button>
         </div>
         <a href="public/admin.html">پنل ادمین</a>
-        <button id="logout-btn" class="btn-primary" style="width:auto;padding:8px 16px;font-size:14px;">خروج</button>
       </nav>
     </header>
 
@@ -85,7 +90,27 @@
         <h2 style="margin:32px 0 24px 0;font-size:24px;font-weight:600;">آدرس‌ها</h2>
         <div id="addresses"></div>
       </section>
+
+      <!-- Account Section -->
+      <section>
+        <h2 style="margin:32px 0 24px 0;font-size:24px;font-weight:600;">حساب کاربری</h2>
+        <div id="account" class="card">
+          <div id="account-info" class="badge">برای مشاهده اطلاعات، وارد شوید.</div>
+          <div id="owned-ips" class="list" style="margin-top:12px"></div>
+        </div>
+      </section>
     </main>
+    <footer class="container" style="margin-top:32px">
+      <div class="card" style="display:flex;align-items:center;justify-content:space-between;gap:12px">
+        <div>
+          <strong>وضعیت KV:</strong>
+          <span id="kv-status" class="badge">بررسی...</span>
+        </div>
+        <div>
+          <a href="https://t.me/NoiDUsers" target="_blank" rel="noopener" class="badge">@NoiDUsers</a>
+        </div>
+      </div>
+    </footer>
   </div>
 
   <script src="public/app.js" type="module"></script>

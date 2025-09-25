@@ -11,19 +11,27 @@ async function ensureDefault(env){
 }
 
 export async function onRequestGet({ request, env }){
-  const uid = await requireUser(request, env);
-  if(!uid) return json({ error:'unauthorized' }, 401);
+  // Allow viewing countries without login, but show stats only for logged users
   await ensureDefault(env);
   const countries = (await kvGet(env, 'app:countries')) || [];
-  const enriched = [];
-  for(const c of countries){
-    const list = (await kvGet(env, `app:country:${c.code}:addresses`)) || [];
-    const total = list.length;
-    const free = list.filter(a=>a.status==='free').length;
-    const used = list.filter(a=>a.status==='used').length;
-    enriched.push({ ...c, total, free, used });
+  const uid = await requireUser(request, env);
+  
+  if(uid){
+    // Logged in: show full stats
+    const enriched = [];
+    for(const c of countries){
+      const list = (await kvGet(env, `app:country:${c.code}:addresses`)) || [];
+      const total = list.length;
+      const free = list.filter(a=>a.status==='free').length;
+      const used = list.filter(a=>a.status==='used').length;
+      enriched.push({ ...c, total, free, used });
+    }
+    return json({ countries: enriched, authenticated: true });
+  } else {
+    // Not logged in: show countries without stats
+    const basic = countries.map(c => ({ ...c, total: 0, free: 0, used: 0 }));
+    return json({ countries: basic, authenticated: false });
   }
-  return json({ countries: enriched });
 }
 
 export async function onRequestPost({ request, env }){

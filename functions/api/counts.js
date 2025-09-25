@@ -1,9 +1,7 @@
-import { json, requireUser } from '../_utils/auth.js';
+import { json } from '../_utils/auth.js';
 import { kvGet } from '../_utils/kv.js';
 
-export async function onRequestGet({ request, env }){
-  const uid = await requireUser(request, env);
-  if(!uid) return json({ error:'unauthorized' }, 401);
+export async function onRequestGet({ env }){
   const countries = (await kvGet(env, 'app:countries')) || [];
   let total = 0, free = 0, used = 0;
   for(const c of countries){

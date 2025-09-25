@@ -38,13 +38,20 @@ export async function onRequestPost({ request, env }){
 export async function onRequestPatch({ request, env }){
   const sid = await requireAdmin(request, env);
   if(!sid) return json({ error:'unauthorized' }, 401);
-  const { code, ip, status } = await readJSON(request);
+  const { code, ip, status, owner } = await readJSON(request);
   if(!code || !ip || !['free','used'].includes(status)) return json({ error:'invalid' }, 400);
   const up = code.toUpperCase();
   const list = (await kvGet(env, `app:country:${up}:addresses`)) || [];
   const item = list.find(a=>a.ip===ip);
   if(!item) return json({ error:'not found' }, 404);
   item.status = status;
+  if(status === 'used'){
+    // set or keep owner if provided
+    if(owner) item.owner = String(owner);
+  } else {
+    // free: clear any owner
+    delete item.owner;
+  }
   await kvSet(env, `app:country:${up}:addresses`, list);
   return json({ ok:true });
 }
