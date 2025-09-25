@@ -1,0 +1,73 @@
+<!doctype html>
+<html lang="fa" dir="rtl">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>پنل ادمین - Mini DataBase DNS</title>
+  <link rel="stylesheet" href="./styles.css" />
+</head>
+<body>
+  <header class="container">
+    <div class="header-brand">
+      <img src="./dns.png" alt="DNS Logo" class="logo" />
+      <h1>پنل ادمین</h1>
+    </div>
+    <nav>
+      <a href="../">خانه</a>
+      <button id="logout-btn" class="danger">خروج</button>
+    </nav>
+  </header>
+
+  <main class="container">
+    <section id="login-section" class="card">
+      <h2>ورود ادمین</h2>
+      <form id="login-form">
+        <label>نام کاربری
+          <input type="text" name="username" required />
+        </label>
+        <label>رمز عبور
+          <input type="password" name="password" required />
+        </label>
+        <button type="submit">ورود</button>
+      </form>
+      <div id="login-error" class="error"></div>
+    </section>
+
+    <section id="manage-section" class="hidden">
+      <h2>مدیریت کشورها و آدرس‌ها</h2>
+
+      <div class="grid">
+        <div class="card">
+          <h3>افزودن کشور</h3>
+          <form id="add-country-form">
+            <label>نام کشور
+              <input type="text" name="name" placeholder="United Kingdom" required />
+            </label>
+            <label>کد دو حرفی (ISO Alpha-2)
+              <input type="text" name="code" placeholder="GB" maxlength="2" required />
+            </label>
+            <button type="submit">افزودن</button>
+          </form>
+        </div>
+
+        <div class="card">
+          <h3>افزودن آدرس به کشور</h3>
+          <form id="add-address-form">
+            <label>کشور
+              <select name="code" id="country-select"></select>
+            </label>
+            <label>آدرس IP (هر خط یک آدرس)
+              <textarea name="ips" rows="6" placeholder="1.2.3.4\n5.6.7.8"></textarea>
+            </label>
+            <button type="submit">افزودن آدرس‌ها</button>
+          </form>
+        </div>
+      </div>
+
+      <div id="admin-feedback"></div>
+    </section>
+  </main>
+
+  <script type="module" src="./admin.js"></script>
+</body>
+</html>

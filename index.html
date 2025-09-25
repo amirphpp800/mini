@@ -1,0 +1,93 @@
+<!doctype html>
+<html lang="fa" dir="rtl">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Mini DataBase DNS</title>
+  <link rel="stylesheet" href="public/styles.css" />
+</head>
+<body>
+  <!-- Authentication Section -->
+  <div id="auth-section">
+    <div class="auth-container">
+      <div class="auth-card">
+        <h2 class="auth-title">ورود به سیستم DNS</h2>
+        
+        <!-- Register Form -->
+        <div id="register-step">
+          <div class="form-group">
+            <label class="form-label">آیدی عددی تلگرام</label>
+            <input type="number" id="telegram-id" class="form-input" placeholder="مثال: 123456789" required />
+          </div>
+          <button id="send-code-btn" class="btn-primary">ارسال کد تایید</button>
+          <div id="register-message"></div>
+        </div>
+
+        <!-- Verify Form -->
+        <div id="verify-step" class="hidden">
+          <div class="form-group">
+            <label class="form-label">آیدی عددی تلگرام</label>
+            <input type="number" id="verify-telegram-id" class="form-input" readonly />
+          </div>
+          <div class="form-group">
+            <label class="form-label">کد تایید (۵ رقمی)</label>
+            <input type="text" id="verify-code" class="form-input" placeholder="12345" maxlength="5" required />
+          </div>
+          <button id="verify-btn" class="btn-primary">تایید و ورود</button>
+          <div id="verify-message"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Main App Section -->
+  <div id="app-section" class="hidden">
+    <header class="container">
+      <div class="header-brand">
+        <img src="public/dns.png" alt="DNS Logo" class="logo" />
+        <h1>Mini DataBase DNS</h1>
+      </div>
+      <nav>
+        <div class="user-info">
+          <span>کاربر: </span>
+          <span id="user-id"></span>
+        </div>
+        <a href="public/admin.html">پنل ادمین</a>
+        <button id="logout-btn" class="btn-primary" style="width:auto;padding:8px 16px;font-size:14px;">خروج</button>
+      </nav>
+    </header>
+
+    <main class="container">
+      <!-- Global Stats -->
+      <section class="stats">
+        <div class="glass-stat white">
+          <div class="stat-number" id="stat-total">0</div>
+          <div class="stat-label">کل IP ها</div>
+        </div>
+        <div class="glass-stat green">
+          <div class="stat-number" id="stat-free">0</div>
+          <div class="stat-label">IP های آزاد</div>
+        </div>
+        <div class="glass-stat red">
+          <div class="stat-number" id="stat-used">0</div>
+          <div class="stat-label">IP های اشغال</div>
+        </div>
+      </section>
+
+      <!-- Countries Section -->
+      <section>
+        <h2 style="margin:32px 0 24px 0;font-size:24px;font-weight:600;">کشورها</h2>
+        <div id="countries" class="grid"></div>
+      </section>
+
+      <!-- Addresses Section -->
+      <section>
+        <h2 style="margin:32px 0 24px 0;font-size:24px;font-weight:600;">آدرس‌ها</h2>
+        <div id="addresses"></div>
+      </section>
+    </main>
+  </div>
+
+  <script src="public/app.js" type="module"></script>
+</body>
+</html>
