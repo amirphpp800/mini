@@ -54,19 +54,21 @@ header a, header button{
   background: rgba(255,255,255,.10);
   border:1px solid rgba(255,255,255,.22);
   padding:10px 14px;border-radius:14px;text-decoration:none;box-shadow: var(--glass-shadow);
+  transition: all .25s ease; will-change: transform, background, box-shadow;
 }
-header a:hover, header button:hover{background: rgba(255,255,255,.16); border-color:rgba(255,255,255,.32)}
+header a:hover, header button:hover{background: rgba(255,255,255,.16); border-color:rgba(255,255,255,.32); transform: translateY(-1px); box-shadow: 0 12px 32px rgba(0,0,0,.45);}
 header .danger{border-color:var(--danger);color:#ffd2d2;background:linear-gradient(180deg, rgba(255,92,92,.15), rgba(255,92,92,.05))}
 .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:16px}
 .card{
-  background: rgba(255,255,255,.10);
+  background: linear-gradient(180deg, rgba(255,255,255,.12), rgba(255,255,255,.08));
   padding:24px;border-radius:20px;
-  border:1px solid rgba(255,255,255,.18);
+  border:1px solid rgba(255,255,255,.22);
   box-shadow: var(--glass-shadow);
   backdrop-filter: blur(24px) saturate(180%);
   -webkit-backdrop-filter: blur(24px) saturate(180%);
   position:relative;
   overflow:hidden;
+  isolation:isolate;
 }
 .card::before{
   content:'';
@@ -74,6 +76,15 @@ header .danger{border-color:var(--danger);color:#ffd2d2;background:linear-gradie
   top:0;left:0;right:0;height:1px;
   background:linear-gradient(90deg, transparent, rgba(255,255,255,.2), transparent);
 }
+.card::after{
+  content:'';
+  position:absolute;
+  top:-20%; bottom:-20%; left:-60%; width:45%;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,.22), transparent);
+  transform: translateX(-120%) skewX(-12deg);
+  opacity:.0; pointer-events:none;
+}
+.card:hover::after{ animation: sheen-slide 1.8s ease; opacity:.9; }
 .hidden{display:none}
 .error{color:var(--danger);margin-top:8px}
 label{display:flex;flex-direction:column;gap:6px;margin-bottom:12px}
@@ -123,6 +134,14 @@ button:hover{filter:brightness(1.06)}
   top:0;left:0;right:0;height:1px;
   background:linear-gradient(90deg, transparent, rgba(255,255,255,.3), transparent);
 }
+.glass-stat::after{
+  content:''; position:absolute;
+  top:-20%; bottom:-20%; left:-60%; width:45%;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,.25), transparent);
+  transform: translateX(-120%) skewX(-12deg);
+  opacity:0; pointer-events:none;
+}
+.glass-stat:hover::after{ animation: sheen-slide 1.8s ease; opacity:.9; }
 .glass-stat.white{background: var(--glass-white);}
 .glass-stat.green{background: var(--glass-green); border-color:rgba(74,222,128,.3);}
 .glass-stat.red{background: var(--glass-red); border-color:rgba(239,68,68,.3);}
@@ -153,6 +172,14 @@ button:hover{filter:brightness(1.06)}
   top:0;left:0;right:0;height:1px;
   background:linear-gradient(90deg, transparent, rgba(255,255,255,.25), transparent);
 }
+.country-card-modern::after{
+  content:''; position:absolute;
+  top:-20%; bottom:-20%; left:-60%; width:45%;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,.25), transparent);
+  transform: translateX(-120%) skewX(-12deg);
+  opacity:0; pointer-events:none;
+}
+.country-card-modern:hover::after{ animation: sheen-slide 1.8s ease; opacity:.9; }
 
 .country-header{
   display:flex;
@@ -270,6 +297,22 @@ button:hover{filter:brightness(1.06)}
 }
 .btn-primary:focus{ outline: none; box-shadow: 0 0 0 3px rgba(255,255,255,.18); }
 
+/* Utilities */
+.section-title{
+  margin:32px 0 24px 0; font-size:24px; font-weight:700; letter-spacing:-.2px;
+  background: linear-gradient(180deg, #ffffff, #cdd8ff);
+  -webkit-background-clip:text; background-clip:text; -webkit-text-fill-color: transparent;
+  text-shadow: 0 1px 0 rgba(255,255,255,.08);
+}
+.section-title::after{
+  content:''; display:block; height:2px; width:64px; margin-top:10px; border-radius:999px;
+  background: linear-gradient(90deg, rgba(99,102,241,0), rgba(99,102,241,.45), rgba(99,102,241,0));
+}
+.btn-compact{ width:auto; padding:8px 16px; font-size:14px; border-radius:12px; }
+footer.container{ margin-top:32px; }
+.card-row{ display:flex; align-items:center; justify-content:space-between; gap:12px; }
+.mt-12{ margin-top:12px; }
+
 /* Responsive adjustments */
 @media (max-width: 768px){
   .container{ padding:12px; }
@@ -315,4 +358,10 @@ button:hover{filter:brightness(1.06)}
   background: linear-gradient(180deg, rgba(255,255,255,.25), rgba(255,255,255,.15));
   border: 2px solid transparent;
   border-radius: 999px;
+}
+
+/* Sheen animation for glass elements */
+@keyframes sheen-slide{
+  0%{ transform: translateX(-120%) skewX(-12deg); }
+  100%{ transform: translateX(120%) skewX(-12deg); }
 }

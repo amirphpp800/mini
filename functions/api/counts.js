@@ -7,7 +7,8 @@ export async function onRequestGet({ env }){
   for(const c of countries){
     const list = (await kvGet(env, `app:country:${c.code}:addresses`)) || [];
     total += list.length;
-    free += list.filter(a=>a.status==='free').length;
+    // Handle addresses that might not have status field (legacy data)
+    free += list.filter(a=>!a.status || a.status==='free').length;
     used += list.filter(a=>a.status==='used').length;
   }
   return json({ totalIPs: total, freeIPs: free, usedIPs: used });

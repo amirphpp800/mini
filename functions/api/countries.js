@@ -22,7 +22,8 @@ export async function onRequestGet({ request, env }){
     for(const c of countries){
       const list = (await kvGet(env, `app:country:${c.code}:addresses`)) || [];
       const total = list.length;
-      const free = list.filter(a=>a.status==='free').length;
+      // Handle addresses that might not have status field (legacy data)
+      const free = list.filter(a=>!a.status || a.status==='free').length;
       const used = list.filter(a=>a.status==='used').length;
       enriched.push({ ...c, total, free, used });
     }

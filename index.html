@@ -4,7 +4,7 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Mini DataBase DNS</title>
-  <link rel="stylesheet" href="public/styles.css" />
+  <link rel="stylesheet" href="public/modern-styles.css" />
 </head>
 <body>
   <!-- Authentication Section -->
@@ -19,7 +19,7 @@
             <label class="form-label">آیدی عددی تلگرام</label>
             <input type="number" id="telegram-id" class="form-input" placeholder="مثال: 123456789" required />
           </div>
-          <button id="send-code-btn" class="btn-primary">ارسال کد تایید</button>
+          <button id="send-code-btn" class="btn btn-primary">ارسال کد تایید</button>
           <div id="register-message"></div>
         </div>
 
@@ -33,7 +33,7 @@
             <label class="form-label">کد تایید (۵ رقمی)</label>
             <input type="text" id="verify-code" class="form-input" placeholder="12345" maxlength="5" required />
           </div>
-          <button id="verify-btn" class="btn-primary">تایید و ورود</button>
+          <button id="verify-btn" class="btn btn-primary">تایید و ورود</button>
           <div id="verify-message"></div>
         </div>
       </div>
@@ -42,72 +42,75 @@
 
   <!-- Main App Section -->
   <div id="app-section">
-    <header class="container">
-      <div class="header-brand">
-        <img src="public/dns.png" alt="DNS Logo" class="logo" />
-        <h1>Mini DataBase DNS</h1>
+    <header>
+      <div class="container header-content">
+        <div class="header-brand">
+          <img src="public/dns.png" alt="DNS Logo" class="logo" />
+          <h1>Mini DataBase DNS</h1>
+        </div>
+        <nav>
+          <div id="guest-actions" class="user-info">
+            <span>مهمان</span>
+            <button id="open-auth-btn" class="btn btn-primary btn-compact">ورود/ثبت‌نام</button>
+          </div>
+          <div id="user-actions" class="user-info hidden">
+            <span>کاربر: </span>
+            <span id="user-id"></span>
+            <button id="account-btn" class="btn btn-primary btn-compact">حساب کاربری</button>
+            <button id="logout-btn" class="btn btn-primary btn-compact">خروج</button>
+          </div>
+          <a href="public/admin.html" class="btn btn-compact">پنل ادمین</a>
+        </nav>
       </div>
-      <nav>
-        <div id="guest-actions" class="user-info">
-          <span>مهمان</span>
-          <button id="open-auth-btn" class="btn-primary" style="width:auto;padding:8px 16px;font-size:14px;">ورود/ثبت‌نام</button>
-        </div>
-        <div id="user-actions" class="user-info hidden">
-          <span>کاربر: </span>
-          <span id="user-id"></span>
-          <button id="account-btn" class="btn-primary" style="width:auto;padding:8px 16px;font-size:14px;">حساب کاربری</button>
-          <button id="logout-btn" class="btn-primary" style="width:auto;padding:8px 16px;font-size:14px;">خروج</button>
-        </div>
-        <a href="public/admin.html">پنل ادمین</a>
-      </nav>
     </header>
 
     <main class="container">
       <!-- Global Stats -->
       <section class="stats">
-        <div class="glass-stat white">
+        <div class="stat-card white">
           <div class="stat-number" id="stat-total">0</div>
           <div class="stat-label">کل IP ها</div>
         </div>
-        <div class="glass-stat green">
+        <div class="stat-card green">
           <div class="stat-number" id="stat-free">0</div>
           <div class="stat-label">IP های آزاد</div>
         </div>
-        <div class="glass-stat red">
+        <div class="stat-card red">
           <div class="stat-number" id="stat-used">0</div>
           <div class="stat-label">IP های اشغال</div>
         </div>
       </section>
 
       <!-- Countries Section -->
-      <section>
-        <h2 style="margin:32px 0 24px 0;font-size:24px;font-weight:600;">کشورها</h2>
-        <div id="countries" class="grid"></div>
+      <section class="section">
+        <h2 class="section-title">کشورها</h2>
+        <div id="countries" class="countries-grid"></div>
       </section>
 
       <!-- Addresses Section -->
-      <section>
-        <h2 style="margin:32px 0 24px 0;font-size:24px;font-weight:600;">آدرس‌ها</h2>
+      <section class="addresses-section">
+        <h2 class="section-title">آدرس‌ها</h2>
         <div id="addresses"></div>
       </section>
 
       <!-- Account Section -->
-      <section>
-        <h2 style="margin:32px 0 24px 0;font-size:24px;font-weight:600;">حساب کاربری</h2>
+      <section class="section">
+        <h2 class="section-title">حساب کاربری</h2>
         <div id="account" class="card">
-          <div id="account-info" class="badge">برای مشاهده اطلاعات، وارد شوید.</div>
-          <div id="owned-ips" class="list" style="margin-top:12px"></div>
+          <div id="account-info">برای مشاهده اطلاعات، وارد شوید.</div>
+          <div id="owned-ips" class="address-list mt-md"></div>
         </div>
       </section>
     </main>
-    <footer class="container" style="margin-top:32px">
-      <div class="card" style="display:flex;align-items:center;justify-content:space-between;gap:12px">
+    
+    <footer>
+      <div class="container footer-content">
         <div>
           <strong>وضعیت KV:</strong>
-          <span id="kv-status" class="badge">بررسی...</span>
+          <span id="kv-status">بررسی...</span>
         </div>
         <div>
-          <a href="https://t.me/NoiDUsers" target="_blank" rel="noopener" class="badge">@NoiDUsers</a>
+          <a href="https://t.me/NoiDUsers" target="_blank" rel="noopener">@NoiDUsers</a>
         </div>
       </div>
     </footer>

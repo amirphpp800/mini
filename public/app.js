@@ -6,6 +6,9 @@ async function fetchJSON(url, opts={}){
     try { msg = await res.json(); } catch { msg = await res.text(); }
     const err = new Error(typeof msg === 'string' ? msg : (msg?.error || 'error'));
     err.status = res.status;
+    if(msg && typeof msg === 'object'){
+      err.detail = msg.detail || msg.message || '';
+    }
     throw err;
   }
   return res.json();
@@ -69,7 +72,7 @@ sendCodeBtn?.addEventListener('click', async ()=>{
   registerMessage.className = '';
   registerMessage.textContent = '';
   if(!telegramId){
-    registerMessage.className = 'error';
+    registerMessage.className = 'text-danger';
     registerMessage.textContent = 'آیدی تلگرام را وارد کنید';
     return;
   }
@@ -77,14 +80,15 @@ sendCodeBtn?.addEventListener('click', async ()=>{
     await fetchJSON('/api/register', { method:'POST', body: JSON.stringify({ telegramId })});
     // Move to verify step and fill id
     verifyTelegramIdInput.value = telegramId;
-    registerMessage.className = 'success';
+    registerMessage.className = 'text-success';
     registerMessage.textContent = 'کد تایید ارسال شد';
     registerStep.classList.add('hidden');
     verifyStep.classList.remove('hidden');
     verifyCodeInput.focus();
   } catch(e){
-    registerMessage.className = 'error';
-    registerMessage.textContent = 'خطا در ارسال کد';
+    registerMessage.className = 'text-danger';
+    const detail = e?.detail ? ` (${e.detail})` : '';
+    registerMessage.textContent = `خطا در ارسال کد${detail}. اگر پیام دریافت نکردید، ابتدا در تلگرام به ربات پیام بدهید و دکمه Start را بزنید، سپس دوباره تلاش کنید.`;
   }
 });
 
@@ -95,7 +99,7 @@ verifyBtn?.addEventListener('click', async ()=>{
   verifyMessage.className = '';
   verifyMessage.textContent = '';
   if(!code){
-    verifyMessage.className = 'error';
+    verifyMessage.className = 'text-danger';
     verifyMessage.textContent = 'کد تایید را وارد کنید';
     return;
   }
@@ -105,7 +109,7 @@ verifyBtn?.addEventListener('click', async ()=>{
     setUser(resp.userId || telegramId);
     showApp(resp.userId || telegramId);
   } catch(e){
-    verifyMessage.className = 'error';
+    verifyMessage.className = 'text-danger';
     verifyMessage.textContent = 'کد نامعتبر است یا منقضی شده';
   }
 });
@@ -139,12 +143,12 @@ async function loadAccount(){
       me.owned.forEach(o => {
         const row = document.createElement('div');
         row.className = 'address-item';
-        row.innerHTML = `<div>${o.ip}</div><div class="badge">${o.country}</div>`;
+        row.innerHTML = `<div>${o.ip}</div><div class="status-badge">${o.country}</div>`;
         ownedIps.appendChild(row);
       });
     } else {
       const none = document.createElement('div');
-      none.className = 'badge';
+      none.className = 'status-badge';
       none.textContent = 'هیچ IP فعالی ندارید.';
       ownedIps.appendChild(none);
     }
@@ -174,13 +178,13 @@ async function loadCountries(){
     el.innerHTML = '';
     data.countries.forEach(c => {
       const card = document.createElement('div');
-      card.className = 'country-card-modern';
+      card.className = 'country-card';
 
       const header = document.createElement('div');
       header.className = 'country-header';
 
       const flag = document.createElement('img');
-      flag.className = 'country-flag-modern';
+      flag.className = 'country-flag';
       flag.src = `https://flagcdn.com/${c.code.toLowerCase()}.svg`;
       flag.alt = c.name;
       flag.loading = 'lazy';
@@ -192,25 +196,26 @@ async function loadCountries(){
 
       header.append(flag, info);
 
-      // small glass stats inside each card
+      // small stats inside each card
       const stats = document.createElement('div');
       stats.className = 'country-stats';
 
       const sTotal = document.createElement('div');
-      sTotal.className = 'glass-stat white';
-      sTotal.innerHTML = `<div class="stat-number">${c.total}</div><div class="stat-label">کل</div>`;
+      sTotal.className = 'country-stat';
+      sTotal.innerHTML = `<div class="country-stat-value">${c.total}</div><div class="country-stat-label">کل</div>`;
 
       const sFree = document.createElement('div');
-      sFree.className = 'glass-stat green';
-      sFree.innerHTML = `<div class="stat-number">${c.free}</div><div class="stat-label">آزاد</div>`;
+      sFree.className = 'country-stat';
+      sFree.innerHTML = `<div class="country-stat-value">${c.free}</div><div class="country-stat-label">آزاد</div>`;
 
       const sUsed = document.createElement('div');
-      sUsed.className = 'glass-stat red';
-      sUsed.innerHTML = `<div class="stat-number">${c.used}</div><div class="stat-label">اشغال</div>`;
+      sUsed.className = 'country-stat';
+      sUsed.innerHTML = `<div class="country-stat-value">${c.used}</div><div class="country-stat-label">اشغال</div>`;
 
       stats.append(sTotal, sFree, sUsed);
 
       const btn = document.createElement('button');
+      btn.className = 'btn btn-primary';
       btn.textContent = 'مشاهده آدرس‌ها';
       btn.addEventListener('click', () => {
         if(!getUser()){
@@ -221,7 +226,11 @@ async function loadCountries(){
         loadAddresses(c.code);
       });
 
-      card.append(header, stats, btn);
+      const actions = document.createElement('div');
+      actions.className = 'country-actions';
+      actions.appendChild(btn);
+
+      card.append(header, stats, actions);
       el.appendChild(card);
     });
   } catch(e){
@@ -231,7 +240,7 @@ async function loadCountries(){
 
 async function loadAddresses(code){
   const container = document.getElementById('addresses');
-  container.innerHTML = `<div class="card"><div class="badge">${code}</div><div class="list" id="addr-list"></div></div>`;
+  container.innerHTML = `<div class="card"><div class="mb-md">${code}</div><div class="address-list" id="addr-list"></div></div>`;
   try {
     const data = await fetchJSON('/api/addresses?code=' + encodeURIComponent(code));
     const list = document.getElementById('addr-list');
@@ -242,7 +251,7 @@ async function loadAddresses(code){
       const ip = document.createElement('div');
       ip.textContent = a.ip;
       const st = document.createElement('div');
-      st.className = 'status ' + (a.status === 'free' ? 'free' : 'used');
+      st.className = 'status-badge ' + (a.status === 'free' ? 'free' : 'used');
       st.textContent = a.status === 'free' ? 'آزاد' : 'اشغال';
       row.append(ip, st);
       list.appendChild(row);
@@ -272,9 +281,9 @@ function handleUnauthorized(){
       const r = await fetchJSON('/api/health');
       if(kvStatus){
         kvStatus.textContent = r.ok ? 'متصل' : 'قطع';
-        kvStatus.style.background = r.ok ? 'rgba(74,222,128,.18)' : 'rgba(239,68,68,.18)';
+        kvStatus.className = r.ok ? 'text-success' : 'text-danger';
       }
-    } catch { if(kvStatus){ kvStatus.textContent = 'نامشخص'; } }
+    } catch { if(kvStatus){ kvStatus.textContent = 'نامشخص'; kvStatus.className = ''; } }
   }
   pollHealth();
   setInterval(pollHealth, 15000);

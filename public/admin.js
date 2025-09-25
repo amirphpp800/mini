@@ -12,6 +12,7 @@ const addCountryForm = document.getElementById('add-country-form');
 const addAddressForm = document.getElementById('add-address-form');
 const countrySelect = document.getElementById('country-select');
 const feedback = document.getElementById('admin-feedback');
+const loginError = document.getElementById('login-error');
 
 function showManage(){ loginSection.classList.add('hidden'); manageSection.classList.remove('hidden'); }
 function showLogin(){ manageSection.classList.add('hidden'); loginSection.classList.remove('hidden'); }
@@ -25,7 +26,7 @@ loginForm.addEventListener('submit', async (ev)=>{
     })});
     await loadCountries();
     showManage();
-  } catch(e){ document.getElementById('login-error').textContent = 'ورود ناموفق'; }
+  } catch(e){ loginError.textContent = 'ورود ناموفق'; }
 });
 
 logoutBtn.addEventListener('click', async ()=>{
@@ -51,14 +52,19 @@ addCountryForm.addEventListener('submit', async (ev)=>{
   // Validate country code: exactly 2 letters A-Z
   if(!/^[A-Z]{2}$/.test(code)){
     feedback.textContent = 'کد کشور باید دو حرف انگلیسی باشد (مثال: GB)';
+    feedback.className = 'text-danger';
     return;
   }
   try {
     await fetchJSON('/api/countries', { method:'POST', body: JSON.stringify({ name, code })});
     feedback.textContent = 'کشور اضافه شد';
+    feedback.className = 'text-success';
     addCountryForm.reset();
     await loadCountries();
-  } catch(e){ feedback.textContent = 'خطا: ' + e.message; }
+  } catch(e){ 
+    feedback.textContent = 'خطا: ' + e.message;
+    feedback.className = 'text-danger';
+  }
 });
 
 addAddressForm.addEventListener('submit', async (ev)=>{
@@ -71,11 +77,16 @@ addAddressForm.addEventListener('submit', async (ev)=>{
   const invalid = ips.filter(ip => !IPv4.test(ip));
   if(invalid.length){
     feedback.textContent = `برخی IP ها نامعتبرند: ${invalid.join(', ')}`;
+    feedback.className = 'text-danger';
     return;
   }
   try {
     await fetchJSON('/api/addresses', { method:'POST', body: JSON.stringify({ code, ips })});
     feedback.textContent = 'آدرس‌ها اضافه شدند';
+    feedback.className = 'text-success';
     addAddressForm.reset();
-  } catch(e){ feedback.textContent = 'خطا: ' + e.message; }
+  } catch(e){ 
+    feedback.textContent = 'خطا: ' + e.message;
+    feedback.className = 'text-danger';
+  }
 });

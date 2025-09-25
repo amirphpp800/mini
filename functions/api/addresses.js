@@ -8,7 +8,12 @@ export async function onRequestGet({ request, env }){
   const code = (url.searchParams.get('code') || '').toUpperCase();
   if(!code) return json({ error:'code' }, 400);
   const addresses = (await kvGet(env, `app:country:${code}:addresses`)) || [];
-  return json({ code, addresses });
+  // Ensure all addresses have a status field (handle legacy data)
+  const normalized = addresses.map(a => ({
+    ...a,
+    status: a.status || 'free'
+  }));
+  return json({ code, addresses: normalized });
 }
 
 export async function onRequestPost({ request, env }){
@@ -17,7 +22,9 @@ export async function onRequestPost({ request, env }){
   const { code, ips } = await readJSON(request);
   if(!code || !Array.isArray(ips)) return json({ error:'invalid' }, 400);
   const up = code.toUpperCase();
-  const list = (await kvGet(env, `app:country:${up}:addresses`)) || [];
+  let list = (await kvGet(env, `app:country:${up}:addresses`)) || [];
+  // Normalize existing addresses to ensure they have status field
+  list = list.map(a => ({ ...a, status: a.status || 'free' }));
   const set = new Set(list.map(a=>a.ip));
   const IPv4 = /^(25[0-5]|2[0-4]\d|1\d{2}|[1-9]?\d)(\.(25[0-5]|2[0-4]\d|1\d{2}|[1-9]?\d)){3}$/;
   const invalid = [];
@@ -41,7 +48,9 @@ export async function onRequestPatch({ request, env }){
   const { code, ip, status, owner } = await readJSON(request);
   if(!code || !ip || !['free','used'].includes(status)) return json({ error:'invalid' }, 400);
   const up = code.toUpperCase();
-  const list = (await kvGet(env, `app:country:${up}:addresses`)) || [];
+  let list = (await kvGet(env, `app:country:${up}:addresses`)) || [];
+  // Normalize existing addresses to ensure they have status field
+  list = list.map(a => ({ ...a, status: a.status || 'free' }));
   const item = list.find(a=>a.ip===ip);
   if(!item) return json({ error:'not found' }, 404);
   item.status = status;

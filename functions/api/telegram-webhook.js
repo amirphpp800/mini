@@ -1,15 +1,12 @@
 import { json, readJSON } from '../_utils/auth.js';
+import { getTelegramToken } from '../_utils/telegram.js';
 
 // Minimal Telegram webhook endpoint
 // Receives updates and optionally responds to /start
 export async function onRequestPost({ request, env }){
   try {
     const update = await readJSON(request);
-    const token = env.TELEGRAM_BOT_TOKEN;
-    if(!token){
-      // We still return 200 so Telegram doesn't retry endlessly
-      return json({ ok:true, note: 'TELEGRAM_BOT_TOKEN not set' });
-    }
+    const token = getTelegramToken(env);
 
     // Handle message updates
     const msg = update?.message;
