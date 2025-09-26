@@ -3,5 +3,10 @@
     "name": "England",
     "faName": "انگلیس",
     "code": "gb"
+  },
+  {
+    "name": "Canada",
+    "faName": "کانادا",
+    "code": "ca"
   }
 ]
