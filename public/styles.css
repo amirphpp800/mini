@@ -253,7 +253,7 @@ main {
 }
 .alert-card .hdr .ttl{ font-weight:700; letter-spacing:.4px; }
 .alert-card .msg{ opacity:.95; line-height:1.6; white-space:pre-wrap; }
-.alert-card .actions{ display:flex; justify-content:flex-end; margin-top:.8rem; }
+.alert-card .actions{ display:flex; justify-content:flex-end; margin-top:.8rem; gap: .5rem; }
 .alert-card .btn-close{
   padding: .5rem .9rem; border-radius: 10px; background:#fff; color:#000; border:none; font-weight:700; cursor:pointer;
 }

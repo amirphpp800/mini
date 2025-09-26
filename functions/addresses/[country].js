@@ -21,14 +21,12 @@ export const onRequestGet = async ({ request, params, env }) => {
     const verified = await env.KV.get(`user:${chat_id}:verified`);
     if (!verified) return new Response('Forbidden', { status: 403 });
 
-    // If the user already has an assigned IP for this country, return it
-    const userKey = `user_ip:${chat_id}:${country}`;
-    const existing = await env.KV.get(userKey);
-    if (existing) {
-      return new Response(JSON.stringify({ country, addresses: [existing] }), {
-        headers: { 'Content-Type': 'application/json' },
-      });
-    }
+    // Each request should return a new unique address (no repeat for this user).
+    // We'll track per-user history and skip previously assigned IPs.
+    const userHistKey = `user_hist:${chat_id}:${country}`;
+    const histRaw = await env.KV.get(userHistKey);
+    const userHist = histRaw ? JSON.parse(histRaw) : [];
+    const userHistSet = new Set(userHist);
 
     // Load all IPs and busy list
     const allRaw = await env.KV.get(`ips:${country}`);
@@ -36,9 +34,9 @@ export const onRequestGet = async ({ request, params, env }) => {
     const busyRaw = await env.KV.get(`ips_busy:${country}`);
     let busy = busyRaw ? JSON.parse(busyRaw) : [];
 
-    // Find first free IP
+    // Find first free IP that is not busy and not in user's history
     const busySet = new Set(busy);
-    const freeIp = all.find(ip => !busySet.has(ip));
+    const freeIp = all.find(ip => !busySet.has(ip) && !userHistSet.has(ip));
 
     if (!freeIp) {
       return new Response(JSON.stringify({ country, addresses: [] }), {
@@ -46,11 +44,12 @@ export const onRequestGet = async ({ request, params, env }) => {
       });
     }
 
-    // Mark as assigned: save mapping for user and append to busy list (dedup)
+    // Mark as consumed globally and record in user's history
     busySet.add(freeIp);
     busy = Array.from(busySet);
     await env.KV.put(`ips_busy:${country}`, JSON.stringify(busy));
-    await env.KV.put(userKey, freeIp);
+    userHistSet.add(freeIp);
+    await env.KV.put(userHistKey, JSON.stringify(Array.from(userHistSet)));
 
     return new Response(JSON.stringify({ country, addresses: [freeIp] }), {
       headers: { 'Content-Type': 'application/json' },
