@@ -3,7 +3,8 @@ export const onRequestPost = async ({ request, env }) => {
     const body = await request.json();
     const { session, country, addresses, code, faName } = body;
 
-    if (!session || !country || !code || !Array.isArray(addresses) || addresses.length === 0) {
+    // session, country, and at least one valid address are required. code is optional for existing countries
+    if (!session || !country || !Array.isArray(addresses) || addresses.length === 0) {
       return new Response('Invalid input', { status: 400 });
     }
 
@@ -14,12 +15,14 @@ export const onRequestPost = async ({ request, env }) => {
     }
 
     const key = country.toLowerCase();
-    const iso = String(code).trim().toLowerCase();
-    // basic ISO alpha-2 validation
-    if (!/^[a-z]{2}$/.test(iso)) {
+    let countryData = await env.DB.get(key, { type: 'json' });
+
+    // Determine ISO code: prefer explicit code, else from existing record
+    let iso = String(code || (countryData && countryData.code) || '').trim().toLowerCase();
+    if (!countryData && !/^[a-z]{2}$/.test(iso)) {
+      // For creating a new country, ISO code is required and must be valid
       return new Response('Invalid country code', { status: 400 });
     }
-    let countryData = await env.DB.get(key, { type: 'json' });
 
     // Create or update minimal country record with name and ISO code
     if (!countryData) {
@@ -30,7 +33,7 @@ export const onRequestPost = async ({ request, env }) => {
       await env.DB.put(key, JSON.stringify(countryData));
     } else {
       let changed = false;
-      if (countryData.code !== iso) { countryData.code = iso; changed = true; }
+      if (/^[a-z]{2}$/.test(iso) && countryData.code !== iso) { countryData.code = iso; changed = true; }
       if (countryData.name !== country) { countryData.name = country; changed = true; }
       if (faName && typeof faName === 'string' && faName.trim() && countryData.faName !== faName.trim()) {
         countryData.faName = faName.trim();

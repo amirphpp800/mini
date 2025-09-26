@@ -25,10 +25,10 @@
       <button class="modal-close" id="closeSignup" aria-label="Close">×</button>
       <h2 id="accTitle">User Account</h2>
       <div class="status-line" id="accStatus">Checking status...</div>
-      <div class="row">
+      <div class="row" id="u_tg_row">
         <a class="tg-btn" href="tg://resolve?domain=minidnsverify_bot">Start Telegram Bot</a>
       </div>
-      <div class="row">
+      <div class="row" id="u_chat_row">
         <input type="number" id="u_chat_id" placeholder="Telegram chat_id" />
         <button id="u_send">Send Code</button>
       </div>
@@ -40,11 +40,14 @@
         <span>Logged in</span>
         <button id="u_logout">Logout</button>
       </div>
+      <div class="row" id="u_id_row" style="display:none">
+        <div class="muted">Your chat_id: <span id="u_id_value"></span></div>
+      </div>
       <div id="u_history_wrap" style="display:none; margin-top: .75rem;">
         <div class="lbl" style="margin:.25rem 0">Your fetched addresses</div>
         <div id="u_history" style="display:flex;flex-direction:column;gap:.5rem;"></div>
       </div>
-      <small>If you didn’t receive a message, open the Telegram bot below, press Start, then try again:
+      <small id="u_tg_hint">If you didn’t receive a message, open the Telegram bot below, press Start, then try again:
         <a href="https://t.me/minidnsverify_bot" target="_blank" rel="noopener" style="color:#7fd1ff">@minidnsverify_bot</a>
       </small>
     </section>
@@ -250,18 +253,48 @@
       const histWrap = document.getElementById('u_history_wrap');
       const histList = document.getElementById('u_history');
       const openBtn = document.getElementById('openSignup');
+      const tgRow = document.getElementById('u_tg_row');
+      const chatRow = document.getElementById('u_chat_row');
+      const tgHint = document.getElementById('u_tg_hint');
+      const idRow = document.getElementById('u_id_row');
+      const idVal = document.getElementById('u_id_value');
 
-      function renderLogged(){
+      async function loadMe(session){
+        if(!session) return;
+        try{
+          const r = await fetch('/auth/me', { headers:{ 'Authorization': `Bearer ${session}` } });
+          if(r.ok){
+            const { chat_id } = await r.json();
+            if(idVal) idVal.textContent = chat_id || '';
+          } else {
+            if(idVal) idVal.textContent = '';
+          }
+        }catch(_){ if(idVal) idVal.textContent=''; }
+      }
+
+      async function renderLogged(){
         const ses = localStorage.getItem('userSession');
         if(ses){
           loggedRow.style.display='flex';
           otpRow.style.display='none';
           histWrap.style.display='block';
           if(openBtn){ openBtn.textContent = 'Dashboard'; }
+          // hide onboarding rows when logged in
+          if(tgRow) tgRow.style.display='none';
+          if(chatRow) chatRow.style.display='none';
+          if(tgHint) tgHint.style.display='none';
+          if(idRow) idRow.style.display='flex';
+          await loadMe(ses);
         } else {
           loggedRow.style.display='none';
           histWrap.style.display='none';
           if(openBtn){ openBtn.textContent = 'Create Account'; }
+          // show onboarding rows when logged out
+          if(tgRow) tgRow.style.display='flex';
+          if(chatRow) chatRow.style.display='flex';
+          if(tgHint) tgHint.style.display='block';
+          if(idRow) idRow.style.display='none';
+          if(idVal) idVal.textContent = '';
         }
       }
 
@@ -328,7 +361,7 @@
             const {session} = await r.json();
             localStorage.setItem('userSession', session);
             alert('Your account has been verified.');
-            renderLogged();
+            await renderLogged();
           } else {
             window.showError('Verification failed');
           }
@@ -337,10 +370,10 @@
 
       // style logout button and add confirmation
       logoutBtn.classList.add('danger-btn');
-      logoutBtn.addEventListener('click', ()=>{
+      logoutBtn.addEventListener('click', async ()=>{
         if(confirm('آیا از خروج از حساب اطمینان دارید؟')){
           localStorage.removeItem('userSession');
-          renderLogged();
+          await renderLogged();
         }
       });
 
