@@ -41,6 +41,10 @@
         <span>Logged in</span>
         <button id="u_logout">Logout</button>
       </div>
+      <div id="u_history_wrap" style="display:none; margin-top: .75rem;">
+        <div class="lbl" style="margin:.25rem 0">Your fetched addresses</div>
+        <div id="u_history" style="display:flex;flex-direction:column;gap:.5rem;"></div>
+      </div>
       <small>If you didn’t receive a message, open the Telegram bot below, press Start, then try again:
         <a href="https://t.me/minidnsverify_bot" target="_blank" rel="noopener" style="color:#7fd1ff">@minidnsverify_bot</a>
       </small>
@@ -166,7 +170,7 @@
           btn.className = 'get-btn';
           btn.textContent = 'Get Addresses';
           btn.addEventListener('click', async ()=>{
-            const session = localStorage.getItem('userSession') || localStorage.getItem('adminSession');
+            const session = localStorage.getItem('userSession');
             if(!session){
               // Open signup modal for smoother UX
               if (window.openSignupModal) window.openSignupModal();
@@ -193,6 +197,16 @@
               const text = addresses.join('\n');
               await navigator.clipboard.writeText(text).catch(()=>{});
               alert(`Copied ${addresses.length} addresses to clipboard.`);
+              // Save to local history for the user
+              try{
+                const key = 'userAddrHistory';
+                const hist = JSON.parse(localStorage.getItem(key) || '[]');
+                const entry = { country: c.name, count: addresses.length, addresses, ts: Date.now() };
+                hist.unshift(entry);
+                // keep last 20 entries max
+                localStorage.setItem(key, JSON.stringify(hist.slice(0,20)));
+                if(window.renderUserHistory) window.renderUserHistory();
+              }catch(_e){}
             }catch(e){
               console.error(e);
               alert('Network error while fetching addresses');
@@ -245,14 +259,18 @@
       const verifyBtn = document.getElementById('u_verify');
       const loggedRow = document.getElementById('u_logged');
       const logoutBtn = document.getElementById('u_logout');
+      const histWrap = document.getElementById('u_history_wrap');
+      const histList = document.getElementById('u_history');
 
       function renderLogged(){
         const ses = localStorage.getItem('userSession');
         if(ses){
           loggedRow.style.display='flex';
           otpRow.style.display='none';
+          histWrap.style.display='block';
         } else {
           loggedRow.style.display='none';
+          histWrap.style.display='none';
         }
       }
 
@@ -279,10 +297,14 @@
         renderLogged();
       })();
 
+      // Prefill chat id from localStorage
+      chatEl.value = localStorage.getItem('userChatId') || '';
+
       sendBtn.addEventListener('click', async (e)=>{
         e.preventDefault();
         const chat_id = chatEl.value.trim();
         if(!chat_id) return alert('Enter chat_id');
+        localStorage.setItem('userChatId', chat_id);
         if(isLocal){
           alert('In local mode, sending the code may not work. Please test again after deployment.');
         }
@@ -326,6 +348,44 @@
         localStorage.removeItem('userSession');
         renderLogged();
       });
+
+      // Render user address history
+      window.renderUserHistory = function(){
+        try{
+          const arr = JSON.parse(localStorage.getItem('userAddrHistory') || '[]');
+          histList.innerHTML = '';
+          if(arr.length===0){
+            const p = document.createElement('div');
+            p.className = 'muted';
+            p.textContent = 'No addresses fetched yet.';
+            histList.appendChild(p);
+            return;
+          }
+          arr.forEach(item=>{
+            const row = document.createElement('div');
+            row.style.display='flex';
+            row.style.justifyContent='space-between';
+            row.style.alignItems='center';
+            row.style.gap='.5rem';
+            row.style.padding='.5rem .6rem';
+            row.style.border='1px solid rgba(255,255,255,0.15)';
+            row.style.borderRadius='10px';
+            row.style.background='rgba(255,255,255,0.04)';
+            const left = document.createElement('div');
+            left.textContent = `${item.country} — ${item.count} IPs`;
+            const right = document.createElement('div');
+            const copy = document.createElement('button');
+            copy.textContent = 'Copy';
+            copy.addEventListener('click', async ()=>{
+              try{ await navigator.clipboard.writeText((item.addresses||[]).join('\n')); }catch(_e){}
+            });
+            right.appendChild(copy);
+            row.appendChild(left);
+            row.appendChild(right);
+            histList.appendChild(row);
+          });
+        }catch(e){ histList.innerHTML=''; }
+      }
     })();
 
     // --- Modal open/close for account panel ---
@@ -335,7 +395,7 @@
       const modal = document.getElementById('accModal');
       const closeBtn = document.getElementById('closeSignup');
 
-      function open(){ overlay.classList.add('active'); modal.classList.add('active'); }
+      function open(){ overlay.classList.add('active'); modal.classList.add('active'); if(window.renderUserHistory) window.renderUserHistory(); }
       function close(){ overlay.classList.remove('active'); modal.classList.remove('active'); }
       window.openSignupModal = open;
       window.closeSignupModal = close;

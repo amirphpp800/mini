@@ -16,24 +16,48 @@
     <a href="../index.html" class="admin-btn">← Back to Home</a>
   </header>
   <div id="loginSection">
-    <input type="number" id="chat_id" placeholder="Admin username" required />
-    <div id="statusRow" style="font-size:12px;opacity:0.8;margin:6px 0 10px 0;">
+    <label for="chat_id" class="lbl">Admin chat_id</label>
+    <input type="number" id="chat_id" placeholder="e.g. 123456789" required />
+    <div id="statusRow" class="muted">
       Checking KV and Bot status...
     </div>
-    <button id="sendCodeBtn">Send Code</button>
-    <input type="number" id="otp" placeholder="Enter OTP" style="display:none" />
-    <button id="verifyBtn" style="display:none">Verify</button>
+    <div class="row">
+      <button id="sendCodeBtn">Send Code</button>
+      <input type="number" id="otp" placeholder="Enter OTP" style="display:none" />
+      <button id="verifyBtn" style="display:none">Verify</button>
+    </div>
   </div>
 
   <form id="countryForm" style="display:none">
-    <select id="countrySelect"></select>
-    <input type="text" id="name" placeholder="New Country Name (if not exists)" />
-    <input type="text" id="faName" placeholder="Persian Name (اختیاری)" />
-    <input type="url" id="flag" placeholder="Flag URL (if new country)" />
-    <input type="text" id="code" placeholder="Flag code (مثل gb یا gb-eng)" />
-    <textarea id="description" placeholder="Description (optional)"></textarea>
-    <textarea id="addresses" placeholder="Enter IPv4 addresses, one per line" required></textarea>
-    <button type="submit">Add Country</button>
+    <div class="form-grid">
+      <div class="form-col">
+        <label class="lbl" for="countrySelect">Select Country</label>
+        <select id="countrySelect"></select>
+
+        <label class="lbl" for="name">New Country Name (if not exists)</label>
+        <input type="text" id="name" placeholder="Example: England" />
+
+        <label class="lbl" for="faName">Persian Name (اختیاری)</label>
+        <input type="text" id="faName" placeholder="مثال: انگلیس" />
+
+        <label class="lbl" for="code">Flag code (مثل gb یا gb-eng)</label>
+        <input type="text" id="code" placeholder="gb, gb-eng, de, fr ..." />
+      </div>
+      <div class="form-col">
+        <label class="lbl" for="flag">Flag URL (if new country)</label>
+        <input type="url" id="flag" placeholder="https://.../flag.png (اختیاری)" />
+
+        <label class="lbl" for="description">Description (optional)</label>
+        <textarea id="description" placeholder="Short description"></textarea>
+      </div>
+    </div>
+
+    <label class="lbl" for="addresses">IPv4 addresses (one per line)</label>
+    <textarea id="addresses" placeholder="1.2.3.4\n5.6.7.8" required></textarea>
+
+    <div class="row end">
+      <button type="submit">Add / Update</button>
+    </div>
   </form>
   <script>
     // --- Admin login logic ---
@@ -44,6 +68,7 @@
     const loginSection=document.getElementById('loginSection');
     const countryForm=document.getElementById('countryForm');
     const statusRow=document.getElementById('statusRow');
+    const selEl = document.getElementById('countrySelect');
 
     // Show KV/Bot status
     (async ()=>{
@@ -63,10 +88,14 @@
       }
     })();
 
+    // Prefill chat_id from localStorage
+    chatInput.value = localStorage.getItem('adminChatId') || '';
+
     sendBtn.addEventListener('click', async (e)=>{
       e.preventDefault();
       const chat_id=chatInput.value.trim();
       if(!chat_id) return alert('Enter chat_id');
+      localStorage.setItem('adminChatId', chat_id);
       const res=await fetch('/auth/send-code',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({chat_id})});
       if(res.ok){
         const {next_retry_sec=30} = await res.json().catch(()=>({}));
@@ -102,20 +131,7 @@
         loginSection.style.display='none';
         countryForm.style.display='block';
         // populate countries select
-        try {
-          const resCountries = await fetch('/countries');
-          if(resCountries.ok){
-            const countries = await resCountries.json();
-            const sel=document.getElementById('countrySelect');
-            sel.innerHTML='';
-            countries.forEach(c=>{
-              const opt=document.createElement('option');
-              opt.value=c.name;
-              opt.textContent=c.name;
-              sel.appendChild(opt);
-            });
-          }
-        }catch(e){console.error(e);}
+        await populateCountries();
       }else alert('Verification failed');
     });
 
@@ -143,6 +159,32 @@
         console.error(err);
       }
     });
+
+    async function populateCountries(){
+      try {
+        const resCountries = await fetch('/countries');
+        if(resCountries.ok){
+          const countries = await resCountries.json();
+          selEl.innerHTML='';
+          countries.forEach(c=>{
+            const opt=document.createElement('option');
+            opt.value=c.name;
+            opt.textContent=c.name;
+            selEl.appendChild(opt);
+          });
+        }
+      }catch(e){ console.error(e); }
+    }
+
+    // Auto-init admin session UI
+    (async function initAdmin(){
+      const ses = localStorage.getItem('adminSession');
+      if(ses){
+        loginSection.style.display='none';
+        countryForm.style.display='block';
+        await populateCountries();
+      }
+    })();
   </script>
 </body>
 </html>
