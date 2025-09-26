@@ -66,6 +66,21 @@
       </div>
     </div>
   </div>
+  <!-- Address modal (for showing fetched IPs with Copy and auto-refresh on close) -->
+  <div class="alert-overlay" id="addrOverlay"></div>
+  <div class="alert-container" id="addrContainer">
+    <div class="alert-card" role="dialog" aria-modal="true" aria-labelledby="addrTitle">
+      <div class="hdr">
+        <div class="ttl" id="addrTitle">آدرس‌های شما</div>
+        <button class="btn-close" id="addrX">×</button>
+      </div>
+      <div class="msg" id="addrMsg" style="white-space: pre-wrap; direction: ltr;"></div>
+      <div class="actions">
+        <button id="addrCopy">Copy</button>
+        <button class="btn-close" id="addrOk">باشه</button>
+      </div>
+    </div>
+  </div>
   <main id="cards"></main>
   <script>
     // --- Error modal helper ---
@@ -87,6 +102,36 @@
       xBtn.addEventListener('click', close);
       overlay.addEventListener('click', close);
       window.showError = showError;
+    })();
+    // --- Address modal helper ---
+    (function(){
+      const overlay = document.getElementById('addrOverlay');
+      const container = document.getElementById('addrContainer');
+      const msgEl = document.getElementById('addrMsg');
+      const copyBtn = document.getElementById('addrCopy');
+      const okBtn = document.getElementById('addrOk');
+      const xBtn = document.getElementById('addrX');
+
+      function close(){
+        overlay.classList.remove('active');
+        container.classList.remove('active');
+        // Refresh page so the assigned IPs move to busy list
+        location.reload();
+      }
+      function showAddressModal(addresses){
+        const text = (addresses||[]).join('\n');
+        msgEl.textContent = text;
+        overlay.classList.add('active');
+        container.classList.add('active');
+        // Handlers
+        copyBtn.onclick = async ()=>{
+          try{ await navigator.clipboard.writeText(text); copyBtn.textContent='Copied!'; setTimeout(()=>copyBtn.textContent='Copy',1500);}catch(_e){}
+        };
+        okBtn.onclick = close;
+        xBtn.onclick = close;
+        overlay.onclick = close;
+      }
+      window.showAddressModal = showAddressModal;
     })();
     // simple mapper to Persian names
     function nameToFa(name){
@@ -179,9 +224,7 @@
                 window.showError('No addresses available yet.');
                 return;
               }
-              const text = addresses.join('\n');
-              await navigator.clipboard.writeText(text).catch(()=>{});
-              alert(`Copied ${addresses.length} addresses to clipboard.`);
+              if(window.showAddressModal) window.showAddressModal(addresses);
               // Save to local history for the user
               try{
                 const key = 'userAddrHistory';
