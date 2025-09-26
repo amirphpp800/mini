@@ -8,5 +8,120 @@
     "name": "Canada",
     "faName": "کانادا",
     "code": "ca"
+  },
+  {
+    "name": "United States",
+    "faName": "آمریکا",
+    "code": "us"
+  },
+  {
+    "name": "Germany",
+    "faName": "آلمان",
+    "code": "de"
+  },
+  {
+    "name": "Turkey",
+    "faName": "ترکیه",
+    "code": "tr"
+  },
+  {
+    "name": "Bulgaria",
+    "faName": "بلغارستان",
+    "code": "bg"
+  },
+  {
+    "name": "Azerbaijan",
+    "faName": "آذربایجان",
+    "code": "az"
+  },
+  {
+    "name": "Spain",
+    "faName": "اسپانیا",
+    "code": "es"
+  },
+  {
+    "name": "Finland",
+    "faName": "فنلاند",
+    "code": "fi"
+  },
+  {
+    "name": "Qatar",
+    "faName": "قطر",
+    "code": "qa"
+  },
+  {
+    "name": "United Arab Emirates",
+    "faName": "امارات",
+    "code": "ae"
+  },
+  {
+    "name": "Bahrain",
+    "faName": "بحرین",
+    "code": "bh"
+  },
+  {
+    "name": "Belgium",
+    "faName": "بلژیک",
+    "code": "be"
+  },
+  {
+    "name": "Sweden",
+    "faName": "سوئد",
+    "code": "se"
+  },
+  {
+    "name": "Mexico",
+    "faName": "مکزیک",
+    "code": "mx"
+  },
+  {
+    "name": "Italy",
+    "faName": "ایتالیا",
+    "code": "it"
+  },
+  {
+    "name": "Netherlands",
+    "faName": "هلند",
+    "code": "nl"
+  },
+  {
+    "name": "France",
+    "faName": "فرانسه",
+    "code": "fr"
+  },
+  {
+    "name": "Japan",
+    "faName": "ژاپن",
+    "code": "jp"
+  },
+  {
+    "name": "Singapore",
+    "faName": "سنگاپور",
+    "code": "sg"
+  },
+  {
+    "name": "South Korea",
+    "faName": "کره جنوبی",
+    "code": "kr"
+  },
+  {
+    "name": "Australia",
+    "faName": "استرالیا",
+    "code": "au"
+  },
+  {
+    "name": "Switzerland",
+    "faName": "سوئیس",
+    "code": "ch"
+  },
+  {
+    "name": "China",
+    "faName": "چین",
+    "code": "cn"
+  },
+  {
+    "name": "Armenia",
+    "faName": "ارمنستان",
+    "code": "am"
   }
 ]
