@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Admin Panel</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <header>
+    <h1>Admin Panel</h1>
+    <a href="../index.html" class="admin-btn">← Back to Home</a>
+  </header>
+  <div id="loginSection">
+    <input type="number" id="chat_id" placeholder="Your Telegram chat_id" required />
+    <button id="sendCodeBtn">Send Code</button>
+    <input type="number" id="otp" placeholder="Enter OTP" style="display:none" />
+    <button id="verifyBtn" style="display:none">Verify</button>
+  </div>
+
+  <form id="countryForm" style="display:none">
+    <select id="countrySelect"></select>
+    <input type="text" id="name" placeholder="New Country Name (if not exists)" />
+    <input type="url" id="flag" placeholder="Flag URL (if new country)" />
+    <textarea id="description" placeholder="Description (optional)"></textarea>
+    <textarea id="addresses" placeholder="Enter IPv4 addresses, one per line" required></textarea>
+    <button type="submit">Add Country</button>
+  </form>
+  <script>
+    // --- Admin login logic ---
+    const chatInput=document.getElementById('chat_id');
+    const otpInput=document.getElementById('otp');
+    const sendBtn=document.getElementById('sendCodeBtn');
+    const verifyBtn=document.getElementById('verifyBtn');
+    const loginSection=document.getElementById('loginSection');
+    const countryForm=document.getElementById('countryForm');
+
+    sendBtn.addEventListener('click', async (e)=>{
+      e.preventDefault();
+      const chat_id=chatInput.value.trim();
+      if(!chat_id) return alert('Enter chat_id');
+      const res=await fetch('/auth/send-code',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({chat_id})});
+      if(res.ok){
+        alert('Code sent');
+        otpInput.style.display='block';
+        verifyBtn.style.display='inline-block';
+      }else alert('Error sending code');
+    });
+
+    verifyBtn.addEventListener('click', async (e)=>{
+      e.preventDefault();
+      const chat_id=chatInput.value.trim();
+      const code=otpInput.value.trim();
+      if(!code) return alert('Enter code');
+      const res=await fetch('/auth/verify',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({chat_id,code})});
+      if(res.ok){
+        const {session}=await res.json();
+        localStorage.setItem('adminSession',session);
+        loginSection.style.display='none';
+        countryForm.style.display='block';
+        // populate countries select
+        try {
+          const resCountries = await fetch('/countries');
+          if(resCountries.ok){
+            const countries = await resCountries.json();
+            const sel=document.getElementById('countrySelect');
+            sel.innerHTML='';
+            countries.forEach(c=>{
+              const opt=document.createElement('option');
+              opt.value=c.name;
+              opt.textContent=c.name;
+              sel.appendChild(opt);
+            });
+          }
+        }catch(e){console.error(e);}
+      }else alert('Verification failed');
+    });
+
+    // --- Add country form logic ---
+    document.getElementById('countryForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+            const body = {
+        session: localStorage.getItem('adminSession'),
+        country: document.getElementById('countrySelect').value.trim() || document.getElementById('name').value.trim(),
+        flag: document.getElementById('flag').value.trim(),
+        description: document.getElementById('description').value.trim(),
+        addresses: document.getElementById('addresses').value.split('\n').map(s=>s.trim()).filter(Boolean)
+      };
+      try {
+        const res = await fetch('/admin/add-address', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+        if(res.ok){
+          alert('Added!');
+          e.target.reset();
+        } else {
+          alert('Error adding country');
+        }
+      } catch(err){
+        console.error(err);
+      }
+    });
+  </script>
+</body>
+</html>
