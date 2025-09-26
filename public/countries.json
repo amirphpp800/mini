@@ -1,7 +1,8 @@
 [
   {
     "name": "England",
-    "flag": "https://flagcdn.com/1080x540/gb-eng.png",
-    "description": "Default country card for local testing."
+    "faName": "انگلیس",
+    "code": "gb-eng",
+    "description": "Default country card for local testing. Uses flag-icons locally."
   }
 ]

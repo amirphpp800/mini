@@ -17,6 +17,9 @@ export const onRequestPost = async ({ request, env }) => {
     // Generate simple session token
     const session = crypto.randomUUID();
     await env.KV.put(`session:${session}`, chat_id, { expirationTtl: 86400 }); // 1 day
+    await env.KV.delete(`otp:${chat_id}`);
+    // mark user as verified (can be used later)
+    await env.KV.put(`user:${chat_id}:verified`, '1', { expirationTtl: 86400 });
 
     return new Response(JSON.stringify({ session }), {
       headers: { 'Content-Type': 'application/json' },

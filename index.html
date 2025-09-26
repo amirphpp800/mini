@@ -5,32 +5,347 @@
   <meta http-equiv="X-UA-Compatible" content="IE=edge" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Countries Glass Cards</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;600&family=Vazirmatn:wght@400;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/lipis/flag-icons@7.3.2/css/flag-icons.min.css" />
   <link rel="stylesheet" href="public/styles.css" />
 </head>
 <body>
+  <canvas id="bg-net"></canvas>
   <header>
     <h1>Countries Showcase</h1>
     <a href="public/admin.html" class="admin-btn">Admin Panel</a>
+    <div class="actions">
+      <button id="openSignup" class="primary-btn">Create Account</button>
+    </div>
   </header>
+  <div class="modal-overlay" id="accOverlay"></div>
+  <div class="modal-container" id="accModal">
+    <section id="account" class="account-panel" role="dialog" aria-modal="true" aria-labelledby="accTitle">
+      <button class="modal-close" id="closeSignup" aria-label="Close">×</button>
+      <h2 id="accTitle">User Account</h2>
+      <div class="status-line" id="accStatus">Checking status...</div>
+      <div class="row">
+        <a class="tg-btn" href="tg://resolve?domain=minidnsverify_bot">Start Telegram Bot</a>
+      </div>
+      <div class="row">
+        <input type="number" id="u_chat_id" placeholder="Telegram chat_id" />
+        <button id="u_send">Send Code</button>
+      </div>
+      <div class="row" id="u_otp_row" style="display:none">
+        <input type="number" id="u_otp" placeholder="Enter verification code" />
+        <button id="u_verify">Verify</button>
+      </div>
+      <div class="row" id="u_logged" style="display:none">
+        <span>Logged in</span>
+        <button id="u_logout">Logout</button>
+      </div>
+      <small>If you didn’t receive a message, open the Telegram bot below, press Start, then try again:
+        <a href="https://t.me/minidnsverify_bot" target="_blank" rel="noopener" style="color:#7fd1ff">@minidnsverify_bot</a>
+      </small>
+    </section>
+  </div>
   <main id="cards"></main>
   <script>
+    // minimal mapper from country name to flag code for fallback
+    function nameToFlagCode(name){
+      const map = {
+        'england': 'gb-eng',
+        'united kingdom': 'gb',
+        'uk': 'gb',
+        'great britain': 'gb'
+      };
+      const key = String(name||'').toLowerCase();
+      return map[key];
+    }
+    // simple mapper to Persian names
+    function nameToFa(name){
+      const map = {
+        'england': 'انگلیس',
+        'united kingdom': 'بریتانیا',
+        'uk': 'بریتانیا',
+        'great britain': 'بریتانیا'
+      };
+      const key = String(name||'').toLowerCase();
+      return map[key] || '';
+    }
+    const isLocal = /^(localhost|127\.0\.0\.1)/.test(location.hostname);
+    function ensureFlagVisible(el, code){
+      try{
+        requestAnimationFrame(()=>{
+          const bg = getComputedStyle(el).backgroundImage;
+          if(!bg || bg === 'none'){
+            // Fallback: if subdivision like gb-eng fails, try base country code
+            if(code && /^gb-/.test(code)){
+              el.className = 'fi fi-gb fis';
+              el.setAttribute('aria-label', 'United Kingdom flag');
+            } else if (code && /^[a-z]{2}$/i.test(code)){
+              // keep two-letter codes as-is, else use UK as last resort
+              el.className = `fi fi-${code.toLowerCase()} fis`;
+            } else {
+              el.className = 'fi fi-gb fis';
+              el.setAttribute('aria-label', 'United Kingdom flag');
+            }
+          }
+        });
+      }catch(e){}
+    }
     async function loadCountries() {
       try {
-        const res = await fetch('public/countries.json');
-        const data = await res.json();
+        let data;
+        // Try dynamic endpoint first (serverless function), then fallback to local file
+        if (!isLocal) {
+          try {
+            const res = await fetch('/countries');
+            if (res.ok) {
+              data = await res.json();
+            } else {
+              throw new Error('fallback to local');
+            }
+          } catch (e) {
+            const resLocal = await fetch('public/countries.json');
+            data = await resLocal.json();
+          }
+        } else {
+          const resLocal = await fetch('public/countries.json');
+          data = await resLocal.json();
+        }
         const container = document.getElementById('cards');
         container.innerHTML = '';
         data.forEach(c => {
           const card = document.createElement('div');
           card.className = 'glass-card';
-          card.innerHTML = `<img src="${c.flag}" alt="flag"/><h2>${c.name}</h2><p>${c.description || ''}</p>`;
+
+          // Flag element: prefer image when provided; always have a robust fallback to flag-icons
+          if (c.flag) {
+            const img = new Image();
+            img.alt = `${c.name} flag`;
+            img.loading = 'lazy';
+            img.referrerPolicy = 'no-referrer';
+            img.crossOrigin = 'anonymous';
+            img.onerror = () => {
+              const span = document.createElement('span');
+              const code = (c && c.code) || nameToFlagCode(c && c.name) || 'gb';
+              span.className = `fi fi-${code} fis`;
+              span.setAttribute('aria-label', `${c.name} flag`);
+              img.replaceWith(span);
+              ensureFlagVisible(span, code);
+            };
+            img.src = c.flag;
+            card.appendChild(img);
+          } else {
+            const span = document.createElement('span');
+            const code = (c && c.code) || nameToFlagCode(c && c.name) || 'gb';
+            span.className = `fi fi-${code} fis`;
+            span.setAttribute('aria-label', `${c.name} flag`);
+            card.appendChild(span);
+            ensureFlagVisible(span, code);
+          }
+
+          // Title (EN) and subtitle (FA)
+          const title = document.createElement('h2');
+          title.textContent = c.name || '';
+          card.appendChild(title);
+          const sub = document.createElement('div');
+          sub.className = 'subtitle-fa';
+          sub.textContent = c.faName || nameToFa(c.name) || '';
+          if (sub.textContent) card.appendChild(sub);
+
+          // Counters
+          const counters = document.createElement('div');
+          counters.className = 'counters';
+          counters.innerHTML = `
+              <div class="count total">0</div>
+              <div class="count free">0</div>
+              <div class="count busy">0</div>`;
+          card.appendChild(counters);
+
+          // Button
+          const btn = document.createElement('button');
+          btn.className = 'get-btn';
+          btn.textContent = 'Get Addresses';
+          btn.addEventListener('click', async ()=>{
+            const session = localStorage.getItem('userSession') || localStorage.getItem('adminSession');
+            if(!session){
+              // Open signup modal for smoother UX
+              if (window.openSignupModal) window.openSignupModal();
+              else alert('Please verify your account first.');
+              return;
+            }
+            try{
+              const r = await fetch(`/addresses/${(c.name||'').toLowerCase()}`,{
+                headers:{ 'Authorization': `Bearer ${session}` }
+              });
+              if(!r.ok){
+                if(r.status===401||r.status===403){
+                  alert('Your session is invalid or unverified. Please verify again.');
+                } else {
+                  alert('Failed to fetch addresses');
+                }
+                return;
+              }
+              const { addresses=[] } = await r.json();
+              if(addresses.length===0){
+                alert('No addresses available yet.');
+                return;
+              }
+              const text = addresses.join('\n');
+              await navigator.clipboard.writeText(text).catch(()=>{});
+              alert(`Copied ${addresses.length} addresses to clipboard.`);
+            }catch(e){
+              console.error(e);
+              alert('Network error while fetching addresses');
+            }
+          });
+          card.appendChild(btn);
+
           container.appendChild(card);
+          // fetch stats (skip in local static mode)
+          async function loadStats(){
+            try{
+              if(isLocal) return; 
+              const r=await fetch(`/stats/${c.name}`);
+              if(r.ok){
+                const s=await r.json();
+                card.querySelector('.total').textContent=s.total;
+                card.querySelector('.free').textContent=s.free;
+                card.querySelector('.busy').textContent=s.busy;
+              }
+            }catch(e){}
+          }
+          loadStats();
+          if(!isLocal) setInterval(loadStats,30000);
         });
       } catch (err) {
         console.error(err);
+        // Fallback: show a default country card if everything fails
+        const container = document.getElementById('cards');
+        container.innerHTML = '';
+        const fallback = { name:'England', faName:'انگلیس', code:'gb-eng' };
+        const card = document.createElement('div');
+        card.className = 'glass-card';
+        const span = document.createElement('span');
+        span.className = 'fi fi-gb-eng fis';
+        card.appendChild(span);
+        const h2=document.createElement('h2');h2.textContent=fallback.name;card.appendChild(h2);
+        const sub=document.createElement('div');sub.className='subtitle-fa';sub.textContent=fallback.faName;card.appendChild(sub);
+        container.appendChild(card);
       }
     }
     loadCountries();
-  </script>
+    // --- User account logic ---
+    (function(){
+      const isLocal = /^(localhost|127\.0\.0\.1)/.test(location.hostname);
+      const statusEl = document.getElementById('accStatus');
+      const chatEl = document.getElementById('u_chat_id');
+      const sendBtn = document.getElementById('u_send');
+      const otpRow = document.getElementById('u_otp_row');
+      const otpEl = document.getElementById('u_otp');
+      const verifyBtn = document.getElementById('u_verify');
+      const loggedRow = document.getElementById('u_logged');
+      const logoutBtn = document.getElementById('u_logout');
+
+      function renderLogged(){
+        const ses = localStorage.getItem('userSession');
+        if(ses){
+          loggedRow.style.display='flex';
+          otpRow.style.display='none';
+        } else {
+          loggedRow.style.display='none';
+        }
+      }
+
+      (async()=>{
+        try{
+          if(isLocal){
+            statusEl.textContent = 'Local mode';
+            statusEl.style.color = '#ffd27a';
+          } else {
+            const r = await fetch('/status');
+            if(r.ok){
+              const {kv, bot} = await r.json();
+              statusEl.textContent = `KV: ${kv? 'Connected':'Not available'} | Bot token: ${bot? 'Configured':'Missing'}`;
+              statusEl.style.color = kv && bot ? '#9cff9c' : '#ffd27a';
+            } else {
+              statusEl.textContent = 'Unable to read status endpoint';
+              statusEl.style.color = '#ffd27a';
+            }
+          }
+        }catch(e){
+          statusEl.textContent = 'Status check failed';
+          statusEl.style.color = '#ffd27a';
+        }
+        renderLogged();
+      })();
+
+      sendBtn.addEventListener('click', async (e)=>{
+        e.preventDefault();
+        const chat_id = chatEl.value.trim();
+        if(!chat_id) return alert('Enter chat_id');
+        if(isLocal){
+          alert('In local mode, sending the code may not work. Please test again after deployment.');
+        }
+        try{
+          const r = await fetch('/auth/send-code',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({chat_id})});
+          if(r.ok){
+            const {next_retry_sec=30} = await r.json().catch(()=>({}));
+            otpRow.style.display='flex';
+            verifyBtn.style.display='inline-block';
+            sendBtn.disabled = true; let left = next_retry_sec||30; const original = sendBtn.getAttribute('data-original-label') || sendBtn.textContent || 'Send Code';
+            const t = setInterval(()=>{ left--; if(left<=0){clearInterval(t); sendBtn.disabled=false; sendBtn.textContent=original;} else { sendBtn.textContent=`${original} (${left} seconds left)`; } },1000);
+          } else {
+            const j = await r.json().catch(()=>({}));
+            if(r.status===429 && j.next_retry_sec){
+              alert(`Please wait ${j.next_retry_sec} seconds.`);
+              } else {
+              alert('Error sending code');
+              }
+          }
+        }catch(e){ alert('Network error'); }
+      });
+
+      verifyBtn.addEventListener('click', async (e)=>{
+        const chat_id = chatEl.value.trim();
+        const code = otpEl.value.trim();
+        if(!code) return alert('Enter code');
+        try{
+          const r = await fetch('/auth/verify',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({chat_id,code})});
+          if(r.ok){
+            const {session} = await r.json();
+            localStorage.setItem('userSession', session);
+            alert('Your account has been verified.');
+            renderLogged();
+          } else {
+            alert('Verification failed');
+          }
+        }catch(e){ alert('Network error'); }
+      });
+
+      logoutBtn.addEventListener('click', ()=>{
+        localStorage.removeItem('userSession');
+        renderLogged();
+      });
+    })();
+
+    // --- Modal open/close for account panel ---
+    (function(){
+      const openBtn = document.getElementById('openSignup');
+      const overlay = document.getElementById('accOverlay');
+      const modal = document.getElementById('accModal');
+      const closeBtn = document.getElementById('closeSignup');
+
+      function open(){ overlay.classList.add('active'); modal.classList.add('active'); }
+      function close(){ overlay.classList.remove('active'); modal.classList.remove('active'); }
+      window.openSignupModal = open;
+      window.closeSignupModal = close;
+
+      if(openBtn) openBtn.addEventListener('click', open);
+      if(closeBtn) closeBtn.addEventListener('click', close);
+      if(overlay) overlay.addEventListener('click', close);
+      document.addEventListener('keydown', (e)=>{ if(e.key==='Escape') close(); });
+    })();
+    </script>
+  <script src="public/net.js"></script>
 </body>
 </html>

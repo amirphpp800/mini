@@ -9,7 +9,8 @@ export const onRequestGet = async ({ env }) => {
     countries = [
       {
         name: 'England',
-        flag: 'https://flagcdn.com/1080x540/gb-eng.png', // HD flag image
+        code: 'gb-eng',
+        faName: 'انگلیس',
         description: 'Default country card added automatically.'
       }
     ];

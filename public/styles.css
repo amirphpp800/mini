@@ -1,23 +1,34 @@
 /* Glassmorphism black & white theme */
+@keyframes fadeIn{0%{opacity:0;transform:translateY(20px);}100%{opacity:1;transform:translateY(0);}}
+@keyframes float{0%{transform:translateY(0);}50%{transform:translateY(-6px);}100%{transform:translateY(0);}}
+
 * {
   box-sizing: border-box;
   margin: 0;
   padding: 0;
-  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  font-family:'Poppins', sans-serif;
 }
 body {
-  background: radial-gradient(ellipse at top, rgba(255,255,255,0.1), transparent),
-              radial-gradient(ellipse at bottom, rgba(255,255,255,0.05), transparent),
-              #000;
+  background: #0a0a0a;
   color: #fff;
   min-height: 100vh;
   display: flex;
   flex-direction: column;
   align-items: center;
+  position: relative;
 }
+/* prevent horizontal overflow on some browsers */
+html, body { height: 100%; overflow-x: hidden; }
 header {
   padding: 2rem 1rem;
   text-align: center;
+  position: relative;
+  z-index: 1;
+}
+header .actions{
+  margin-top: .75rem;
+  display: inline-flex;
+  gap: .5rem;
 }
 main {
   width: 100%;
@@ -26,28 +37,180 @@ main {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
   gap: 2rem;
+  position: relative;
+  z-index: 1;
 }
 .glass-card {
-  background: rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.04);
   border-radius: 20px;
-  backdrop-filter: blur(15px);
-  -webkit-backdrop-filter: blur(15px);
-  border: 1px solid rgba(255, 255, 255, 0.2);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  border: 1px solid rgba(255, 255, 255, 0.18);
   padding: 1.5rem;
   text-align: center;
-  transition: transform 0.3s ease;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.35);
 }
-.glass-card:hover {
-  transform: translateY(-10px);
+.glass-card h2{font-size:1.25rem;letter-spacing:0.5px;text-transform:uppercase;margin-top:0.25rem;}
+.glass-card .subtitle-fa{
+  font-size:0.95rem;
+  color:rgba(255,255,255,0.75);
+  margin-top:0.25rem;
+  direction: rtl;
+  unicode-bidi: plaintext;
+  font-family:'Vazirmatn','Poppins',sans-serif;
+  font-weight:600;
 }
+.counters{display:flex;justify-content:space-around;margin:1rem 0;}
+.count{padding:0.5rem 1rem;border-radius:10px;font-weight:bold;backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);border:1px solid rgba(255,255,255,0.3);} 
+.count.total{background:rgba(255,255,255,0.2);} /* white */
+.count.free{background:rgba(0,255,0,0.25);} /* green */
+.count.busy{background:rgba(255,0,0,0.25);} /* red */
+.get-btn{margin-top:0.5rem;padding:0.5rem 1rem;border:none;border-radius:10px;background:#fff;color:#000;font-weight:bold;cursor:pointer;}
+.get-btn:hover{opacity:0.85;}
 .glass-card img {
-  width: 80px;
-  height: 50px;
+  width: 100px;
+  height: 60px;
   object-fit: cover;
-  border-radius: 10px;
+  border-radius: 8px;
   margin-bottom: 1rem;
   border: 1px solid rgba(255,255,255,0.3);
+  background: rgba(255,255,255,0.1);
 }
+/* ensure span-based flag-icons have similar sizing */
+.glass-card .fi {
+  display: inline-block;
+  width: 100px;
+  height: 60px;
+  border-radius: 8px;
+  margin-bottom: 1rem;
+  border: 1px solid rgba(255,255,255,0.3);
+  background: rgba(255,255,255,0.1);
+}
+
+/* Account panel styling */
+#account.account-panel{
+  width: 100%;
+  max-width: 1000px;
+  margin: 0 auto;
+  padding: 1.25rem 1rem;
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,255,255,0.18);
+  border-radius: 16px;
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+  box-shadow: 0 8px 24px rgba(0,0,0,0.35);
+  position: relative;
+  z-index: 3;
+}
+#account .modal-close{
+  position: absolute;
+  top: .5rem;
+  inset-inline-end: .5rem; /* RTL-friendly */
+  background: transparent;
+  border: none;
+  color: #fff;
+  font-size: 1.25rem;
+  cursor: pointer;
+  padding: .25rem .4rem;
+  line-height: 1;
+  opacity: .8;
+}
+#account .modal-close:hover{ opacity: 1; }
+#account h2{
+  font-size: 1.1rem;
+  letter-spacing: .5px;
+  margin-bottom: .5rem;
+  text-transform: uppercase;
+}
+#account .status-line{
+  font-size: .9rem;
+  margin-bottom: .75rem;
+  color: #ffd27a;
+}
+#account .row{
+  display: flex;
+  gap: .5rem;
+  align-items: center;
+  margin: .35rem 0;
+}
+#account input[type="number"],
+#account input[type="text"]{
+  flex: 1;
+  min-width: 0;
+}
+#account button{
+  white-space: nowrap;
+}
+#account small{
+  display: block;
+  margin-top: .5rem;
+  opacity: .85;
+  line-height: 1.6;
+  direction: ltr;
+  unicode-bidi: plaintext;
+  font-family:'Poppins',sans-serif;
+}
+#u_logged{
+  justify-content: space-between;
+}
+#u_logged span{
+  padding: .35rem .6rem;
+  border-radius: 8px;
+  background: rgba(0,255,128,0.15);
+  border: 1px solid rgba(0,255,128,0.35);
+  font-weight: 600;
+}
+
+/* Responsive adjustments */
+@media (max-width: 600px){
+  #account .row{ flex-direction: column; align-items: stretch; }
+  #account button{ width: 100%; }
+}
+
+/* Modal & overlay */
+.modal-overlay{
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.6);
+  backdrop-filter: blur(2px);
+  -webkit-backdrop-filter: blur(2px);
+  z-index: 2;
+  display: none;
+}
+.modal-container{
+  position: fixed;
+  inset: 0;
+  display: none;
+  align-items: flex-start;
+  justify-content: center;
+  padding: 1rem;
+  z-index: 3;
+}
+.modal-container.active,
+.modal-overlay.active{ display: flex; }
+
+/* CTA buttons */
+.primary-btn{
+  padding: .6rem 1rem;
+  border-radius: 10px;
+  background: #fff;
+  color: #000;
+  font-weight: 700;
+  border: none;
+  cursor: pointer;
+}
+.primary-btn:hover{ opacity: .85; }
+.tg-btn{
+  padding: .6rem 1rem;
+  border-radius: 10px;
+  background: #2AABEE;
+  color: #fff;
+  font-weight: 700;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+}
+.tg-btn:hover{ filter: brightness(1.05); }
 form {
   max-width: 400px;
   margin: 3rem auto;
@@ -62,8 +225,11 @@ input, textarea, button {
   outline: none;
 }
 input, textarea {
-  background: rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.05);
   color: #fff;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
 }
 button {
   background: #fff;
@@ -88,4 +254,16 @@ button:hover {
 }
 .admin-btn:hover {
   opacity: 0.85;
+}
+
+/* background particle canvas */
+
+#bg-net{
+  position: fixed;
+  inset: 0; /* top:0; right:0; bottom:0; left:0 */
+  width: 100%;
+  height: 100%;
+  z-index: 0;
+  display: block; /* avoid inline gaps */
+  pointer-events: none; /* clicks pass through */
 }

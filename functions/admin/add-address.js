@@ -1,7 +1,7 @@
 export const onRequestPost = async ({ request, env }) => {
   try {
     const body = await request.json();
-    const { session, country, flag, description, addresses } = body;
+    const { session, country, faName, flag, description, addresses, code } = body;
 
     if (!session || !addresses || !Array.isArray(addresses) || addresses.length === 0) {
       return new Response('Invalid input', { status: 400 });
@@ -20,7 +20,17 @@ export const onRequestPost = async ({ request, env }) => {
     if (!countryData) {
       if (!flag) return new Response('Flag required for new country', { status: 400 });
       countryData = { name: country, flag, description: description || '' };
+      if (faName) countryData.faName = faName;
+      if (code) countryData.code = code;
       await env.DB.put(key, JSON.stringify(countryData));
+    } else {
+      // enrich existing with optional fields
+      let changed = false;
+      if (code && !countryData.code) { countryData.code = code; changed = true; }
+      if (faName && !countryData.faName) { countryData.faName = faName; changed = true; }
+      if (changed) {
+        await env.DB.put(key, JSON.stringify(countryData));
+      }
     }
 
     // Store addresses list in a separate KV namespace
