@@ -100,20 +100,15 @@
     async function loadCountries() {
       try {
         let data;
-        // Try dynamic endpoint first (serverless function), then fallback to local file
-        if (!isLocal) {
-          try {
-            const res = await fetch('/countries');
-            if (res.ok) {
-              data = await res.json();
-            } else {
-              throw new Error('fallback to local');
-            }
-          } catch (e) {
-            const resLocal = await fetch('public/countries.json');
-            data = await resLocal.json();
+        // Always try dynamic endpoint first, then fallback to local file in both local and production
+        try {
+          const res = await fetch('/countries');
+          if (res.ok) {
+            data = await res.json();
+          } else {
+            throw new Error('fallback to local');
           }
-        } else {
+        } catch (e) {
           const resLocal = await fetch('public/countries.json');
           data = await resLocal.json();
         }
@@ -254,6 +249,7 @@
       const logoutBtn = document.getElementById('u_logout');
       const histWrap = document.getElementById('u_history_wrap');
       const histList = document.getElementById('u_history');
+      const openBtn = document.getElementById('openSignup');
 
       function renderLogged(){
         const ses = localStorage.getItem('userSession');
@@ -261,9 +257,11 @@
           loggedRow.style.display='flex';
           otpRow.style.display='none';
           histWrap.style.display='block';
+          if(openBtn){ openBtn.textContent = 'Dashboard'; }
         } else {
           loggedRow.style.display='none';
           histWrap.style.display='none';
+          if(openBtn){ openBtn.textContent = 'Create Account'; }
         }
       }
 
@@ -337,13 +335,17 @@
         }catch(e){ window.showError('Network error'); }
       });
 
+      // style logout button and add confirmation
+      logoutBtn.classList.add('danger-btn');
       logoutBtn.addEventListener('click', ()=>{
-        localStorage.removeItem('userSession');
-        renderLogged();
+        if(confirm('آیا از خروج از حساب اطمینان دارید؟')){
+          localStorage.removeItem('userSession');
+          renderLogged();
+        }
       });
 
       // Render user address history
-      window.renderUserHistory = function(){
+      window.renderUserHistory = async function(){
         try{
           const arr = JSON.parse(localStorage.getItem('userAddrHistory') || '[]');
           histList.innerHTML = '';
@@ -354,29 +356,54 @@
             histList.appendChild(p);
             return;
           }
-          arr.forEach(item=>{
+          for(const item of arr){
             const row = document.createElement('div');
-            row.style.display='flex';
-            row.style.justifyContent='space-between';
-            row.style.alignItems='center';
-            row.style.gap='.5rem';
-            row.style.padding='.5rem .6rem';
-            row.style.border='1px solid rgba(255,255,255,0.15)';
-            row.style.borderRadius='10px';
-            row.style.background='rgba(255,255,255,0.04)';
-            const left = document.createElement('div');
-            left.textContent = `${item.country} — ${item.count} IPs`;
-            const right = document.createElement('div');
+            row.className = 'hist-row';
+            const header = document.createElement('div');
+            header.className = 'hist-header';
+            header.textContent = `${item.country} — ${item.count} IPs`;
+            const actions = document.createElement('div');
             const copy = document.createElement('button');
             copy.textContent = 'Copy';
             copy.addEventListener('click', async ()=>{
               try{ await navigator.clipboard.writeText((item.addresses||[]).join('\n')); }catch(_e){}
             });
-            right.appendChild(copy);
-            row.appendChild(left);
-            row.appendChild(right);
+            actions.appendChild(copy);
+            const top = document.createElement('div');
+            top.className = 'hist-top';
+            top.appendChild(header);
+            top.appendChild(actions);
+            row.appendChild(top);
+
+            // Geolocate up to first 8 IPs from this entry
+            const ips = (item.addresses||[]).slice(0,8);
+            if(ips.length){
+              try{
+                const r = await fetch('/geo', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ ips }) });
+                if(r.ok){
+                  const { results=[] } = await r.json();
+                  const list = document.createElement('div');
+                  list.className = 'hist-geo-list';
+                  for(const g of results){
+                    const card = document.createElement('div');
+                    card.className = 'hist-geo-card';
+                    const ip = document.createElement('div'); ip.className = 'geo-ip'; ip.textContent = g.query || '';
+                    const meta = document.createElement('div'); meta.className = 'geo-meta';
+                    const parts = [];
+                    if(g.countryCode){ parts.push(g.countryCode); }
+                    if(g.city){ parts.push(g.city); }
+                    if(g.isp){ parts.push(g.isp); }
+                    meta.textContent = parts.join(' • ');
+                    card.appendChild(ip);
+                    card.appendChild(meta);
+                    list.appendChild(card);
+                  }
+                  row.appendChild(list);
+                }
+              }catch(_e){}
+            }
             histList.appendChild(row);
-          });
+          }
         }catch(e){ histList.innerHTML=''; }
       }
     })();

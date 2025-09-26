@@ -1,7 +1,7 @@
 export const onRequestPost = async ({ request, env }) => {
   try {
     const body = await request.json();
-    const { session, country, addresses, code } = body;
+    const { session, country, addresses, code, faName } = body;
 
     if (!session || !country || !code || !Array.isArray(addresses) || addresses.length === 0) {
       return new Response('Invalid input', { status: 400 });
@@ -24,11 +24,18 @@ export const onRequestPost = async ({ request, env }) => {
     // Create or update minimal country record with name and ISO code
     if (!countryData) {
       countryData = { name: country, code: iso };
+      if (faName && typeof faName === 'string' && faName.trim()) {
+        countryData.faName = faName.trim();
+      }
       await env.DB.put(key, JSON.stringify(countryData));
     } else {
       let changed = false;
       if (countryData.code !== iso) { countryData.code = iso; changed = true; }
       if (countryData.name !== country) { countryData.name = country; changed = true; }
+      if (faName && typeof faName === 'string' && faName.trim() && countryData.faName !== faName.trim()) {
+        countryData.faName = faName.trim();
+        changed = true;
+      }
       if (changed) await env.DB.put(key, JSON.stringify(countryData));
     }
 
