@@ -8,7 +8,6 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;600&family=Vazirmatn:wght@400;600&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/lipis/flag-icons@7.3.2/css/flag-icons.min.css" />
   <link rel="stylesheet" href="public/styles.css" />
 </head>
 <body>
@@ -50,19 +49,42 @@
       </small>
     </section>
   </div>
+  <!-- Global glassy error modal -->
+  <div class="alert-overlay" id="alertOverlay"></div>
+  <div class="alert-container" id="alertContainer">
+    <div class="alert-card" role="dialog" aria-modal="true" aria-labelledby="alertTitle">
+      <div class="hdr">
+        <div class="ttl" id="alertTitle">خطا</div>
+        <button class="btn-close" id="alertX">×</button>
+      </div>
+      <div class="msg" id="alertMsg"></div>
+      <div class="actions">
+        <button class="btn-close" id="alertOk">باشه</button>
+      </div>
+    </div>
+  </div>
   <main id="cards"></main>
   <script>
-    // minimal mapper from country name to flag code for fallback
-    function nameToFlagCode(name){
-      const map = {
-        'england': 'gb-eng',
-        'united kingdom': 'gb',
-        'uk': 'gb',
-        'great britain': 'gb'
-      };
-      const key = String(name||'').toLowerCase();
-      return map[key];
-    }
+    // --- Error modal helper ---
+    (function(){
+      const overlay = document.getElementById('alertOverlay');
+      const container = document.getElementById('alertContainer');
+      const titleEl = document.getElementById('alertTitle');
+      const msgEl = document.getElementById('alertMsg');
+      const okBtn = document.getElementById('alertOk');
+      const xBtn = document.getElementById('alertX');
+      function close(){ overlay.classList.remove('active'); container.classList.remove('active'); }
+      function showError(message, title){
+        titleEl.textContent = title || 'خطا';
+        msgEl.textContent = message || '';
+        overlay.classList.add('active');
+        container.classList.add('active');
+      }
+      okBtn.addEventListener('click', close);
+      xBtn.addEventListener('click', close);
+      overlay.addEventListener('click', close);
+      window.showError = showError;
+    })();
     // simple mapper to Persian names
     function nameToFa(name){
       const map = {
@@ -75,26 +97,6 @@
       return map[key] || '';
     }
     const isLocal = /^(localhost|127\.0\.0\.1)/.test(location.hostname);
-    function ensureFlagVisible(el, code){
-      try{
-        requestAnimationFrame(()=>{
-          const bg = getComputedStyle(el).backgroundImage;
-          if(!bg || bg === 'none'){
-            // Fallback: if subdivision like gb-eng fails, try base country code
-            if(code && /^gb-/.test(code)){
-              el.className = 'fi fi-gb fis';
-              el.setAttribute('aria-label', 'United Kingdom flag');
-            } else if (code && /^[a-z]{2}$/i.test(code)){
-              // keep two-letter codes as-is, else use UK as last resort
-              el.className = `fi fi-${code.toLowerCase()} fis`;
-            } else {
-              el.className = 'fi fi-gb fis';
-              el.setAttribute('aria-label', 'United Kingdom flag');
-            }
-          }
-        });
-      }catch(e){}
-    }
     async function loadCountries() {
       try {
         let data;
@@ -121,31 +123,16 @@
           const card = document.createElement('div');
           card.className = 'glass-card';
 
-          // Flag element: prefer image when provided; always have a robust fallback to flag-icons
-          if (c.flag) {
-            const img = new Image();
-            img.alt = `${c.name} flag`;
-            img.loading = 'lazy';
-            img.referrerPolicy = 'no-referrer';
-            img.crossOrigin = 'anonymous';
-            img.onerror = () => {
-              const span = document.createElement('span');
-              const code = (c && c.code) || nameToFlagCode(c && c.name) || 'gb';
-              span.className = `fi fi-${code} fis`;
-              span.setAttribute('aria-label', `${c.name} flag`);
-              img.replaceWith(span);
-              ensureFlagVisible(span, code);
-            };
-            img.src = c.flag;
-            card.appendChild(img);
-          } else {
-            const span = document.createElement('span');
-            const code = (c && c.code) || nameToFlagCode(c && c.name) || 'gb';
-            span.className = `fi fi-${code} fis`;
-            span.setAttribute('aria-label', `${c.name} flag`);
-            card.appendChild(span);
-            ensureFlagVisible(span, code);
-          }
+          // Flag element: use FlagCDN with ISO 3166-1 alpha-2 code
+          const code = String((c && c.code) || '').toLowerCase() || 'gb';
+          const img = new Image();
+          img.alt = `${c.name} flag`;
+          img.loading = 'lazy';
+          img.src = `https://flagcdn.com/w160/${code}.png`;
+          img.srcset = `https://flagcdn.com/w320/${code}.png 2x`;
+          img.referrerPolicy = 'no-referrer';
+          img.className = 'flag-img';
+          card.appendChild(img);
 
           // Title (EN) and subtitle (FA)
           const title = document.createElement('h2');
@@ -160,9 +147,9 @@
           const counters = document.createElement('div');
           counters.className = 'counters';
           counters.innerHTML = `
-              <div class="count total">0</div>
-              <div class="count free">0</div>
-              <div class="count busy">0</div>`;
+              <div class="count total"><div class="num">0</div><div class="lbl-en">Total IPs</div></div>
+              <div class="count free"><div class="num">0</div><div class="lbl-en">Free</div></div>
+              <div class="count busy"><div class="num">0</div><div class="lbl-en">Busy</div></div>`;
           card.appendChild(counters);
 
           // Button
@@ -174,7 +161,7 @@
             if(!session){
               // Open signup modal for smoother UX
               if (window.openSignupModal) window.openSignupModal();
-              else alert('Please verify your account first.');
+              else window.showError('Please verify your account first.');
               return;
             }
             try{
@@ -183,15 +170,15 @@
               });
               if(!r.ok){
                 if(r.status===401||r.status===403){
-                  alert('Your session is invalid or unverified. Please verify again.');
+                  window.showError('Your session is invalid or unverified. Please verify again.');
                 } else {
-                  alert('Failed to fetch addresses');
+                  window.showError('Failed to fetch addresses');
                 }
                 return;
               }
               const { addresses=[] } = await r.json();
               if(addresses.length===0){
-                alert('No addresses available yet.');
+                window.showError('No addresses available yet.');
                 return;
               }
               const text = addresses.join('\n');
@@ -209,7 +196,7 @@
               }catch(_e){}
             }catch(e){
               console.error(e);
-              alert('Network error while fetching addresses');
+              window.showError('Network error while fetching addresses');
             }
           });
           card.appendChild(btn);
@@ -222,9 +209,9 @@
               const r=await fetch(`/stats/${c.name}`);
               if(r.ok){
                 const s=await r.json();
-                card.querySelector('.total').textContent=s.total;
-                card.querySelector('.free').textContent=s.free;
-                card.querySelector('.busy').textContent=s.busy;
+                card.querySelector('.total .num').textContent=s.total;
+                card.querySelector('.free .num').textContent=s.free;
+                card.querySelector('.busy .num').textContent=s.busy;
               }
             }catch(e){}
           }
@@ -236,12 +223,18 @@
         // Fallback: show a default country card if everything fails
         const container = document.getElementById('cards');
         container.innerHTML = '';
-        const fallback = { name:'England', faName:'انگلیس', code:'gb-eng' };
+        const fallback = { name:'England', faName:'انگلیس', code:'gb' };
         const card = document.createElement('div');
         card.className = 'glass-card';
-        const span = document.createElement('span');
-        span.className = 'fi fi-gb-eng fis';
-        card.appendChild(span);
+        const code = 'gb';
+        const img = new Image();
+        img.alt = `${fallback.name} flag`;
+        img.loading = 'lazy';
+        img.src = `https://flagcdn.com/w160/${code}.png`;
+        img.srcset = `https://flagcdn.com/w320/${code}.png 2x`;
+        img.referrerPolicy = 'no-referrer';
+        img.className = 'flag-img';
+        card.appendChild(img);
         const h2=document.createElement('h2');h2.textContent=fallback.name;card.appendChild(h2);
         const sub=document.createElement('div');sub.className='subtitle-fa';sub.textContent=fallback.faName;card.appendChild(sub);
         container.appendChild(card);
@@ -303,34 +296,34 @@
       sendBtn.addEventListener('click', async (e)=>{
         e.preventDefault();
         const chat_id = chatEl.value.trim();
-        if(!chat_id) return alert('Enter chat_id');
+        if(!chat_id) return window.showError('Enter chat_id');
         localStorage.setItem('userChatId', chat_id);
         if(isLocal){
-          alert('In local mode, sending the code may not work. Please test again after deployment.');
+          window.showError('In local mode, sending the code may not work. Please test again after deployment.');
         }
         try{
           const r = await fetch('/auth/send-code',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({chat_id})});
-          if(r.ok){
-            const {next_retry_sec=30} = await r.json().catch(()=>({}));
-            otpRow.style.display='flex';
-            verifyBtn.style.display='inline-block';
-            sendBtn.disabled = true; let left = next_retry_sec||30; const original = sendBtn.getAttribute('data-original-label') || sendBtn.textContent || 'Send Code';
-            const t = setInterval(()=>{ left--; if(left<=0){clearInterval(t); sendBtn.disabled=false; sendBtn.textContent=original;} else { sendBtn.textContent=`${original} (${left} seconds left)`; } },1000);
-          } else {
+            if(r.ok){
+              const {next_retry_sec=30} = await r.json().catch(()=>({}));
+              otpRow.style.display='flex';
+              verifyBtn.style.display='inline-block';
+              sendBtn.disabled = true; let left = next_retry_sec||30; const original = sendBtn.getAttribute('data-original-label') || sendBtn.textContent || 'Send Code';
+              const t = setInterval(()=>{ left--; if(left<=0){clearInterval(t); sendBtn.disabled=false; sendBtn.textContent=original;} else { sendBtn.textContent=`${original} (${left} seconds left)`; } },1000);
+            } else {
             const j = await r.json().catch(()=>({}));
             if(r.status===429 && j.next_retry_sec){
-              alert(`Please wait ${j.next_retry_sec} seconds.`);
+              window.showError(`Please wait ${j.next_retry_sec} seconds.`, 'لطفاً صبر کنید');
               } else {
-              alert('Error sending code');
+              window.showError('Error sending code');
               }
-          }
-        }catch(e){ alert('Network error'); }
+            }
+        }catch(e){ window.showError('Network error'); }
       });
 
       verifyBtn.addEventListener('click', async (e)=>{
         const chat_id = chatEl.value.trim();
         const code = otpEl.value.trim();
-        if(!code) return alert('Enter code');
+        if(!code) { window.showError('Enter code'); return; }
         try{
           const r = await fetch('/auth/verify',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({chat_id,code})});
           if(r.ok){
@@ -339,9 +332,9 @@
             alert('Your account has been verified.');
             renderLogged();
           } else {
-            alert('Verification failed');
+            window.showError('Verification failed');
           }
-        }catch(e){ alert('Network error'); }
+        }catch(e){ window.showError('Network error'); }
       });
 
       logoutBtn.addEventListener('click', ()=>{

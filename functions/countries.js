@@ -9,7 +9,7 @@ export const onRequestGet = async ({ env }) => {
     countries = [
       {
         name: 'England',
-        code: 'gb-eng',
+        code: 'gb',
         faName: 'انگلیس',
         description: 'Default country card added automatically.'
       }

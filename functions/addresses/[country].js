@@ -21,10 +21,38 @@ export const onRequestGet = async ({ request, params, env }) => {
     const verified = await env.KV.get(`user:${chat_id}:verified`);
     if (!verified) return new Response('Forbidden', { status: 403 });
 
+    // If the user already has an assigned IP for this country, return it
+    const userKey = `user_ip:${chat_id}:${country}`;
+    const existing = await env.KV.get(userKey);
+    if (existing) {
+      return new Response(JSON.stringify({ country, addresses: [existing] }), {
+        headers: { 'Content-Type': 'application/json' },
+      });
+    }
+
+    // Load all IPs and busy list
     const allRaw = await env.KV.get(`ips:${country}`);
     const all = allRaw ? JSON.parse(allRaw) : [];
+    const busyRaw = await env.KV.get(`ips_busy:${country}`);
+    let busy = busyRaw ? JSON.parse(busyRaw) : [];
 
-    return new Response(JSON.stringify({ country, addresses: all }), {
+    // Find first free IP
+    const busySet = new Set(busy);
+    const freeIp = all.find(ip => !busySet.has(ip));
+
+    if (!freeIp) {
+      return new Response(JSON.stringify({ country, addresses: [] }), {
+        headers: { 'Content-Type': 'application/json' },
+      });
+    }
+
+    // Mark as assigned: save mapping for user and append to busy list (dedup)
+    busySet.add(freeIp);
+    busy = Array.from(busySet);
+    await env.KV.put(`ips_busy:${country}`, JSON.stringify(busy));
+    await env.KV.put(userKey, freeIp);
+
+    return new Response(JSON.stringify({ country, addresses: [freeIp] }), {
       headers: { 'Content-Type': 'application/json' },
     });
   } catch (e) {

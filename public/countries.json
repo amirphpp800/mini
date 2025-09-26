@@ -2,7 +2,6 @@
   {
     "name": "England",
     "faName": "انگلیس",
-    "code": "gb-eng",
-    "description": "Default country card for local testing. Uses flag-icons locally."
+    "code": "gb"
   }
 ]

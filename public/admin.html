@@ -15,6 +15,20 @@
     <h1>Admin Panel</h1>
     <a href="../index.html" class="admin-btn">← Back to Home</a>
   </header>
+  <!-- Global glassy error modal -->
+  <div class="alert-overlay" id="alertOverlay"></div>
+  <div class="alert-container" id="alertContainer">
+    <div class="alert-card" role="dialog" aria-modal="true" aria-labelledby="alertTitle">
+      <div class="hdr">
+        <div class="ttl" id="alertTitle">خطا</div>
+        <button class="btn-close" id="alertX">×</button>
+      </div>
+      <div class="msg" id="alertMsg"></div>
+      <div class="actions">
+        <button class="btn-close" id="alertOk">باشه</button>
+      </div>
+    </div>
+  </div>
   <div id="loginSection">
     <label for="chat_id" class="lbl">Admin chat_id</label>
     <input type="number" id="chat_id" placeholder="e.g. 123456789" required />
@@ -31,35 +45,45 @@
   <form id="countryForm" style="display:none">
     <div class="form-grid">
       <div class="form-col">
-        <label class="lbl" for="countrySelect">Select Country</label>
+        <label class="lbl" for="countrySelect">انتخاب کشور (در صورت موجود بودن)</label>
         <select id="countrySelect"></select>
 
-        <label class="lbl" for="name">New Country Name (if not exists)</label>
-        <input type="text" id="name" placeholder="Example: England" />
+        <label class="lbl" for="name">نام کشور جدید (اگر وجود ندارد)</label>
+        <input type="text" id="name" placeholder="مثال: Ukraine" />
 
-        <label class="lbl" for="faName">Persian Name (اختیاری)</label>
-        <input type="text" id="faName" placeholder="مثال: انگلیس" />
-
-        <label class="lbl" for="code">Flag code (مثل gb یا gb-eng)</label>
-        <input type="text" id="code" placeholder="gb, gb-eng, de, fr ..." />
-      </div>
-      <div class="form-col">
-        <label class="lbl" for="flag">Flag URL (if new country)</label>
-        <input type="url" id="flag" placeholder="https://.../flag.png (اختیاری)" />
-
-        <label class="lbl" for="description">Description (optional)</label>
-        <textarea id="description" placeholder="Short description"></textarea>
+        <label class="lbl" for="code">کد کشور (ISO-3166 alpha-2 مثل ua, gb, de)</label>
+        <input type="text" id="code" placeholder="ua, gb, de, fr ..." />
       </div>
     </div>
 
-    <label class="lbl" for="addresses">IPv4 addresses (one per line)</label>
-    <textarea id="addresses" placeholder="1.2.3.4\n5.6.7.8" required></textarea>
+    <label class="lbl" for="addresses">آدرس‌های IPv4 (هر خط یک آدرس)</label>
+    <textarea id="addresses" placeholder="45.153.38.148\n46.33.136.18\n86.104.12.89\n45.14.247.217" required></textarea>
 
     <div class="row end">
       <button type="submit">Add / Update</button>
     </div>
   </form>
   <script>
+    // --- Error modal helper ---
+    (function(){
+      const overlay = document.getElementById('alertOverlay');
+      const container = document.getElementById('alertContainer');
+      const titleEl = document.getElementById('alertTitle');
+      const msgEl = document.getElementById('alertMsg');
+      const okBtn = document.getElementById('alertOk');
+      const xBtn = document.getElementById('alertX');
+      function close(){ overlay.classList.remove('active'); container.classList.remove('active'); }
+      function showError(message, title){
+        titleEl.textContent = title || 'خطا';
+        msgEl.textContent = message || '';
+        overlay.classList.add('active');
+        container.classList.add('active');
+      }
+      okBtn.addEventListener('click', close);
+      xBtn.addEventListener('click', close);
+      overlay.addEventListener('click', close);
+      window.showError = showError;
+    })();
     // --- Admin login logic ---
     const chatInput=document.getElementById('chat_id');
     const otpInput=document.getElementById('otp');
@@ -94,7 +118,7 @@
     sendBtn.addEventListener('click', async (e)=>{
       e.preventDefault();
       const chat_id=chatInput.value.trim();
-      if(!chat_id) return alert('Enter chat_id');
+      if(!chat_id) return window.showError('Enter chat_id');
       localStorage.setItem('adminChatId', chat_id);
       const res=await fetch('/auth/send-code',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({chat_id})});
       if(res.ok){
@@ -116,14 +140,14 @@
             sendBtn.textContent = `${original} (${left})`;
           }
         },1000);
-      }else alert('Error sending code');
+      }else window.showError('Error sending code');
     });
 
     verifyBtn.addEventListener('click', async (e)=>{
       e.preventDefault();
       const chat_id=chatInput.value.trim();
       const code=otpInput.value.trim();
-      if(!code) return alert('Enter code');
+      if(!code) return window.showError('Enter code');
       const res=await fetch('/auth/verify',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({chat_id,code})});
       if(res.ok){
         const {session}=await res.json();
@@ -132,19 +156,16 @@
         countryForm.style.display='block';
         // populate countries select
         await populateCountries();
-      }else alert('Verification failed');
+      }else window.showError('Verification failed');
     });
 
     // --- Add country form logic ---
     document.getElementById('countryForm').addEventListener('submit', async (e) => {
       e.preventDefault();
-            const body = {
+      const body = {
         session: localStorage.getItem('adminSession'),
         country: document.getElementById('countrySelect').value.trim() || document.getElementById('name').value.trim(),
-        faName: document.getElementById('faName').value.trim(),
-        flag: document.getElementById('flag').value.trim(),
         code: document.getElementById('code').value.trim(),
-        description: document.getElementById('description').value.trim(),
         addresses: document.getElementById('addresses').value.split('\n').map(s=>s.trim()).filter(Boolean)
       };
       try {
@@ -153,10 +174,11 @@
           alert('Added!');
           e.target.reset();
         } else {
-          alert('Error adding country');
+          window.showError('Error adding country');
         }
       } catch(err){
         console.error(err);
+        window.showError('Network error');
       }
     });
 
@@ -167,13 +189,13 @@
           const countries = await resCountries.json();
           selEl.innerHTML='';
           countries.forEach(c=>{
-            const opt=document.createElement('option');
+            const opt = document.createElement('option');
             opt.value=c.name;
             opt.textContent=c.name;
             selEl.appendChild(opt);
           });
         }
-      }catch(e){ console.error(e); }
+      }catch(e){ console.error(e); window.showError('Failed to load countries'); }
     }
 
     // Auto-init admin session UI

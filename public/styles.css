@@ -60,31 +60,47 @@ main {
   font-family:'Vazirmatn','Poppins',sans-serif;
   font-weight:600;
 }
-.counters{display:flex;justify-content:space-around;margin:1rem 0;}
-.count{padding:0.5rem 1rem;border-radius:10px;font-weight:bold;backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);border:1px solid rgba(255,255,255,0.3);} 
-.count.total{background:rgba(255,255,255,0.2);} /* white */
-.count.free{background:rgba(0,255,0,0.25);} /* green */
-.count.busy{background:rgba(255,0,0,0.25);} /* red */
+.counters{display:grid; grid-template-columns: repeat(3, 1fr); margin:1rem 0; gap:.4rem; align-items:stretch;}
+.count{
+  min-width: 0;
+  padding:.45rem .5rem;
+  border-radius:12px;
+  backdrop-filter:blur(14px);
+  -webkit-backdrop-filter:blur(14px);
+  border:1px solid rgba(255,255,255,0.18);
+  background: linear-gradient(180deg, rgba(255,255,255,0.08), rgba(255,255,255,0.03));
+  box-shadow: 0 4px 14px rgba(0,0,0,0.25), inset 0 1px 0 rgba(255,255,255,0.18);
+  text-align:center;
+}
+.count .num{ font-size:1.05rem; font-weight:800; letter-spacing:.3px; }
+.count .lbl-en{ font-size:.68rem; opacity:.95; margin-top:.14rem; letter-spacing:.2px; }
+.count.total{
+  background: linear-gradient(180deg, rgba(255,255,255,0.14), rgba(255,255,255,0.05));
+  border-color: rgba(255,255,255,0.26);
+  color: #fff;
+  box-shadow: 0 6px 16px rgba(0,0,0,0.22), inset 0 1px 0 rgba(255,255,255,0.22);
+}
+.count.free{
+  background: linear-gradient(180deg, rgba(0,255,128,0.18), rgba(0,255,128,0.06));
+  border-color: rgba(0,255,128,0.28);
+}
+.count.busy{
+  background: linear-gradient(180deg, rgba(255,0,64,0.18), rgba(255,0,64,0.06));
+  border-color: rgba(255,0,64,0.28);
+}
+
+/* subtle hover to enhance glass look */
+.count:hover{ box-shadow: 0 6px 18px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.24); }
 .get-btn{margin-top:0.5rem;padding:0.5rem 1rem;border:none;border-radius:10px;background:#fff;color:#000;font-weight:bold;cursor:pointer;}
 .get-btn:hover{opacity:0.85;}
-.glass-card img {
-  width: 100px;
-  height: 60px;
-  object-fit: cover;
-  border-radius: 8px;
-  margin-bottom: 1rem;
-  border: 1px solid rgba(255,255,255,0.3);
-  background: rgba(255,255,255,0.1);
-}
-/* ensure span-based flag-icons have similar sizing */
-.glass-card .fi {
-  display: inline-block;
-  width: 100px;
-  height: 60px;
-  border-radius: 8px;
-  margin-bottom: 1rem;
-  border: 1px solid rgba(255,255,255,0.3);
-  background: rgba(255,255,255,0.1);
+.glass-card img.flag-img{
+  width: 96px;     /* standard width */
+  height: auto;    /* keep full image, no crop */
+  object-fit: contain;
+  border-radius: 6px;
+  margin-bottom: .5rem;
+  border: 1px solid rgba(255,255,255,0.22);
+  background: rgba(255,255,255,0.06);
 }
 
 /* Account panel styling */
@@ -165,6 +181,15 @@ main {
 @media (max-width: 600px){
   #account .row{ flex-direction: column; align-items: stretch; }
   #account button{ width: 100%; }
+  .counters{ gap: .35rem; }
+  .count{ padding:.4rem .45rem; }
+  .count .num{ font-size:.95rem; }
+  .count .lbl-en{ font-size:.62rem; }
+}
+@media (max-width: 360px){
+  .count{ padding:.35rem .4rem; }
+  .count .num{ font-size:.9rem; }
+  .count .lbl-en{ font-size:.58rem; }
 }
 
 /* Modal & overlay */
@@ -188,6 +213,50 @@ main {
 }
 .modal-container.active,
 .modal-overlay.active{ display: flex; }
+
+/* Error modal (glassy) */
+.alert-overlay{
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.6);
+  backdrop-filter: blur(2px);
+  -webkit-backdrop-filter: blur(2px);
+  z-index: 10;
+  display: none;
+}
+.alert-container{
+  position: fixed;
+  inset: 0;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+  z-index: 11;
+}
+.alert-container.active,
+.alert-overlay.active{ display: flex; }
+.alert-card{
+  width: 100%;
+  max-width: 460px;
+  padding: 1rem 1.1rem;
+  background: rgba(255,255,255,0.06);
+  border: 1px solid rgba(255,255,255,0.2);
+  border-radius: 16px;
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  box-shadow: 0 8px 32px rgba(0,0,0,0.45);
+  color: #fff;
+}
+.alert-card .hdr{
+  display:flex; align-items:center; justify-content:space-between; gap:.5rem;
+  margin-bottom: .5rem;
+}
+.alert-card .hdr .ttl{ font-weight:700; letter-spacing:.4px; }
+.alert-card .msg{ opacity:.95; line-height:1.6; white-space:pre-wrap; }
+.alert-card .actions{ display:flex; justify-content:flex-end; margin-top:.8rem; }
+.alert-card .btn-close{
+  padding: .5rem .9rem; border-radius: 10px; background:#fff; color:#000; border:none; font-weight:700; cursor:pointer;
+}
 
 /* CTA buttons */
 .primary-btn{
