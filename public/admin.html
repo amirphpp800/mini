@@ -115,16 +115,26 @@
       const okBtn = document.getElementById('alertOk');
       const xBtn = document.getElementById('alertX');
       function close(){ overlay.classList.remove('active'); container.classList.remove('active'); }
-      function showError(message, title){
-        titleEl.textContent = title || 'خطا';
-        msgEl.textContent = message || '';
+      function open(title, message, asHtml){
+        titleEl.textContent = title || 'پیام';
+        if(asHtml){ msgEl.innerHTML = message || ''; }
+        else { msgEl.textContent = message || ''; }
         overlay.classList.add('active');
         container.classList.add('active');
+      }
+      function showError(message, title){
+        open(title || 'خطا', message, false);
+      }
+      function showMessage(message, title){
+        // Support line breaks in messages
+        const html = String(message||'').replace(/\n/g, '<br>');
+        open(title || 'پیام', html, true);
       }
       okBtn.addEventListener('click', close);
       xBtn.addEventListener('click', close);
       overlay.addEventListener('click', close);
       window.showError = showError;
+      window.showMessage = showMessage;
     })();
     // --- Admin login logic ---
     const chatInput=document.getElementById('chat_id');
@@ -187,7 +197,7 @@
       const res=await fetch('/auth/send-code',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({chat_id})});
       if(res.ok){
         const {next_retry_sec=30} = await res.json().catch(()=>({}));
-        alert('کد ارسال شد. اگر پیام نگرفتید، ابتدا در ربات زیر Start را بزنید و مجدد تلاش کنید:\n@minidnsverify_bot');
+        window.showMessage('کد ارسال شد. اگر پیام نگرفتید، ابتدا در ربات زیر Start را بزنید و مجدد تلاش کنید:\n@minidnsverify_bot','پیام');
         otpInput.style.display='block';
         verifyBtn.style.display='inline-block';
         // prevent spamming button for 30s
@@ -216,7 +226,7 @@
       try{
         const r = await fetch('/admin/delete', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(body) });
         if(r.ok){
-          alert('Deleted');
+          window.showMessage('Deleted','پیام');
           // reset form
           document.getElementById('name').value='';
           document.getElementById('code').value='';
@@ -258,7 +268,7 @@
         const url = adminMode==='dns' ? '/admin/add-address' : '/admin/wg-add';
         const res = await fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
         if(res.ok){
-          alert('Added!');
+          window.showMessage('Added!','پیام');
           e.target.reset();
           await populateCountries();
           updateFormMode();
@@ -404,7 +414,7 @@
         const url = adminMode==='dns' ? '/admin/clear-busy' : '/admin/wg-clear-busy';
         const r = await fetch(url, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(body) });
         if(r.ok){
-          alert('Busy cleared');
+          window.showMessage('Busy cleared','پیام');
           await loadStatsFor(country);
         } else { window.showError('Failed to clear busy'); }
       }catch(_){ window.showError('Network error'); }
@@ -490,7 +500,7 @@
           const r = await fetch('/admin/balance-update',{method:'POST',headers:{'Content-Type':'application/json'},body: JSON.stringify({session:s, target_chat_id, delta:d})});
           if(r.ok){
             const j = await r.json();
-            alert(`Balance updated.\nPrev: ${j.prev}$\nNext: ${j.next}$`);
+            window.showMessage(`Balance updated.\nPrev: ${j.prev}$\nNext: ${j.next}$`,'پیام');
             delta.value='';
           } else {
             window.showError('Failed to update balance');
@@ -556,7 +566,7 @@
           const r = await fetch('/admin/set-pricing', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ session: s, dns, wg }) });
           if(r.ok){
             const j = await r.json();
-            alert(`Saved.\nDNS: ${j.dns.toFixed(2)}$\nWG: ${j.wg.toFixed(2)}$`);
+            window.showMessage(`Saved.\nDNS: ${j.dns.toFixed(2)}$\nWG: ${j.wg.toFixed(2)}$`,'پیام');
             dnsInput.value = j.dns.toFixed(2);
             wgInput.value = j.wg.toFixed(2);
           } else {
