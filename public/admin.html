@@ -417,18 +417,37 @@
     async function populateCountries(preserveSelection = true){
       try {
         let countries = [];
-        try{
-          const resCountries = await fetch('/countries');
-          if(resCountries.ok){
-            countries = await resCountries.json();
-          } else {
-            throw new Error('fallback');
-          }
-        } catch(_){
+        if(adminMode === 'dns'){
+          // DNS countries dataset
           try{
-            const resLocal = await fetch('countries.json');
-            if(resLocal.ok) countries = await resLocal.json();
-          }catch(__){}
+            const resCountries = await fetch('/countries');
+            if(resCountries.ok){
+              countries = await resCountries.json();
+            } else {
+              throw new Error('fallback');
+            }
+          } catch(_){
+            try{
+              const resLocal = await fetch('countries.json');
+              if(resLocal.ok) countries = await resLocal.json();
+            }catch(__){}
+          }
+        } else {
+          // WireGuard countries dataset (only those that have endpoints)
+          try{
+            const resWg = await fetch('/wireguard-countries');
+            if(resWg.ok){
+              const j = await resWg.json();
+              if(Array.isArray(j) && j.length>0) countries = j; else throw new Error('fallback');
+            } else {
+              throw new Error('fallback');
+            }
+          } catch(_){
+            try{
+              const resLocalWg = await fetch('wireguard-countries.json');
+              if(resLocalWg.ok) countries = await resLocalWg.json();
+            }catch(__){}
+          }
         }
         // Optionally fetch per-country totals for current mode and sort by total desc
         const endpointBase = adminMode==='dns' ? '/stats/' : '/wg-stats/';
