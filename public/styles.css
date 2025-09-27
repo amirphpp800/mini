@@ -271,6 +271,18 @@ main {
   padding: .5rem .9rem; border-radius: 10px; background:#fff; color:#000; border:none; font-weight:700; cursor:pointer;
 }
 
+/* Confirm modal specific buttons */
+#confirmYes{
+  background: #22c55e; /* green */
+  color: #fff;
+}
+#confirmYes:hover{ filter: brightness(1.05); }
+#confirmNo{
+  background: #2f2f33; /* dark gray */
+  color: #fff;
+}
+#confirmNo:hover{ filter: brightness(1.05); }
+
 /* CTA buttons */
 .primary-btn{
   padding: .6rem 1rem;
