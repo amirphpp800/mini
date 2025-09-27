@@ -18,6 +18,7 @@
       <span class="brand-name">Pro TooLs</span>
     </div>
     <a href="../index.html" class="admin-btn">← Back to Home</a>
+    <button id="logoutBtn" class="admin-btn" style="display:none">Logout</button>
   </header>
   <!-- Global glassy error modal -->
   <div class="alert-overlay" id="alertOverlay"></div>
@@ -212,6 +213,7 @@
   const statsSummary = document.getElementById('statsSummary');
   const statsRefresh = document.getElementById('statsRefresh');
   const usersTbody = document.getElementById('usersTbody');
+  const logoutBtn = document.getElementById('logoutBtn');
 
   // Helper to include admin session as Authorization header for all admin APIs
   function adminHeaders(json = true){
@@ -230,6 +232,7 @@
     if(countryForm) countryForm.style.display='none';
     if(statsSection) statsSection.style.display='none';
     if(adminTabs) adminTabs.style.display='none';
+    if(logoutBtn) logoutBtn.style.display='none';
   }
 
   // Load users list for stats
@@ -278,6 +281,14 @@
         statusRow.style.color = '#ffd27a';
       }
     })();
+
+    // --- Logout wiring ---
+    if(logoutBtn){
+      logoutBtn.addEventListener('click', ()=>{
+        invalidateAdminSession();
+        window.showMessage('از حساب کاربری خارج شدید.','پیام');
+      });
+    }
 
     // Prefill chat_id from localStorage
     chatInput.value = localStorage.getItem('adminChatId') || '';
@@ -403,7 +414,7 @@
       }
     });
 
-    async function populateCountries(){
+    async function populateCountries(preserveSelection = true){
       try {
         let countries = [];
         try{
@@ -419,9 +430,32 @@
             if(resLocal.ok) countries = await resLocal.json();
           }catch(__){}
         }
-        // sort by English name
-        countries.sort((a,b)=>String(a.name||'').localeCompare(String(b.name||'')));
+        // Optionally fetch per-country totals for current mode and sort by total desc
+        const endpointBase = adminMode==='dns' ? '/stats/' : '/wg-stats/';
+        const totals = await Promise.allSettled((countries||[]).map(async (c)=>{
+          const name = c && c.name ? String(c.name) : '';
+          if(!name) return { name: '', total: 0 };
+          try{
+            const r = await fetch(endpointBase + encodeURIComponent(name));
+            if(r && r.ok){
+              const s = await r.json();
+              return { name, total: Number(s && s.total || 0) };
+            }
+          }catch(__){}
+          return { name, total: 0 };
+        }));
+        const totalMap = new Map();
+        for(const t of totals){
+          if(t.status==='fulfilled' && t.value && t.value.name){ totalMap.set(t.value.name, t.value.total||0); }
+        }
+        countries.sort((a,b)=>{
+          const ta = totalMap.get(a.name) || 0;
+          const tb = totalMap.get(b.name) || 0;
+          if(tb!==ta) return tb - ta; // bigger first
+          return String(a.name||'').localeCompare(String(b.name||''));
+        });
         countriesCache = countries;
+        const prevSel = preserveSelection ? (selEl.value || '') : '';
         selEl.innerHTML='';
         const placeholder = document.createElement('option');
         placeholder.value='';
@@ -434,6 +468,10 @@
           opt.textContent = fa ? `${c.name} (${fa})` : c.name;
           selEl.appendChild(opt);
         });
+        // Try to restore previous selection if it still exists
+        if(prevSel){
+          selEl.value = prevSel;
+        }
         updateFormMode();
       }catch(e){ console.error(e); window.showError('Failed to load countries'); }
     }
@@ -574,7 +612,7 @@
     }, { capture: true });
 
     // Mode switching
-    function setAdminMode(mode){
+    async function setAdminMode(mode){
       adminMode = mode;
       if(mode==='dns'){
         if(modeDnsBtn){ modeDnsBtn.classList.add('active'); modeDnsBtn.setAttribute('aria-selected','true'); }
@@ -588,6 +626,8 @@
         addrEl.placeholder = '203.0.113.10:51820\n198.51.100.22:443\n192.0.2.7:12345';
       }
       analyzeEntries();
+      const prev = selEl.value;
+      await populateCountries(true);
       const sel = selEl.value.trim();
       if(sel) loadStatsFor(sel).catch(()=>{});
     }
@@ -607,6 +647,7 @@
         if(adminTabs) adminTabs.style.display='block';
         if(countryForm) countryForm.style.display='block';
         if(statsSection) statsSection.style.display='none';
+        if(logoutBtn) logoutBtn.style.display='inline-block';
         await populateCountries();
         updateFormMode();
         // notify owner silently if admin reopened panel (optional)
