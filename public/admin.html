@@ -46,6 +46,13 @@
       <button id="verifyBtn" style="display:none">Verify</button>
     </div>
   </div>
+  <!-- Admin top tabs -->
+  <div id="adminTabs" style="display:none; margin: .5rem 0 1rem;">
+    <div class="tabs" role="tablist" aria-label="Admin Sections">
+      <button type="button" class="tab active" id="tab-manage" role="tab" aria-selected="true">Manage Data</button>
+      <button type="button" class="tab" id="tab-stats" role="tab" aria-selected="false">User Stats</button>
+    </div>
+  </div>
 
   <form id="countryForm" style="display:none">
     <div class="tabs" role="tablist" aria-label="Admin Dataset Mode" style="margin-bottom:.75rem;">
@@ -108,6 +115,32 @@
       <button type="button" id="bal_apply">اعمال تغییر موجودی</button>
     </div>
   </form>
+  <!-- Admin Stats Section -->
+  <section id="adminStatsSection" style="display:none">
+    <div class="form-grid" style="align-items:flex-end">
+      <div class="form-col">
+        <h3 style="margin:.25rem 0 .5rem;">آمار کاربران</h3>
+        <div class="muted" id="statsSummary">Loading...</div>
+      </div>
+      <div class="form-col" style="text-align:end">
+        <button type="button" id="statsRefresh">Refresh</button>
+      </div>
+    </div>
+    <div class="glass-card" style="margin-top:.5rem; overflow:auto">
+      <table id="usersTable" style="width:100%; border-collapse:collapse;">
+        <thead>
+          <tr>
+            <th style="text-align:left; padding:.5rem; border-bottom:1px solid rgba(255,255,255,.15)">Chat ID</th>
+            <th style="text-align:left; padding:.5rem; border-bottom:1px solid rgba(255,255,255,.15)">Verified</th>
+            <th style="text-align:left; padding:.5rem; border-bottom:1px solid rgba(255,255,255,.15)">Balance (USD)</th>
+          </tr>
+        </thead>
+        <tbody id="usersTbody">
+          <tr><td style="padding:.5rem;" colspan="3" class="muted">Loading...</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
   </div>
   <script>
     // --- Error modal helper ---
@@ -171,6 +204,62 @@
   const previewAddrsBtn = document.getElementById('previewAddrs');
   const clearBusyBtn = document.getElementById('clearBusy');
   const ipHelper = document.getElementById('ipHelper');
+  // Admin section tabs
+  const adminTabs = document.getElementById('adminTabs');
+  const tabManage = document.getElementById('tab-manage');
+  const tabStats = document.getElementById('tab-stats');
+  const statsSection = document.getElementById('adminStatsSection');
+  const statsSummary = document.getElementById('statsSummary');
+  const statsRefresh = document.getElementById('statsRefresh');
+  const usersTbody = document.getElementById('usersTbody');
+
+  // Helper to include admin session as Authorization header for all admin APIs
+  function adminHeaders(json = true){
+    const s = localStorage.getItem('adminSession') || '';
+    const h = {};
+    if(json) h['Content-Type'] = 'application/json';
+    if(s) h['Authorization'] = `Bearer ${s}`;
+    return h;
+  }
+
+  // Central unauthorized handler to reset UI and prompt re-login
+  const UNAUTH_MSG = 'Unauthorized: لطفاً در بخش بالا با OTP وارد شوید (Admin session).';
+  function invalidateAdminSession(){
+    try { localStorage.removeItem('adminSession'); } catch(_){ }
+    if(loginSection) loginSection.style.display='block';
+    if(countryForm) countryForm.style.display='none';
+    if(statsSection) statsSection.style.display='none';
+    if(adminTabs) adminTabs.style.display='none';
+  }
+
+  // Load users list for stats
+  async function loadAdminUsers(){
+    try{
+      if(usersTbody) usersTbody.innerHTML = '<tr><td style="padding:.5rem;" colspan="3" class="muted">Loading...</td></tr>';
+      const r = await fetch('/admin/users', { headers: adminHeaders(false) });
+      if(!r.ok){
+        if(r.status===401){ invalidateAdminSession(); window.showError(UNAUTH_MSG); return; }
+        window.showError('Failed to load users'); return;
+      }
+      const j = await r.json();
+      const users = Array.isArray(j.users) ? j.users : [];
+      if(statsSummary) statsSummary.textContent = `Total users: ${j.total||users.length} | Total balance: $${(j.total_balance!=null? Number(j.total_balance).toFixed(2) : '0.00')}`;
+      if(!users.length){
+        usersTbody.innerHTML = '<tr><td style="padding:.5rem;" colspan="3" class="muted">No users found.</td></tr>';
+        return;
+      }
+      const rows = users.map(u=>{
+        const bal = Number.isFinite(u.balance) ? u.balance.toFixed(2) : '0.00';
+        const ver = u.verified ? 'Yes' : 'No';
+        return `<tr>
+          <td style="padding:.5rem; border-bottom:1px solid rgba(255,255,255,.06);">${u.chat_id||''}</td>
+          <td style="padding:.5rem; border-bottom:1px solid rgba(255,255,255,.06);">${ver}</td>
+          <td style="padding:.5rem; border-bottom:1px solid rgba(255,255,255,.06); direction:ltr;">$${bal}</td>
+        </tr>`;
+      }).join('');
+      usersTbody.innerHTML = rows;
+    }catch(_){ if(usersTbody) usersTbody.innerHTML = '<tr><td style="padding:.5rem;" colspan="3" class="muted">Load failed.</td></tr>'; }
+  }
 
     // Show KV/Bot status
     (async ()=>{
@@ -228,7 +317,7 @@
       if(!confirm(`حذف کشور «${country}» و تمام IP های مرتبط؟`)) return;
       const body = { session: localStorage.getItem('adminSession'), country };
       try{
-        const r = await fetch('/admin/delete', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(body) });
+        const r = await fetch('/admin/delete', { method:'POST', headers: adminHeaders(), body: JSON.stringify(body) });
         if(r.ok){
           window.showMessage('Deleted','پیام');
           // reset form
@@ -238,7 +327,8 @@
           document.getElementById('addresses').value='';
           await populateCountries();
         } else {
-          window.showError('Delete failed');
+          if(r.status===401){ invalidateAdminSession(); window.showError(UNAUTH_MSG); }
+          else { window.showError('Delete failed'); }
         }
       }catch(e){ window.showError('Network error'); }
     });
@@ -257,7 +347,7 @@
         // populate countries select
         await populateCountries();
         // notify owner about admin login
-        try{ await fetch('/admin/notify-login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({session})}); }catch(_e){}
+        try{ await fetch('/admin/notify-login',{method:'POST',headers: adminHeaders(),body:JSON.stringify({session})}); }catch(_e){}
       }else window.showError('Verification failed');
     });
 
@@ -281,7 +371,7 @@
       const body = adminMode==='dns' ? { ...base, addresses: lines } : { ...base, endpoints: lines };
       try {
         const url = adminMode==='dns' ? '/admin/add-address' : '/admin/wg-add';
-        const res = await fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+        const res = await fetch(url, { method: 'POST', headers: adminHeaders(), body: JSON.stringify(body) });
         if(res.ok){
           window.showMessage('Added!','پیام');
           e.target.reset();
@@ -300,7 +390,7 @@
               if(t) msg = t;
             }
           }catch(_e){}
-          if(res.status===401) msg = 'Unauthorized: لطفاً در بخش بالا با OTP وارد شوید (Admin session).';
+          if(res.status===401){ msg = UNAUTH_MSG; invalidateAdminSession(); }
           if(res.status===403) msg = 'Forbidden: دسترسی مجاز نیست.';
           if(res.status===400 && /Invalid country code/i.test(msg)){
             msg = 'کد کشور نامعتبر است. برای ایجاد کشور جدید، کد دوحرفی ISO-3166 مثل ua, gb, de وارد کنید.';
@@ -427,13 +517,14 @@
       try{
         const body = { session: localStorage.getItem('adminSession'), country };
         const url = adminMode==='dns' ? '/admin/list-addresses' : '/admin/wg-list';
-        const r = await fetch(url, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(body) });
+        const r = await fetch(url, { method:'POST', headers: adminHeaders(), body: JSON.stringify(body) });
         if(r.ok){
           const { addresses=[] } = await r.json();
           prevList.style.display='block';
           prevList.textContent = addresses.length ? addresses.join('\n') : 'No addresses yet.';
         } else {
-          window.showError('Failed to load addresses');
+          if(r.status===401){ invalidateAdminSession(); window.showError(UNAUTH_MSG); }
+          else { window.showError('Failed to load addresses'); }
         }
       }catch(_){ window.showError('Network error'); }
     });
@@ -444,11 +535,11 @@
       try{
         const body = { session: localStorage.getItem('adminSession'), country };
         const url = adminMode==='dns' ? '/admin/clear-busy' : '/admin/wg-clear-busy';
-        const r = await fetch(url, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(body) });
+        const r = await fetch(url, { method:'POST', headers: adminHeaders(), body: JSON.stringify(body) });
         if(r.ok){
           window.showMessage('Busy cleared','پیام');
           await loadStatsFor(country);
-        } else { window.showError('Failed to clear busy'); }
+        } else { if(r.status===401){ invalidateAdminSession(); window.showError(UNAUTH_MSG); } else { window.showError('Failed to clear busy'); } }
       }catch(_){ window.showError('Network error'); }
     });
 
@@ -507,12 +598,19 @@
     (async function initAdmin(){
       const ses = localStorage.getItem('adminSession');
       if(ses){
+        // Validate that session is still valid
+        try{
+          const probe = await fetch(`/auth/me?session=${encodeURIComponent(ses)}`, { headers: adminHeaders(false) });
+          if(!probe.ok){ invalidateAdminSession(); return; }
+        }catch(_){ invalidateAdminSession(); return; }
         loginSection.style.display='none';
-        countryForm.style.display='block';
+        if(adminTabs) adminTabs.style.display='block';
+        if(countryForm) countryForm.style.display='block';
+        if(statsSection) statsSection.style.display='none';
         await populateCountries();
         updateFormMode();
         // notify owner silently if admin reopened panel (optional)
-        try{ await fetch('/admin/notify-login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({session:ses})}); }catch(_e){}
+        try{ await fetch('/admin/notify-login',{method:'POST',headers: adminHeaders(),body:JSON.stringify({session:ses})}); }catch(_e){}
       }
     })();
 
@@ -529,13 +627,14 @@
         if(!target_chat_id) return window.showError('chat_id کاربر را وارد کنید');
         if(!Number.isFinite(d)) return window.showError('مقدار تغییر موجودی نامعتبر است');
         try{
-          const r = await fetch('/admin/balance-update',{method:'POST',headers:{'Content-Type':'application/json'},body: JSON.stringify({session:s, target_chat_id, delta:d})});
+          const r = await fetch('/admin/balance-update',{method:'POST',headers: adminHeaders(),body: JSON.stringify({session:s, target_chat_id, delta:d})});
           if(r.ok){
             const j = await r.json();
             window.showMessage(`Balance updated.\nPrev: ${j.prev}$\nNext: ${j.next}$`,'پیام');
             delta.value='';
           } else {
-            window.showError('Failed to update balance');
+            if(r.status===401){ invalidateAdminSession(); window.showError(UNAUTH_MSG); }
+            else { window.showError('Failed to update balance'); }
           }
         }catch(_){ window.showError('Network error'); }
       });
@@ -576,13 +675,14 @@
         const s = localStorage.getItem('adminSession');
         if(!s){ window.showError('Admin session missing'); return; }
         try{
-          const r = await fetch(`/admin/set-pricing?session=${encodeURIComponent(s)}`);
+          const r = await fetch(`/admin/set-pricing?session=${encodeURIComponent(s)}`, { headers: adminHeaders(false) });
           if(r.ok){
             const j = await r.json();
             dnsInput.value = (j && typeof j.dns === 'number') ? j.dns.toFixed(2) : '0.50';
             wgInput.value = (j && typeof j.wg === 'number') ? j.wg.toFixed(2) : '1.00';
           } else {
-            window.showError('Failed to load pricing');
+            if(r.status===401){ invalidateAdminSession(); window.showError(UNAUTH_MSG); }
+            else { window.showError('Failed to load pricing'); }
           }
         }catch(_){ window.showError('Network error'); }
       }
@@ -595,14 +695,15 @@
         if(!Number.isFinite(dns) || dns < 0) return window.showError('قیمت DNS نامعتبر است');
         if(!Number.isFinite(wg) || wg < 0) return window.showError('قیمت WireGuard نامعتبر است');
         try{
-          const r = await fetch('/admin/set-pricing', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ session: s, dns, wg }) });
+          const r = await fetch('/admin/set-pricing', { method:'POST', headers: adminHeaders(), body: JSON.stringify({ session: s, dns, wg }) });
           if(r.ok){
             const j = await r.json();
             window.showMessage(`Saved.\nDNS: ${j.dns.toFixed(2)}$\nWG: ${j.wg.toFixed(2)}$`,'پیام');
             dnsInput.value = j.dns.toFixed(2);
             wgInput.value = j.wg.toFixed(2);
           } else {
-            window.showError('Failed to save pricing');
+            if(r.status===401){ invalidateAdminSession(); window.showError(UNAUTH_MSG); }
+            else { window.showError('Failed to save pricing'); }
           }
         }catch(_){ window.showError('Network error'); }
       }
@@ -617,6 +718,24 @@
       });
       observer.observe(form, { attributes: true, attributeFilter: ['style'] });
     })();
+
+    // --- Admin Tabs wiring ---
+    function showManage(){
+      if(tabManage){ tabManage.classList.add('active'); tabManage.setAttribute('aria-selected','true'); }
+      if(tabStats){ tabStats.classList.remove('active'); tabStats.setAttribute('aria-selected','false'); }
+      if(countryForm) countryForm.style.display='block';
+      if(statsSection) statsSection.style.display='none';
+    }
+    function showStats(){
+      if(tabStats){ tabStats.classList.add('active'); tabStats.setAttribute('aria-selected','true'); }
+      if(tabManage){ tabManage.classList.remove('active'); tabManage.setAttribute('aria-selected','false'); }
+      if(countryForm) countryForm.style.display='none';
+      if(statsSection) statsSection.style.display='block';
+      loadAdminUsers().catch(()=>{});
+    }
+    if(tabManage) tabManage.addEventListener('click', showManage);
+    if(tabStats) tabStats.addEventListener('click', showStats);
+    if(statsRefresh) statsRefresh.addEventListener('click', ()=> loadAdminUsers());
   </script>
 </body>
 </html>
