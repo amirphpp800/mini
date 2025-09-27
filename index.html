@@ -95,6 +95,21 @@
       </div>
     </div>
   </div>
+  <!-- Confirm modal (glassy) -->
+  <div class="alert-overlay" id="confirmOverlay"></div>
+  <div class="alert-container" id="confirmContainer">
+    <div class="alert-card" role="dialog" aria-modal="true" aria-labelledby="confirmTitle">
+      <div class="hdr">
+        <div class="ttl" id="confirmTitle">تایید</div>
+        <button class="btn-close" id="confirmX">×</button>
+      </div>
+      <div class="msg" id="confirmMsg"></div>
+      <div class="actions">
+        <button id="confirmNo">لغو</button>
+        <button id="confirmYes" class="primary-btn">تایید</button>
+      </div>
+    </div>
+  </div>
   <main id="cards"></main>
   <div class="pagination" id="pagination">
     <button class="page-btn" id="prevPage">Prev</button>
@@ -102,7 +117,7 @@
     <button class="page-btn" id="nextPage">Next</button>
   </div>
   <script>
-    // --- Error modal helper ---
+    // --- Error/Message modal helper ---
     (function(){
       const overlay = document.getElementById('alertOverlay');
       const container = document.getElementById('alertContainer');
@@ -111,16 +126,23 @@
       const okBtn = document.getElementById('alertOk');
       const xBtn = document.getElementById('alertX');
       function close(){ overlay.classList.remove('active'); container.classList.remove('active'); }
-      function showError(message, title){
-        titleEl.textContent = title || 'خطا';
-        msgEl.textContent = message || '';
+      function open(title, message, asHtml){
+        titleEl.textContent = title || 'پیام';
+        if(asHtml){ msgEl.innerHTML = message || ''; }
+        else { msgEl.textContent = message || ''; }
         overlay.classList.add('active');
         container.classList.add('active');
+      }
+      function showError(message, title){ open(title || 'خطا', message, false); }
+      function showMessage(message, title){
+        const html = String(message||'').replace(/\n/g,'<br>');
+        open(title || 'پیام', html, true);
       }
       okBtn.addEventListener('click', close);
       xBtn.addEventListener('click', close);
       overlay.addEventListener('click', close);
       window.showError = showError;
+      window.showMessage = showMessage;
     })();
     // --- Address modal helper ---
     (function(){
@@ -265,7 +287,7 @@
                   window.showError(`موجودی فعلی شما $${currentBal.toFixed(2)} است و برای این عملیات $${Number(price).toFixed(2)} نیاز است. لطفاً برای افزایش موجودی با ادمین تماس بگیرید: @Minimalcraft`, 'موجودی کافی نیست');
                   return;
                 }
-                const ok = confirm(`هزینه این درخواست: $${Number(price).toFixed(2)}\nموجودی فعلی: $${currentBal.toFixed(2)}\nموجودی پس از کسر: $${after.toFixed(2)}\nآیا تایید می‌کنید؟`);
+                const ok = await window.showConfirm(`هزینه این درخواست: $${Number(price).toFixed(2)}\nموجودی فعلی: $${currentBal.toFixed(2)}\nموجودی پس از کسر: $${after.toFixed(2)}\nآیا تایید می‌کنید؟`, 'تایید کسر موجودی');
                 if(!ok) return;
               }
             }
@@ -483,7 +505,7 @@
           if(r.ok){
             const {session} = await r.json();
             localStorage.setItem('userSession', session);
-            alert('Your account has been verified.');
+            window.showMessage('Your account has been verified.','پیام');
             await renderLogged();
           } else {
             window.showError('Verification failed');
@@ -494,7 +516,7 @@
       // style logout button and add confirmation
       logoutBtn.classList.add('danger-btn');
       logoutBtn.addEventListener('click', async ()=>{
-        if(confirm('آیا از خروج از حساب اطمینان دارید؟')){
+        if(await window.showConfirm('آیا از خروج از حساب اطمینان دارید؟','تایید خروج')){
           localStorage.removeItem('userSession');
           await renderLogged();
         }

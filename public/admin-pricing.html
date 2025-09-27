@@ -62,7 +62,7 @@
   </div>
 
   <script>
-    // Error modal helper
+    // Error/Message modal helper
     (function(){
       const overlay = document.getElementById('alertOverlay');
       const container = document.getElementById('alertContainer');
@@ -71,16 +71,25 @@
       const okBtn = document.getElementById('alertOk');
       const xBtn = document.getElementById('alertX');
       function close(){ overlay.classList.remove('active'); container.classList.remove('active'); }
-      function showError(message, title){
-        titleEl.textContent = title || 'خطا';
-        msgEl.textContent = message || '';
+      function open(title, message, asHtml){
+        titleEl.textContent = title || 'پیام';
+        if(asHtml){ msgEl.innerHTML = message || ''; }
+        else { msgEl.textContent = message || ''; }
         overlay.classList.add('active');
         container.classList.add('active');
+      }
+      function showError(message, title){
+        open(title || 'خطا', message, false);
+      }
+      function showMessage(message, title){
+        const html = String(message||'').replace(/\n/g,'<br>');
+        open(title || 'پیام', html, true);
       }
       okBtn.addEventListener('click', close);
       xBtn.addEventListener('click', close);
       overlay.addEventListener('click', close);
       window.showError = showError;
+      window.showMessage = showMessage;
     })();
 
     const chatInput=document.getElementById('chat_id');
@@ -104,7 +113,7 @@
       try{
         const r = await fetch('/auth/send-code',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({chat_id})});
         if(r.ok){
-          alert('کد ارسال شد. اگر پیام نگرفتید، ابتدا در ربات Start را بزنید و مجدد تلاش کنید.');
+          window.showMessage('کد ارسال شد. اگر پیام نگرفتید، ابتدا در ربات Start را بزنید و مجدد تلاش کنید.','پیام');
           otpInput.style.display='block';
           verifyBtn.style.display='inline-block';
         } else {
@@ -158,7 +167,7 @@
         const r = await fetch('/admin/set-pricing',{ method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ session:s, dns, wg }) });
         if(r.ok){
           const j = await r.json();
-          alert(`Saved. DNS: $${j.dns.toFixed(2)} | WG: $${j.wg.toFixed(2)}`);
+          window.showMessage(`Saved. DNS: $${j.dns.toFixed(2)} | WG: $${j.wg.toFixed(2)}`,'پیام');
         } else {
           window.showError('Failed to save pricing');
         }
