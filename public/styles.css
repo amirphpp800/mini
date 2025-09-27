@@ -130,7 +130,7 @@ main {
   inset-inline-end: .5rem; /* RTL-friendly */
   background: transparent;
   border: none;
-  color: #fff;
+  color: #ff3b30; /* red close icon */
   font-size: 1.25rem;
   cursor: pointer;
   padding: .25rem .4rem;
@@ -259,6 +259,12 @@ main {
   margin-bottom: .5rem;
 }
 .alert-card .hdr .ttl{ font-weight:700; letter-spacing:.4px; }
+.alert-card .hdr .btn-close{
+  background: transparent;
+  color: #ff3b30; /* red close icon */
+  border: 1px solid rgba(255,0,64,0.35);
+  padding: .25rem .55rem;
+}
 .alert-card .msg{ opacity:.95; line-height:1.6; white-space:pre-wrap; }
 .alert-card .actions{ display:flex; justify-content:flex-end; margin-top:.8rem; gap: .5rem; }
 .alert-card .btn-close{

@@ -144,6 +144,36 @@
       window.showError = showError;
       window.showMessage = showMessage;
     })();
+    // --- Confirm modal helper ---
+    (function(){
+      const overlay = document.getElementById('confirmOverlay');
+      const container = document.getElementById('confirmContainer');
+      const titleEl = document.getElementById('confirmTitle');
+      const msgEl = document.getElementById('confirmMsg');
+      const yesBtn = document.getElementById('confirmYes');
+      const noBtn = document.getElementById('confirmNo');
+      const xBtn = document.getElementById('confirmX');
+
+      let resolver = null;
+      function close(){ overlay.classList.remove('active'); container.classList.remove('active'); }
+      function open(message, title){
+        titleEl.textContent = title || 'تایید';
+        msgEl.textContent = message || '';
+        overlay.classList.add('active');
+        container.classList.add('active');
+      }
+      function resolve(val){ if(resolver){ const r=resolver; resolver=null; r(val); } close(); }
+      if(yesBtn) yesBtn.onclick = ()=> resolve(true);
+      if(noBtn) noBtn.onclick = ()=> resolve(false);
+      if(xBtn) xBtn.onclick = ()=> resolve(false);
+      if(overlay) overlay.onclick = ()=> resolve(false);
+      document.addEventListener('keydown', (e)=>{ if(e.key==='Escape' && overlay && overlay.classList.contains('active')) resolve(false); });
+
+      function showConfirm(message, title){
+        return new Promise((resolveFn)=>{ resolver = resolveFn; open(message, title); });
+      }
+      window.showConfirm = showConfirm;
+    })();
     // --- Address modal helper ---
     (function(){
       const overlay = document.getElementById('addrOverlay');
