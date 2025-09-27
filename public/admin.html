@@ -498,6 +498,83 @@
         }catch(_){ window.showError('Network error'); }
       });
     })();
+
+    // --- Pricing management UI ---
+    (function(){
+      // Inject pricing controls below balance section for better UX
+      const form = document.getElementById('countryForm');
+      if(!form) return;
+      const pricingBlock = document.createElement('div');
+      pricingBlock.innerHTML = `
+        <hr style="margin:1.25rem 0; border:none; border-top:1px solid rgba(255,255,255,0.15)">
+        <h3 style="margin:.25rem 0 .5rem;">تنظیم قیمت‌ها (USD)</h3>
+        <div class="form-grid">
+          <div class="form-col">
+            <label class="lbl" for="price_dns">هزینه هر آدرس DNS</label>
+            <input type="number" id="price_dns" placeholder="0.50" step="0.01" min="0" />
+          </div>
+          <div class="form-col">
+            <label class="lbl" for="price_wg">هزینه هر اندپوینت WireGuard</label>
+            <input type="number" id="price_wg" placeholder="1.00" step="0.01" min="0" />
+          </div>
+        </div>
+        <div class="row end" style="margin-top:.5rem">
+          <button type="button" id="price_load">بارگذاری قیمت‌ها</button>
+          <button type="button" id="price_save">ذخیره قیمت‌ها</button>
+        </div>
+      `;
+      form.appendChild(pricingBlock);
+
+      const btnLoad = pricingBlock.querySelector('#price_load');
+      const btnSave = pricingBlock.querySelector('#price_save');
+      const dnsInput = pricingBlock.querySelector('#price_dns');
+      const wgInput = pricingBlock.querySelector('#price_wg');
+
+      async function loadPricing(){
+        const s = localStorage.getItem('adminSession');
+        if(!s){ window.showError('Admin session missing'); return; }
+        try{
+          const r = await fetch(`/admin/set-pricing?session=${encodeURIComponent(s)}`);
+          if(r.ok){
+            const j = await r.json();
+            dnsInput.value = (j && typeof j.dns === 'number') ? j.dns.toFixed(2) : '0.50';
+            wgInput.value = (j && typeof j.wg === 'number') ? j.wg.toFixed(2) : '1.00';
+          } else {
+            window.showError('Failed to load pricing');
+          }
+        }catch(_){ window.showError('Network error'); }
+      }
+
+      async function savePricing(){
+        const s = localStorage.getItem('adminSession');
+        if(!s){ window.showError('Admin session missing'); return; }
+        const dns = parseFloat(dnsInput.value);
+        const wg = parseFloat(wgInput.value);
+        if(!Number.isFinite(dns) || dns < 0) return window.showError('قیمت DNS نامعتبر است');
+        if(!Number.isFinite(wg) || wg < 0) return window.showError('قیمت WireGuard نامعتبر است');
+        try{
+          const r = await fetch('/admin/set-pricing', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ session: s, dns, wg }) });
+          if(r.ok){
+            const j = await r.json();
+            alert(`Saved.\nDNS: ${j.dns.toFixed(2)}$\nWG: ${j.wg.toFixed(2)}$`);
+            dnsInput.value = j.dns.toFixed(2);
+            wgInput.value = j.wg.toFixed(2);
+          } else {
+            window.showError('Failed to save pricing');
+          }
+        }catch(_){ window.showError('Network error'); }
+      }
+
+      if(btnLoad) btnLoad.addEventListener('click', loadPricing);
+      if(btnSave) btnSave.addEventListener('click', savePricing);
+
+      // Auto-load when session is available and form is visible
+      const observer = new MutationObserver(()=>{
+        const visible = form.style.display !== 'none';
+        if(visible){ loadPricing().catch(()=>{}); observer.disconnect(); }
+      });
+      observer.observe(form, { attributes: true, attributeFilter: ['style'] });
+    })();
   </script>
 </body>
 </html>

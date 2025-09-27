@@ -18,6 +18,11 @@ export const onRequestGet = async ({ request, params, env }) => {
     const verified = await env.KV.get(`user:${chat_id}:verified`);
     if (!verified) return new Response('Forbidden', { status: 403 });
 
+    // Read pricing for WG (default 1.00 USD)
+    let priceRaw = await env.KV.get('pricing:wg');
+    let price = parseFloat(priceRaw || '1.0');
+    if (!Number.isFinite(price) || price < 0) price = 1.0;
+
     const userHistKey = `wg_user_hist:${chat_id}:${country}`;
     const histRaw = await env.KV.get(userHistKey);
     const userHist = histRaw ? JSON.parse(histRaw) : [];
@@ -37,6 +42,20 @@ export const onRequestGet = async ({ request, params, env }) => {
       });
     }
 
+    // Check and deduct user balance
+    const balKey = `balance:${chat_id}`;
+    const balRaw = await env.KV.get(balKey);
+    const current = balRaw ? parseFloat(balRaw) : 0;
+    const balance = Number.isFinite(current) ? current : 0;
+    if (balance < price) {
+      return new Response(JSON.stringify({ error: 'insufficient_balance', needed: +price.toFixed(2), balance: +balance.toFixed(2) }), {
+        status: 402,
+        headers: { 'Content-Type': 'application/json' },
+      });
+    }
+    const next = +(balance - price).toFixed(2);
+    await env.KV.put(balKey, String(next));
+
     busySet.add(freeEp);
     busy = Array.from(busySet);
     await env.KV.put(`wg_busy:${country}`, JSON.stringify(busy));
@@ -50,3 +69,4 @@ export const onRequestGet = async ({ request, params, env }) => {
     return new Response('Error', { status: 500 });
   }
 }
+

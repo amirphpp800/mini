@@ -42,7 +42,7 @@
         <a class="tg-btn" href="tg://resolve?domain=minidnsverify_bot">Start Telegram Bot</a>
       </div>
       <div class="row" id="u_chat_row">
-        <input type="number" id="u_chat_id" placeholder="Telegram chat_id" />
+        <input type="number" id="u_chat_id" placeholder="Telegram ID" />
         <button id="u_send">Send Code</button>
       </div>
       <div class="row" id="u_otp_row" style="display:none">
@@ -54,7 +54,7 @@
         <button id="u_logout">Logout</button>
       </div>
       <div class="row" id="u_id_row" style="display:none">
-        <div class="muted">Your chat_id: <span id="u_id_value"></span></div>
+        <div class="muted">Your ID: <span id="u_id_value"></span></div>
       </div>
       <div id="u_history_wrap" style="display:none; margin-top: .75rem;">
         <div class="lbl" style="margin:.25rem 0">Your fetched addresses</div>
@@ -244,11 +244,46 @@
             return;
           }
           try{
+            // Pre-confirm: read pricing and current balance, ask user for approval
+            let price = 0;
+            try{
+              const rp = await fetch('/pricing');
+              if(rp.ok){
+                const pj = await rp.json();
+                price = state.currentTab==='dns' ? (pj.dns ?? 0.5) : (pj.wg ?? 1.0);
+              }
+            }catch(_){/* ignore */}
+            let currentBal = null;
+            try{
+              const rb = await fetch('/user/balance', { headers:{ 'Authorization': `Bearer ${session}` } });
+              if(rb.ok){ const bj = await rb.json(); currentBal = parseFloat(bj.balance); }
+            }catch(_){/* ignore */}
+            if(currentBal != null && Number.isFinite(currentBal)){
+              const after = +((currentBal - (Number(price)||0))).toFixed(2);
+              if((Number(price)||0) > 0){
+                if(currentBal < price){
+                  window.showError(`موجودی فعلی شما $${currentBal.toFixed(2)} است و برای این عملیات $${Number(price).toFixed(2)} نیاز است. لطفاً برای افزایش موجودی با ادمین تماس بگیرید: @Minimalcraft`, 'موجودی کافی نیست');
+                  return;
+                }
+                const ok = confirm(`هزینه این درخواست: $${Number(price).toFixed(2)}\nموجودی فعلی: $${currentBal.toFixed(2)}\nموجودی پس از کسر: $${after.toFixed(2)}\nآیا تایید می‌کنید؟`);
+                if(!ok) return;
+              }
+            }
             const path = state.currentTab==='dns' ? `/addresses/${(c.name||'').toLowerCase()}` : `/wg/${(c.name||'').toLowerCase()}`;
             const r = await fetch(path, { headers:{ 'Authorization': `Bearer ${session}` } });
             if(!r.ok){
               if(r.status===401||r.status===403){
                 window.showError('Your session is invalid or unverified. Please verify again.');
+              } else if(r.status===402){
+                try{
+                  const j = await r.json();
+                  const needed = (j && j.needed!=null) ? j.needed : null;
+                  const balance = (j && j.balance!=null) ? j.balance : null;
+                  const msg = `موجودی حساب شما کافی نیست.${needed!=null? `\nمبلغ موردنیاز: $${Number(needed).toFixed(2)}`:''}${balance!=null? `\nموجودی فعلی: $${Number(balance).toFixed(2)}`:''}\nبرای افزایش موجودی به ادمین پیام دهید: @Minimalcraft`;
+                  window.showError(msg, 'موجودی کافی نیست');
+                }catch(_e){
+                  window.showError('موجودی حساب شما کافی نیست. برای افزایش موجودی به ادمین پیام دهید: @Minimalcraft', 'موجودی کافی نیست');
+                }
               } else {
                 window.showError('Failed to fetch addresses');
               }
@@ -265,6 +300,12 @@
               localStorage.setItem(key, JSON.stringify(hist.slice(0,20)));
               if(window.renderUserHistory) window.renderUserHistory();
             }catch(_e){}
+            // Refresh balance after deduction
+            try{
+              const rb2 = await fetch('/user/balance', { headers:{ 'Authorization': `Bearer ${session}` } });
+              if(rb2.ok){ const jb = await rb2.json(); const el = document.getElementById('u_balance_value'); if(el && jb && jb.balance!=null){ el.textContent = `$${jb.balance}`; }
+                const balRow = document.getElementById('u_balance_row'); if(balRow) balRow.style.display='flex'; }
+            }catch(_){/* ignore */}
           }catch(e){ console.error(e); window.showError('Network error while fetching addresses'); }
         });
         card.appendChild(btn);
@@ -409,7 +450,7 @@
       sendBtn.addEventListener('click', async (e)=>{
         e.preventDefault();
         const chat_id = chatEl.value.trim();
-        if(!chat_id) return window.showError('Enter chat_id');
+        if(!chat_id) return window.showError('Enter ID');
         localStorage.setItem('userChatId', chat_id);
         if(isLocal){
           window.showError('In local mode, sending the code may not work. Please test again after deployment.');
