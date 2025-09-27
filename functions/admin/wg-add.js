@@ -3,11 +3,11 @@ export const onRequestPost = async ({ request, env }) => {
     const body = await request.json();
     const { session, country, endpoints, code, faName } = body || {};
     if (!session || !country || !Array.isArray(endpoints) || endpoints.length === 0) {
-      return new Response('Invalid input', { status: 400 });
+      return new Response(JSON.stringify({ error: 'invalid_input', message: 'Session, country and endpoints are required.' }), { status: 400, headers: { 'Content-Type': 'application/json' } });
     }
 
     const chat_id = await env.KV.get(`session:${session}`);
-    if (!chat_id) return new Response('Unauthorized', { status: 401 });
+    if (!chat_id) return new Response(JSON.stringify({ error: 'unauthorized' }), { status: 401, headers: { 'Content-Type': 'application/json' } });
 
     const key = String(country).trim().toLowerCase();
     let countryData = await env.DB.get(key, { type: 'json' });
@@ -15,7 +15,7 @@ export const onRequestPost = async ({ request, env }) => {
     // determine iso code
     let iso = String(code || (countryData && countryData.code) || '').trim().toLowerCase();
     if (!countryData && !/^[a-z]{2}$/.test(iso)) {
-      return new Response('Invalid country code', { status: 400 });
+      return new Response(JSON.stringify({ error: 'invalid_country_code', message: 'ISO-3166 alpha-2 code required for new country.' }), { status: 400, headers: { 'Content-Type': 'application/json' } });
     }
 
     // create or update country record (same as DNS)
@@ -48,14 +48,14 @@ export const onRequestPost = async ({ request, env }) => {
       if (port < 1 || port > 65535) continue;
       if (!seen.has(s)) { seen.add(s); cleaned.push(s); }
     }
-    if (cleaned.length === 0) return new Response('No valid endpoints', { status: 400 });
+    if (cleaned.length === 0) return new Response(JSON.stringify({ error: 'no_valid_endpoints', message: 'No valid endpoints (IPv4:PORT) provided.' }), { status: 400, headers: { 'Content-Type': 'application/json' } });
 
     // append new unique endpoints
     list = Array.from(seen);
     await env.KV.put(addrKey, JSON.stringify(list));
 
-    return new Response('WG endpoints added', { status: 200 });
+    return new Response(JSON.stringify({ ok: true, added: cleaned.length, total: list.length }), { status: 200, headers: { 'Content-Type': 'application/json' } });
   } catch (e) {
-    return new Response('Error', { status: 500 });
+    return new Response(JSON.stringify({ error: 'server_error' }), { status: 500, headers: { 'Content-Type': 'application/json' } });
   }
 }

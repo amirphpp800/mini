@@ -3,15 +3,15 @@ export const onRequestPost = async ({ request, env }) => {
     const body = await request.json();
     const { session, country, addresses, code, faName } = body;
 
-    // session, country, and at least one valid address are required. code is optional for existing countries
+    // Validate basic inputs
     if (!session || !country || !Array.isArray(addresses) || addresses.length === 0) {
-      return new Response('Invalid input', { status: 400 });
+      return new Response(JSON.stringify({ error: 'invalid_input', message: 'Session, country and addresses are required.' }), { status: 400, headers: { 'Content-Type': 'application/json' } });
     }
 
     // Verify session
     const chat_id = await env.KV.get(`session:${session}`);
     if (!chat_id) {
-      return new Response('Unauthorized', { status: 401 });
+      return new Response(JSON.stringify({ error: 'unauthorized' }), { status: 401, headers: { 'Content-Type': 'application/json' } });
     }
 
     const key = country.toLowerCase();
@@ -21,7 +21,7 @@ export const onRequestPost = async ({ request, env }) => {
     let iso = String(code || (countryData && countryData.code) || '').trim().toLowerCase();
     if (!countryData && !/^[a-z]{2}$/.test(iso)) {
       // For creating a new country, ISO code is required and must be valid
-      return new Response('Invalid country code', { status: 400 });
+      return new Response(JSON.stringify({ error: 'invalid_country_code', message: 'ISO-3166 alpha-2 code required for new country.' }), { status: 400, headers: { 'Content-Type': 'application/json' } });
     }
 
     // Create or update minimal country record with name and ISO code
@@ -53,14 +53,17 @@ export const onRequestPost = async ({ request, env }) => {
       .map(s=>s.trim())
       .filter(Boolean)
       .filter(s=>/^(25[0-5]|2[0-4]\d|[01]?\d\d?)\.(25[0-5]|2[0-4]\d|[01]?\d\d?)\.(25[0-5]|2[0-4]\d|[01]?\d\d?)\.(25[0-5]|2[0-4]\d|[01]?\d\d?)$/.test(s));
+    if (ipv4.length === 0) {
+      return new Response(JSON.stringify({ error: 'no_valid_ipv4', message: 'No valid IPv4 addresses provided.' }), { status: 400, headers: { 'Content-Type': 'application/json' } });
+    }
     ipv4.forEach((ip) => {
       if (!list.includes(ip)) list.push(ip);
     });
 
     await env.KV.put(addrKey, JSON.stringify(list));
 
-    return new Response('Addresses added', { status: 200 });
+    return new Response(JSON.stringify({ ok: true, added: ipv4.length, total: list.length }), { status: 200, headers: { 'Content-Type': 'application/json' } });
   } catch (err) {
-    return new Response('Error', { status: 500 });
+    return new Response(JSON.stringify({ error: 'server_error' }), { status: 500, headers: { 'Content-Type': 'application/json' } });
   }
 };

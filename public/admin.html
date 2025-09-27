@@ -265,7 +265,18 @@
     document.getElementById('countryForm').addEventListener('submit', async (e) => {
       e.preventDefault();
       const country = selEl.value.trim() || nameEl.value.trim();
-      const base = { session: localStorage.getItem('adminSession'), country, code: codeEl.value.trim(), faName: faEl.value.trim() };
+      const session = localStorage.getItem('adminSession');
+      if(!session){ window.showError('Unauthorized: لطفاً ابتدا در بالا با OTP وارد شوید تا سشن ادمین فعال شود.'); return; }
+      // If creating a NEW country (no selection), require a valid 2-letter ISO code
+      if(!selEl.value.trim()){
+        const iso = (codeEl.value||'').trim().toLowerCase();
+        if(!/^[a-z]{2}$/.test(iso)){
+          window.showError('کد کشور نامعتبر است. برای ایجاد کشور جدید، کد دوحرفی ISO-3166 مثل ua, gb, de وارد کنید.');
+          return;
+        }
+        codeEl.value = iso; // normalize
+      }
+      const base = { session, country, code: (codeEl.value||'').trim().toLowerCase(), faName: faEl.value.trim() };
       const lines = addrEl.value.split('\n').map(s=>s.trim()).filter(Boolean);
       const body = adminMode==='dns' ? { ...base, addresses: lines } : { ...base, endpoints: lines };
       try {
@@ -277,7 +288,24 @@
           await populateCountries();
           updateFormMode();
         } else {
-          window.showError('Error adding entries');
+          let msg = 'Error adding entries';
+          try{
+            const ct = res.headers.get('Content-Type')||'';
+            if(ct.includes('application/json')){
+              const j = await res.json();
+              if(typeof j === 'string' && j) msg = j;
+              else if(j && (j.error||j.message)) msg = j.error || j.message;
+            } else {
+              const t = await res.text();
+              if(t) msg = t;
+            }
+          }catch(_e){}
+          if(res.status===401) msg = 'Unauthorized: لطفاً در بخش بالا با OTP وارد شوید (Admin session).';
+          if(res.status===403) msg = 'Forbidden: دسترسی مجاز نیست.';
+          if(res.status===400 && /Invalid country code/i.test(msg)){
+            msg = 'کد کشور نامعتبر است. برای ایجاد کشور جدید، کد دوحرفی ISO-3166 مثل ua, gb, de وارد کنید.';
+          }
+          window.showError(msg);
         }
       } catch(err){
         console.error(err);
