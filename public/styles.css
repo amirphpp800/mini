@@ -659,6 +659,7 @@ button:hover {
   font-family:'Vazirmatn','Poppins',sans-serif; /* Vazirmatn for Persian */
   line-height: 1.9;
 }
+
 /* Admin: country dropdown dark theme */
 #countrySelect {
   background: #000;           /* پس‌زمینه خود فیلد select */

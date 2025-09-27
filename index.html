@@ -32,6 +32,18 @@
   <div class="tabs" role="tablist" aria-label="Dataset Tabs">
     <button class="tab active" id="tab-dns" role="tab" aria-selected="true" aria-controls="panel-dns"><img src="public/dns.png" alt="" aria-hidden="true"/> DNS</button>
     <button class="tab" id="tab-wg" role="tab" aria-selected="false" aria-controls="panel-wg"><img src="public/wireguard.svg" alt="" aria-hidden="true"/> Wireguard Endpoint</button>
+    <button class="tab" id="tab-apn" type="button" aria-selected="false" title="APN"> 
+      <img src="public/apn.svg" alt="" aria-hidden="true"/>
+      APN
+    </button>
+    <button class="tab" id="tab-android" type="button" aria-selected="false" title="Android Settings">
+      <img src="public/android.svg" alt="" aria-hidden="true"/>
+      Android Settings
+    </button>
+    <button class="tab" id="tab-ios" type="button" aria-selected="false" title="iPhone Settings">
+      <img src="public/apple.svg" alt="" aria-hidden="true"/>
+      iPhone Settings
+    </button>
   </div>
   <div class="modal-overlay" id="accOverlay"></div>
   <div class="modal-container" id="accModal">
@@ -404,6 +416,31 @@
     async function initDatasets(){
       state.data.dns = await fetchDataset('dns');
       try{ state.data.wg = await fetchDataset('wg'); }catch(_){ state.data.wg = []; }
+
+      // Sort by total IPs desc for better UX
+      async function sortByTotals(kind){
+        try{
+          const list = Array.isArray(state.data[kind]) ? state.data[kind] : [];
+          const base = kind==='dns' ? '/stats/' : '/wg-stats/';
+          const totals = await Promise.allSettled(list.map(async (c)=>{
+            const name = c && c.name ? String(c.name) : '';
+            if(!name) return { name: '', total: 0 };
+            try{
+              const r = await fetch(base + encodeURIComponent(name));
+              if(r && r.ok){ const s = await r.json(); return { name, total: Number(s && s.total || 0) }; }
+            }catch(__){}
+            return { name, total: 0 };
+          }));
+          const totalMap = new Map();
+          for(const t of totals){ if(t.status==='fulfilled' && t.value && t.value.name){ totalMap.set(t.value.name, t.value.total||0); } }
+          state.data[kind] = list.slice().sort((a,b)=>{
+            const ta = totalMap.get(a.name)||0; const tb = totalMap.get(b.name)||0;
+            if(tb!==ta) return tb - ta;
+            return String(a.name||'').localeCompare(String(b.name||''));
+          });
+        }catch(__){}
+      }
+      await Promise.allSettled([sortByTotals('dns'), sortByTotals('wg')]);
       renderPage();
     }
     initDatasets();
@@ -645,6 +682,9 @@
     (function(){
       const tabDns = document.getElementById('tab-dns');
       const tabWg = document.getElementById('tab-wg');
+      const tabApn = document.getElementById('tab-apn');
+      const tabAndroid = document.getElementById('tab-android');
+      const tabIos = document.getElementById('tab-ios');
       const prev = document.getElementById('prevPage');
       const next = document.getElementById('nextPage');
       const cards = document.getElementById('cards');
@@ -676,6 +716,19 @@
       }
       if(tabDns) tabDns.addEventListener('click',()=> setActive('dns'));
       if(tabWg) tabWg.addEventListener('click',()=> setActive('wg'));
+      function showComingSoon(kind){
+        const titles = { apn: 'APN', android: 'Android Settings', ios: 'iPhone Settings' };
+        const icons = {
+          apn: '<img src="public/apn.svg" alt="" width="46" height="46" style="background:#fff;border-radius:50%;padding:4px"/>',
+          android: '<img src="public/android.svg" alt="" width="46" height="46" style="background:#fff;border-radius:50%;padding:4px"/>',
+          ios: '<img src="public/apple.svg" alt="" width="46" height="46" style="background:#fff;border-radius:50%;padding:4px"/>'
+        };
+        const msg = `<div style="display:flex;align-items:center;gap:.6rem;">${icons[kind]}<div><div style="font-weight:800">به زودی</div><div class="muted">این بخش در حال توسعه است و موقتا غیر فعال می‌باشد.</div></div></div>`;
+        window.showMessage(msg, titles[kind]);
+      }
+      if(tabApn) tabApn.addEventListener('click', ()=> showComingSoon('apn'));
+      if(tabAndroid) tabAndroid.addEventListener('click', ()=> showComingSoon('android'));
+      if(tabIos) tabIos.addEventListener('click', ()=> showComingSoon('ios'));
       if(prev) prev.addEventListener('click',()=>{
         animateSwitch(()=>{
           state.page[state.currentTab] = Math.max(1,(state.page[state.currentTab]||1)-1);
