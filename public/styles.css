@@ -489,3 +489,42 @@ button:hover {
   box-shadow: 0 8px 24px rgba(0,0,0,0.35);
   margin-bottom: 2rem;
 }
+
+/* User balance emphasis */
+#u_balance_row{
+  justify-content: flex-start;
+}
+#u_balance_row .muted{
+  font-size: 14px;               /* slightly larger than default muted (12px) */
+  font-weight: 800;
+  letter-spacing: .2px;
+  color: #ffd27a;                 /* warm accent to draw attention */
+  display: inline-flex;
+  align-items: center;
+  gap: .4rem;
+}
+#u_balance_value{
+  font-size: 1.15rem;            /* modest bump for visibility */
+  font-weight: 900;
+  color: #fff;
+  padding: .2rem .5rem;
+  border-radius: 8px;
+  background: rgba(255,255,255,0.10);
+  border: 1px solid rgba(255,255,255,0.22);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+
+/* Small glassy card for inline Persian notes (keeps original font-size) */
+.glass-note{
+  padding: .6rem .75rem;
+  border-radius: 12px;
+  background: rgba(255,255,255,0.06);
+  border: 1px solid rgba(255,255,255,0.2);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  direction: rtl;
+  unicode-bidi: plaintext;
+  font-family:'Vazirmatn','Poppins',sans-serif; /* Vazirmatn for Persian */
+  line-height: 1.9;
+}
