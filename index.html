@@ -4,16 +4,20 @@
   <meta charset="UTF-8" />
   <meta http-equiv="X-UA-Compatible" content="IE=edge" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Countries Glass Cards</title>
+  <title>Pro TooLs — Countries</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;600&family=Vazirmatn:wght@400;600&display=swap" rel="stylesheet">
+  <link rel="icon" href="Logo/Logo.svg" type="image/svg+xml" />
   <link rel="stylesheet" href="public/styles.css" />
 </head>
 <body>
   <canvas id="bg-net"></canvas>
   <header>
-    <h1>Countries Showcase</h1>
+    <div class="brand">
+      <img class="brand-logo" src="Logo/Logo.svg" alt="Pro TooLs logo" />
+      <span class="brand-name">Pro TooLs</span>
+    </div>
     <div class="actions">
       <a href="public/admin.html" class="admin-btn"><span class="btn-ico" aria-hidden="true">
         <!-- Lucide settings cog icon -->
@@ -639,18 +643,49 @@
       const tabWg = document.getElementById('tab-wg');
       const prev = document.getElementById('prevPage');
       const next = document.getElementById('nextPage');
-      function setActive(tab){
-        state.currentTab = tab;
-        if(tabDns&&tabWg){
-          if(tab==='dns'){ tabDns.classList.add('active'); tabDns.setAttribute('aria-selected','true'); tabWg.classList.remove('active'); tabWg.setAttribute('aria-selected','false'); }
-          else { tabWg.classList.add('active'); tabWg.setAttribute('aria-selected','true'); tabDns.classList.remove('active'); tabDns.setAttribute('aria-selected','false'); }
+      const cards = document.getElementById('cards');
+
+      async function animateSwitch(fn){
+        if(cards){
+          cards.classList.add('fade-out');
+          await new Promise(r=>setTimeout(r, 160));
         }
-        renderPage();
+        try{ fn && fn(); }catch(_e){}
+        if(cards){
+          // trigger next frame for smoother transition
+          requestAnimationFrame(()=>{
+            cards.classList.remove('fade-out');
+            cards.classList.add('fade-in');
+            setTimeout(()=> cards.classList.remove('fade-in'), 260);
+          });
+        }
+      }
+      function setActive(tab){
+        animateSwitch(()=>{
+          state.currentTab = tab;
+          if(tabDns&&tabWg){
+            if(tab==='dns'){ tabDns.classList.add('active'); tabDns.setAttribute('aria-selected','true'); tabWg.classList.remove('active'); tabWg.setAttribute('aria-selected','false'); }
+            else { tabWg.classList.add('active'); tabWg.setAttribute('aria-selected','true'); tabDns.classList.remove('active'); tabDns.setAttribute('aria-selected','false'); }
+          }
+          renderPage();
+        });
       }
       if(tabDns) tabDns.addEventListener('click',()=> setActive('dns'));
       if(tabWg) tabWg.addEventListener('click',()=> setActive('wg'));
-      if(prev) prev.addEventListener('click',()=>{ state.page[state.currentTab] = Math.max(1,(state.page[state.currentTab]||1)-1); renderPage(); });
-      if(next) next.addEventListener('click',()=>{ const list = state.data[state.currentTab]||[]; const total = Math.max(1, Math.ceil(list.length/pageSize)); state.page[state.currentTab] = Math.min(total,(state.page[state.currentTab]||1)+1); renderPage(); });
+      if(prev) prev.addEventListener('click',()=>{
+        animateSwitch(()=>{
+          state.page[state.currentTab] = Math.max(1,(state.page[state.currentTab]||1)-1);
+          renderPage();
+        });
+      });
+      if(next) next.addEventListener('click',()=>{
+        animateSwitch(()=>{
+          const list = state.data[state.currentTab]||[];
+          const total = Math.max(1, Math.ceil(list.length/pageSize));
+          state.page[state.currentTab] = Math.min(total,(state.page[state.currentTab]||1)+1);
+          renderPage();
+        });
+      });
     })();
     </script>
   <script src="public/net.js"></script>

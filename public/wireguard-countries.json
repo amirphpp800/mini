@@ -1,17 +1,37 @@
 [
-  { "name": "England", "faName": "انگلیس", "code": "gb" },
-  { "name": "Germany", "faName": "آلمان", "code": "de" },
-  { "name": "Netherlands", "faName": "هلند", "code": "nl" },
-  { "name": "France", "faName": "فرانسه", "code": "fr" },
-  { "name": "Canada", "faName": "کانادا", "code": "ca" },
-  { "name": "United States", "faName": "آمریکا", "code": "us" },
-  { "name": "Japan", "faName": "ژاپن", "code": "jp" },
-  { "name": "Singapore", "faName": "سنگاپور", "code": "sg" },
-  { "name": "Turkey", "faName": "ترکیه", "code": "tr" },
-  { "name": "Qatar", "faName": "قطر", "code": "qa" },
-  { "name": "United Arab Emirates", "faName": "امارات", "code": "ae" },
-  { "name": "Bahrain", "faName": "بحرین", "code": "bh" },
-  { "name": "Sweden", "faName": "سوئد", "code": "se" },
-  { "name": "Italy", "faName": "ایتالیا", "code": "it" },
-  { "name": "Finland", "faName": "فنلاند", "code": "fi" }
+    {
+        "name": "United Arab Emirates",
+        "faName": "امارات",
+        "code": "ae"
+    },
+    {
+        "name": "Algeria",
+        "faName": "الجزایر",
+        "code": "dz"
+    },
+    {
+        "name": "Hong Kong",
+        "faName": "هنگ کنگ",
+        "code": "hk"
+    },
+    {
+        "name": "France",
+        "faName": "فرانسه",
+        "code": "fr"
+    },
+    {
+        "name": "Canada",
+        "faName": "کانادا",
+        "code": "ca"
+    },
+    {
+        "name": "Belgium",
+        "faName": "بلژیک",
+        "code": "be"
+    },
+    {
+        "name": "Denmark",
+        "faName": "دانمارک",
+        "code": "dk"
+    }
 ]
