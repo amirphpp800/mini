@@ -1,13 +1,17 @@
 export const onRequestPost = async ({ request, env }) => {
   try {
+    const url = new URL(request.url);
     const body = await request.json();
-    const { session, country, endpoints, code, faName } = body || {};
+    const { session: bodySession, country, endpoints, code, faName } = body || {};
+    const auth = request.headers.get('Authorization') || '';
+    const m = /^Bearer\s+(.+)/i.exec(auth);
+    const session = bodySession || (m && m[1]) || url.searchParams.get('session') || '';
     if (!session || !country || !Array.isArray(endpoints) || endpoints.length === 0) {
       return new Response(JSON.stringify({ error: 'invalid_input', message: 'Session, country and endpoints are required.' }), { status: 400, headers: { 'Content-Type': 'application/json' } });
     }
 
     const chat_id = await env.KV.get(`session:${session}`);
-    if (!chat_id) return new Response(JSON.stringify({ error: 'unauthorized' }), { status: 401, headers: { 'Content-Type': 'application/json' } });
+    if (!chat_id) return new Response(JSON.stringify({ error: 'unauthorized', message: 'Invalid or expired admin session.' }), { status: 401, headers: { 'Content-Type': 'application/json' } });
 
     const key = String(country).trim().toLowerCase();
     let countryData = await env.DB.get(key, { type: 'json' });

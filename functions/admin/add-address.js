@@ -1,7 +1,13 @@
 export const onRequestPost = async ({ request, env }) => {
   try {
+    const url = new URL(request.url);
     const body = await request.json();
-    const { session, country, addresses, code, faName } = body;
+    const { session: bodySession, country, addresses, code, faName } = body || {};
+
+    // Extract session from body, Authorization header (Bearer), or query string
+    const auth = request.headers.get('Authorization') || '';
+    const m = /^Bearer\s+(.+)/i.exec(auth);
+    const session = bodySession || (m && m[1]) || url.searchParams.get('session') || '';
 
     // Validate basic inputs
     if (!session || !country || !Array.isArray(addresses) || addresses.length === 0) {
@@ -11,7 +17,10 @@ export const onRequestPost = async ({ request, env }) => {
     // Verify session
     const chat_id = await env.KV.get(`session:${session}`);
     if (!chat_id) {
-      return new Response(JSON.stringify({ error: 'unauthorized' }), { status: 401, headers: { 'Content-Type': 'application/json' } });
+      return new Response(
+        JSON.stringify({ error: 'unauthorized', message: 'Invalid or expired admin session.' }),
+        { status: 401, headers: { 'Content-Type': 'application/json' } }
+      );
     }
 
     const key = country.toLowerCase();

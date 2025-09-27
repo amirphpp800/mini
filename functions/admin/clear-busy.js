@@ -1,19 +1,23 @@
 export const onRequestPost = async ({ request, env }) => {
   try {
+    const url = new URL(request.url);
     const body = await request.json();
-    const { session, country } = body || {};
-    if (!session || !country) return new Response('Invalid input', { status: 400 });
+    const { session: bodySession, country } = body || {};
+    const auth = request.headers.get('Authorization') || '';
+    const m = /^Bearer\s+(.+)/i.exec(auth);
+    const session = bodySession || (m && m[1]) || url.searchParams.get('session') || '';
+    if (!session || !country) return new Response(JSON.stringify({ error: 'invalid_input' }), { status: 400, headers: { 'Content-Type': 'application/json' } });
 
     const chat_id = await env.KV.get(`session:${session}`);
-    if (!chat_id) return new Response('Unauthorized', { status: 401 });
+    if (!chat_id) return new Response(JSON.stringify({ error: 'unauthorized' }), { status: 401, headers: { 'Content-Type': 'application/json' } });
 
     const key = String(country).trim().toLowerCase();
-    if (!key) return new Response('Invalid country', { status: 400 });
+    if (!key) return new Response(JSON.stringify({ error: 'invalid_country' }), { status: 400, headers: { 'Content-Type': 'application/json' } });
 
     await env.KV.delete(`ips_busy:${key}`).catch(() => {});
 
-    return new Response('Cleared', { status: 200 });
+    return new Response(JSON.stringify({ ok: true }), { status: 200, headers: { 'Content-Type': 'application/json' } });
   } catch (e) {
-    return new Response('Error', { status: 500 });
+    return new Response(JSON.stringify({ error: 'server_error' }), { status: 500, headers: { 'Content-Type': 'application/json' } });
   }
 };
