@@ -14,17 +14,30 @@
   <canvas id="bg-net"></canvas>
   <header>
     <h1>Countries Showcase</h1>
-    <a href="public/admin.html" class="admin-btn">Admin Panel</a>
     <div class="actions">
-      <button id="openSignup" class="primary-btn">Create Account</button>
+      <a href="public/admin.html" class="admin-btn"><span class="btn-ico" aria-hidden="true">
+        <!-- Lucide settings cog icon -->
+        <svg xmlns="http://www.w3.org/2000/svg" width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#f6c454" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 9a3 3 0 1 0 0 6 3 3 0 0 0 0-6"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09a1.65 1.65 0 0 0-1-1.51 1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09a1.65 1.65 0 0 0 1.51-1 1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9c.7 0 1.27.3 1.51 1H21a2 2 0 1 1 0 4h-.09c-.24.7-.81 1-1.51 1Z"/></svg>
+      </span>Admin Panel</a>
+      <button id="openSignup" class="primary-btn accent-btn"><span class="btn-ico" aria-hidden="true">
+        <!-- Lucide user-round icon -->
+        <svg xmlns="http://www.w3.org/2000/svg" width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 20a6 6 0 0 0-12 0"/><circle cx="12" cy="10" r="4"/></svg>
+      </span><span id="openSignupLabel">Create Account</span></button>
     </div>
   </header>
+  <div class="tabs" role="tablist" aria-label="Dataset Tabs">
+    <button class="tab active" id="tab-dns" role="tab" aria-selected="true" aria-controls="panel-dns"><img src="public/dns.png" alt="" aria-hidden="true"/> DNS</button>
+    <button class="tab" id="tab-wg" role="tab" aria-selected="false" aria-controls="panel-wg"><img src="public/wireguard.svg" alt="" aria-hidden="true"/> Wireguard Endpoint</button>
+  </div>
   <div class="modal-overlay" id="accOverlay"></div>
   <div class="modal-container" id="accModal">
     <section id="account" class="account-panel" role="dialog" aria-modal="true" aria-labelledby="accTitle">
       <button class="modal-close" id="closeSignup" aria-label="Close">×</button>
       <h2 id="accTitle">User Account</h2>
       <div class="status-line" id="accStatus">Checking status...</div>
+      <div class="row" id="u_balance_row" style="display:none">
+        <div class="muted">Balance: <span id="u_balance_value">$0.00</span></div>
+      </div>
       <div class="row" id="u_tg_row">
         <a class="tg-btn" href="tg://resolve?domain=minidnsverify_bot">Start Telegram Bot</a>
       </div>
@@ -83,6 +96,11 @@
     </div>
   </div>
   <main id="cards"></main>
+  <div class="pagination" id="pagination">
+    <button class="page-btn" id="prevPage">Prev</button>
+    <span class="page-info" id="pageInfo">Page 1 / 1</span>
+    <button class="page-btn" id="nextPage">Next</button>
+  </div>
   <script>
     // --- Error modal helper ---
     (function(){
@@ -146,147 +164,154 @@
       return map[key] || '';
     }
     const isLocal = /^(localhost|127\.0\.0\.1)/.test(location.hostname);
-    async function loadCountries() {
-      try {
-        let data;
-        // Always try dynamic endpoint first, then fallback to local file in both local and production
-        try {
-          const res = await fetch('/countries');
-          if (res.ok) {
-            data = await res.json();
-          } else {
-            throw new Error('fallback to local');
-          }
-        } catch (e) {
-          const resLocal = await fetch('public/countries.json');
-          data = await resLocal.json();
+    // Tab and pagination state
+    const pageSize = 14;
+    const state = {
+      currentTab: 'dns',
+      page: { dns: 1, wg: 1 },
+      data: { dns: [], wg: [] }
+    };
+
+    async function fetchDataset(kind){
+      try{
+        // Try dynamic endpoints first for DNS; for WG keep static for now
+        if(kind==='dns'){
+          try{
+            const r = await fetch('/countries');
+            if(r.ok) return await r.json();
+          }catch(_){/* fallthrough */}
+          const rl = await fetch('public/countries.json');
+          return await rl.json();
+        } else {
+          try{
+            const r2 = await fetch('/wireguard-countries');
+            if(r2.ok) return await r2.json();
+          }catch(_){/* fallthrough */}
+          const rl2 = await fetch('public/wireguard-countries.json');
+          return await rl2.json();
         }
-        const container = document.getElementById('cards');
-        container.innerHTML = '';
-        data.forEach(c => {
-          const card = document.createElement('div');
-          card.className = 'glass-card';
+      }catch(e){ return []; }
+    }
 
-          // Flag element: use FlagCDN with ISO 3166-1 alpha-2 code
-          const code = String((c && c.code) || '').toLowerCase() || 'gb';
-          const img = new Image();
-          img.alt = `${c.name} flag`;
-          img.loading = 'lazy';
-          img.src = `https://flagcdn.com/w160/${code}.png`;
-          img.srcset = `https://flagcdn.com/w320/${code}.png 2x`;
-          img.referrerPolicy = 'no-referrer';
-          img.className = 'flag-img';
-          card.appendChild(img);
+    function renderPage(){
+      const list = state.data[state.currentTab] || [];
+      const totalPages = Math.max(1, Math.ceil(list.length / pageSize));
+      let page = state.page[state.currentTab] || 1;
+      if(page>totalPages) page = totalPages; if(page<1) page = 1; state.page[state.currentTab]=page;
 
-          // Title (EN) and subtitle (FA)
-          const title = document.createElement('h2');
-          title.textContent = c.name || '';
-          card.appendChild(title);
-          const sub = document.createElement('div');
-          sub.className = 'subtitle-fa';
-          sub.textContent = c.faName || nameToFa(c.name) || '';
-          if (sub.textContent) card.appendChild(sub);
+      const start = (page-1)*pageSize;
+      const slice = list.slice(start, start + pageSize);
+      const container = document.getElementById('cards');
+      container.innerHTML = '';
 
-          // Counters
-          const counters = document.createElement('div');
-          counters.className = 'counters';
-          counters.innerHTML = `
-              <div class="count total"><div class="num">0</div><div class="lbl-en">Total IPs</div></div>
-              <div class="count free"><div class="num">0</div><div class="lbl-en">Free</div></div>
-              <div class="count busy"><div class="num">0</div><div class="lbl-en">Busy</div></div>`;
-          card.appendChild(counters);
-
-          // Button
-          const btn = document.createElement('button');
-          btn.className = 'get-btn';
-          btn.textContent = 'Get Addresses';
-          btn.addEventListener('click', async ()=>{
-            const session = localStorage.getItem('userSession');
-            if(!session){
-              // Open signup modal for smoother UX
-              if (window.openSignupModal) window.openSignupModal();
-              else window.showError('Please verify your account first.');
-              return;
-            }
-            try{
-              const r = await fetch(`/addresses/${(c.name||'').toLowerCase()}`,{
-                headers:{ 'Authorization': `Bearer ${session}` }
-              });
-              if(!r.ok){
-                if(r.status===401||r.status===403){
-                  window.showError('Your session is invalid or unverified. Please verify again.');
-                } else {
-                  window.showError('Failed to fetch addresses');
-                }
-                return;
-              }
-              const { addresses=[] } = await r.json();
-              if(addresses.length===0){
-                window.showError('No addresses available yet.');
-                return;
-              }
-              if(window.showAddressModal) window.showAddressModal(addresses);
-              // Save to local history for the user
-              try{
-                const key = 'userAddrHistory';
-                const hist = JSON.parse(localStorage.getItem(key) || '[]');
-                const entry = { country: c.name, count: addresses.length, addresses, ts: Date.now() };
-                hist.unshift(entry);
-                // keep last 20 entries max
-                localStorage.setItem(key, JSON.stringify(hist.slice(0,20)));
-                if(window.renderUserHistory) window.renderUserHistory();
-              }catch(_e){}
-            }catch(e){
-              console.error(e);
-              window.showError('Network error while fetching addresses');
-            }
-          });
-          card.appendChild(btn);
-
-          container.appendChild(card);
-          // fetch stats (skip in local static mode)
-          async function loadStats(){
-            try{
-              if(isLocal) return; 
-              const r=await fetch(`/stats/${c.name}`);
-              if(r.ok){
-                const s=await r.json();
-                card.querySelector('.total .num').textContent=s.total;
-                card.querySelector('.free .num').textContent=s.free;
-                card.querySelector('.busy .num').textContent=s.busy;
-              }
-            }catch(e){}
-          }
-          loadStats();
-          if(!isLocal) setInterval(loadStats,30000);
-        });
-      } catch (err) {
-        console.error(err);
-        // Fallback: show a default country card if everything fails
-        const container = document.getElementById('cards');
-        container.innerHTML = '';
-        const fallback = { name:'England', faName:'انگلیس', code:'gb' };
+      slice.forEach(c => {
         const card = document.createElement('div');
         card.className = 'glass-card';
-        const code = 'gb';
+        const code = String((c && c.code) || '').toLowerCase() || 'gb';
         const img = new Image();
-        img.alt = `${fallback.name} flag`;
+        img.alt = `${c.name} flag`;
         img.loading = 'lazy';
         img.src = `https://flagcdn.com/w160/${code}.png`;
         img.srcset = `https://flagcdn.com/w320/${code}.png 2x`;
         img.referrerPolicy = 'no-referrer';
         img.className = 'flag-img';
         card.appendChild(img);
-        const h2=document.createElement('h2');h2.textContent=fallback.name;card.appendChild(h2);
-        const sub=document.createElement('div');sub.className='subtitle-fa';sub.textContent=fallback.faName;card.appendChild(sub);
+
+        const title = document.createElement('h2');
+        title.textContent = c.name || '';
+        card.appendChild(title);
+        const sub = document.createElement('div');
+        sub.className = 'subtitle-fa';
+        sub.textContent = c.faName || nameToFa(c.name) || '';
+        if (sub.textContent) card.appendChild(sub);
+
+        const counters = document.createElement('div');
+        counters.className = 'counters';
+        counters.innerHTML = `
+            <div class="count total"><div class="num">0</div><div class="lbl-en">Total IPs</div></div>
+            <div class="count free"><div class="num">0</div><div class="lbl-en">Free</div></div>
+            <div class="count busy"><div class="num">0</div><div class="lbl-en">Busy</div></div>`;
+        card.appendChild(counters);
+
+        const btn = document.createElement('button');
+        btn.className = 'get-btn';
+        btn.textContent = state.currentTab==='dns' ? 'Get Addresses' : 'Get Endpoints';
+        btn.addEventListener('click', async ()=>{
+          const session = localStorage.getItem('userSession');
+          if(!session){
+            if (window.openSignupModal) window.openSignupModal();
+            else window.showError('Please verify your account first.');
+            return;
+          }
+          try{
+            const path = state.currentTab==='dns' ? `/addresses/${(c.name||'').toLowerCase()}` : `/wg/${(c.name||'').toLowerCase()}`;
+            const r = await fetch(path, { headers:{ 'Authorization': `Bearer ${session}` } });
+            if(!r.ok){
+              if(r.status===401||r.status===403){
+                window.showError('Your session is invalid or unverified. Please verify again.');
+              } else {
+                window.showError('Failed to fetch addresses');
+              }
+              return;
+            }
+            const { addresses=[] } = await r.json();
+            if(addresses.length===0){ window.showError('No addresses available yet.'); return; }
+            if(window.showAddressModal) window.showAddressModal(addresses);
+            try{
+              const key = 'userAddrHistory';
+              const hist = JSON.parse(localStorage.getItem(key) || '[]');
+              const entry = { country: c.name, count: addresses.length, addresses, ts: Date.now(), type: state.currentTab };
+              hist.unshift(entry);
+              localStorage.setItem(key, JSON.stringify(hist.slice(0,20)));
+              if(window.renderUserHistory) window.renderUserHistory();
+            }catch(_e){}
+          }catch(e){ console.error(e); window.showError('Network error while fetching addresses'); }
+        });
+        card.appendChild(btn);
+
         container.appendChild(card);
+
+        // stats per country (skip local)
+        async function loadStats(){
+          try{
+            if(isLocal) return;
+            const endpoint = state.currentTab==='dns' ? `/stats/${c.name}` : `/wg-stats/${c.name}`;
+            const r=await fetch(endpoint);
+            if(r.ok){
+              const s=await r.json();
+              card.querySelector('.total .num').textContent=s.total;
+              card.querySelector('.free .num').textContent=s.free;
+              card.querySelector('.busy .num').textContent=s.busy;
+            }
+          }catch(e){}
+        }
+        loadStats();
+        if(!isLocal) setInterval(loadStats,30000);
+      });
+
+      // update pagination UI
+      const prev = document.getElementById('prevPage');
+      const next = document.getElementById('nextPage');
+      const info = document.getElementById('pageInfo');
+      if(prev&&next&&info){
+        info.textContent = `Page ${page} / ${totalPages}`;
+        prev.disabled = page<=1;
+        next.disabled = page>=totalPages;
       }
     }
-    loadCountries();
+
+    async function initDatasets(){
+      state.data.dns = await fetchDataset('dns');
+      try{ state.data.wg = await fetchDataset('wg'); }catch(_){ state.data.wg = []; }
+      renderPage();
+    }
+    initDatasets();
     // --- User account logic ---
     (function(){
       const isLocal = /^(localhost|127\.0\.0\.1)/.test(location.hostname);
       const statusEl = document.getElementById('accStatus');
+      const balRow = document.getElementById('u_balance_row');
+      const balVal = document.getElementById('u_balance_value');
       const chatEl = document.getElementById('u_chat_id');
       const sendBtn = document.getElementById('u_send');
       const otpRow = document.getElementById('u_otp_row');
@@ -297,6 +322,7 @@
       const histWrap = document.getElementById('u_history_wrap');
       const histList = document.getElementById('u_history');
       const openBtn = document.getElementById('openSignup');
+      const openLabel = document.getElementById('openSignupLabel');
       const tgRow = document.getElementById('u_tg_row');
       const chatRow = document.getElementById('u_chat_row');
       const tgHint = document.getElementById('u_tg_hint');
@@ -314,6 +340,17 @@
             if(idVal) idVal.textContent = '';
           }
         }catch(_){ if(idVal) idVal.textContent=''; }
+        // Load balance
+        try{
+          const rb = await fetch('/user/balance', { headers:{ 'Authorization': `Bearer ${session}` } });
+          if(rb.ok){
+            const { balance } = await rb.json();
+            if(balVal) balVal.textContent = `$${balance}`;
+            if(balRow) balRow.style.display='flex';
+          } else {
+            if(balRow) balRow.style.display='none';
+          }
+        }catch(_e){ if(balRow) balRow.style.display='none'; }
       }
 
       async function renderLogged(){
@@ -322,7 +359,7 @@
           loggedRow.style.display='flex';
           otpRow.style.display='none';
           histWrap.style.display='block';
-          if(openBtn){ openBtn.textContent = 'Dashboard'; }
+          if(openLabel){ openLabel.textContent = 'Dashboard'; }
           // hide onboarding rows when logged in
           if(tgRow) tgRow.style.display='none';
           if(chatRow) chatRow.style.display='none';
@@ -332,13 +369,14 @@
         } else {
           loggedRow.style.display='none';
           histWrap.style.display='none';
-          if(openBtn){ openBtn.textContent = 'Create Account'; }
+          if(openLabel){ openLabel.textContent = 'Create Account'; }
           // show onboarding rows when logged out
           if(tgRow) tgRow.style.display='flex';
           if(chatRow) chatRow.style.display='flex';
           if(tgHint) tgHint.style.display='block';
           if(idRow) idRow.style.display='none';
           if(idVal) idVal.textContent = '';
+          if(balRow) balRow.style.display='none';
         }
       }
 
@@ -501,6 +539,25 @@
       if(closeBtn) closeBtn.addEventListener('click', close);
       if(overlay) overlay.addEventListener('click', close);
       document.addEventListener('keydown', (e)=>{ if(e.key==='Escape') close(); });
+    })();
+    // Tabs & Pagination wiring
+    (function(){
+      const tabDns = document.getElementById('tab-dns');
+      const tabWg = document.getElementById('tab-wg');
+      const prev = document.getElementById('prevPage');
+      const next = document.getElementById('nextPage');
+      function setActive(tab){
+        state.currentTab = tab;
+        if(tabDns&&tabWg){
+          if(tab==='dns'){ tabDns.classList.add('active'); tabDns.setAttribute('aria-selected','true'); tabWg.classList.remove('active'); tabWg.setAttribute('aria-selected','false'); }
+          else { tabWg.classList.add('active'); tabWg.setAttribute('aria-selected','true'); tabDns.classList.remove('active'); tabDns.setAttribute('aria-selected','false'); }
+        }
+        renderPage();
+      }
+      if(tabDns) tabDns.addEventListener('click',()=> setActive('dns'));
+      if(tabWg) tabWg.addEventListener('click',()=> setActive('wg'));
+      if(prev) prev.addEventListener('click',()=>{ state.page[state.currentTab] = Math.max(1,(state.page[state.currentTab]||1)-1); renderPage(); });
+      if(next) next.addEventListener('click',()=>{ const list = state.data[state.currentTab]||[]; const total = Math.max(1, Math.ceil(list.length/pageSize)); state.page[state.currentTab] = Math.min(total,(state.page[state.currentTab]||1)+1); renderPage(); });
     })();
     </script>
   <script src="public/net.js"></script>

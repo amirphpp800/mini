@@ -44,6 +44,10 @@
   </div>
 
   <form id="countryForm" style="display:none">
+    <div class="tabs" role="tablist" aria-label="Admin Dataset Mode" style="margin-bottom:.75rem;">
+      <button type="button" class="tab active" id="mode-dns" role="tab" aria-selected="true">DNS</button>
+      <button type="button" class="tab" id="mode-wg" role="tab" aria-selected="false">Wireguard Endpoints</button>
+    </div>
     <div class="form-grid">
       <div class="form-col">
         <label class="lbl" for="countrySelect">انتخاب کشور (در صورت موجود بودن)</label>
@@ -74,13 +78,30 @@
       <div id="prevList" class="muted" style="margin-top:.25rem;max-height:160px;overflow:auto;display:none;"></div>
     </div>
 
-    <label class="lbl" for="addresses">آدرس‌های IPv4 (هر خط یک آدرس)</label>
+    <label class="lbl" for="addresses" id="addrLabel">آدرس‌های IPv4 (هر خط یک آدرس)</label>
     <textarea id="addresses" placeholder="45.153.38.148\n46.33.136.18\n86.104.12.89\n45.14.247.217" required></textarea>
     <div id="ipHelper" class="muted" style="margin-top:.25rem"></div>
 
     <div class="row end">
       <button type="button" id="deleteBtn" class="danger-btn" style="margin-inline-end:auto">Delete</button>
       <button type="submit">Add / Update</button>
+    </div>
+
+    <hr style="margin:1.25rem 0; border:none; border-top:1px solid rgba(255,255,255,0.15)">
+
+    <h3 style="margin:.25rem 0 .5rem;">مدیریت موجودی (USD)</h3>
+    <div class="form-grid">
+      <div class="form-col">
+        <label class="lbl" for="bal_chat">chat_id کاربر (عددی)</label>
+        <input type="number" id="bal_chat" placeholder="مثال: 123456789" />
+      </div>
+      <div class="form-col">
+        <label class="lbl" for="bal_delta">تغییر موجودی (به دلار؛ منفی برای کسر)</label>
+        <input type="number" id="bal_delta" placeholder="مثال: 10.00 یا -5.25" step="0.01" />
+      </div>
+    </div>
+    <div class="row end" style="margin-top:.5rem">
+      <button type="button" id="bal_apply">اعمال تغییر موجودی</button>
     </div>
   </form>
   </div>
@@ -121,6 +142,10 @@
   const lblCode = document.getElementById('lblCode');
   const lblFa = document.getElementById('lblFa');
   const addrEl = document.getElementById('addresses');
+  const addrLabel = document.getElementById('addrLabel');
+  const modeDnsBtn = document.getElementById('mode-dns');
+  const modeWgBtn = document.getElementById('mode-wg');
+  let adminMode = 'dns'; // 'dns' | 'wg'
   let countriesCache = [];
   // Preview elements
   const prevWrap = document.getElementById('countryPreview');
@@ -217,28 +242,28 @@
         countryForm.style.display='block';
         // populate countries select
         await populateCountries();
+        // notify owner about admin login
+        try{ await fetch('/admin/notify-login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({session})}); }catch(_e){}
       }else window.showError('Verification failed');
     });
 
     // --- Add country form logic ---
     document.getElementById('countryForm').addEventListener('submit', async (e) => {
       e.preventDefault();
-      const body = {
-        session: localStorage.getItem('adminSession'),
-        country: selEl.value.trim() || nameEl.value.trim(),
-        code: codeEl.value.trim(),
-        faName: faEl.value.trim(),
-        addresses: addrEl.value.split('\n').map(s=>s.trim()).filter(Boolean)
-      };
+      const country = selEl.value.trim() || nameEl.value.trim();
+      const base = { session: localStorage.getItem('adminSession'), country, code: codeEl.value.trim(), faName: faEl.value.trim() };
+      const lines = addrEl.value.split('\n').map(s=>s.trim()).filter(Boolean);
+      const body = adminMode==='dns' ? { ...base, addresses: lines } : { ...base, endpoints: lines };
       try {
-        const res = await fetch('/admin/add-address', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+        const url = adminMode==='dns' ? '/admin/add-address' : '/admin/wg-add';
+        const res = await fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
         if(res.ok){
           alert('Added!');
           e.target.reset();
           await populateCountries();
           updateFormMode();
         } else {
-          window.showError('Error adding country');
+          window.showError('Error adding entries');
         }
       } catch(err){
         console.error(err);
@@ -335,14 +360,15 @@
         prevFlag.style.display='none';
       }
       prevWrap.style.display='block';
-      // load stats automatically
+      // load stats automatically for current mode
       loadStatsFor(sel).catch(()=>{});
     }
 
     async function loadStatsFor(countryName){
       try{
         if(!countryName){ prevStats.textContent=''; return; }
-        const r = await fetch(`/stats/${countryName}`);
+        const endpoint = adminMode==='dns' ? `/stats/${countryName}` : `/wg-stats/${countryName}`;
+        const r = await fetch(endpoint);
         if(r.ok){
           const s = await r.json();
           prevStats.textContent = `Total: ${s.total} | Free: ${s.free} | Busy: ${s.busy}`;
@@ -358,7 +384,8 @@
       if(!country){ window.showError('ابتدا کشور را انتخاب یا وارد کنید'); return; }
       try{
         const body = { session: localStorage.getItem('adminSession'), country };
-        const r = await fetch('/admin/list-addresses', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(body) });
+        const url = adminMode==='dns' ? '/admin/list-addresses' : '/admin/wg-list';
+        const r = await fetch(url, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(body) });
         if(r.ok){
           const { addresses=[] } = await r.json();
           prevList.style.display='block';
@@ -374,7 +401,8 @@
       if(!confirm('لیست Busy برای این کشور پاک شود؟')) return;
       try{
         const body = { session: localStorage.getItem('adminSession'), country };
-        const r = await fetch('/admin/clear-busy', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(body) });
+        const url = adminMode==='dns' ? '/admin/clear-busy' : '/admin/wg-clear-busy';
+        const r = await fetch(url, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(body) });
         if(r.ok){
           alert('Busy cleared');
           await loadStatsFor(country);
@@ -382,25 +410,56 @@
       }catch(_){ window.showError('Network error'); }
     });
 
-    // --- Client-side IPv4 validation & dedup ---
+    // --- Client-side validation & dedup ---
     const ipv4Regex = /^(25[0-5]|2[0-4]\d|[01]?\d\d?)\.(25[0-5]|2[0-4]\d|[01]?\d\d?)\.(25[0-5]|2[0-4]\d|[01]?\d\d?)\.(25[0-5]|2[0-4]\d|[01]?\d\d?)$/;
-    function analyzeIPs(){
+    const ipPortRegex = /^(?:25[0-5]|2[0-4]\d|[01]?\d\d?)\.(?:25[0-5]|2[0-4]\d|[01]?\d\d?)\.(?:25[0-5]|2[0-4]\d|[01]?\d\d?)\.(?:25[0-5]|2[0-4]\d|[01]?\d\d?):(\d{1,5})$/;
+    function analyzeEntries(){
       const raw = addrEl.value.split(/\n+/).map(s=>s.trim()).filter(Boolean);
       const valid = [];
       const invalid = [];
       const seen = new Set();
-      for(const s of raw){ if(ipv4Regex.test(s)){ if(!seen.has(s)){ seen.add(s); valid.push(s); } } else { invalid.push(s); } }
-      ipHelper.innerHTML = `Valid: <b>${valid.length}</b> | Invalid: <b>${invalid.length}</b> | Unique: <b>${valid.length}</b> <button type="button" id="btnClean" style="margin-inline-start:.5rem">Clean duplicates</button>`;
+      for(const s of raw){
+        if(adminMode==='dns'){
+          if(ipv4Regex.test(s)){ if(!seen.has(s)){ seen.add(s); valid.push(s); } } else { invalid.push(s); }
+        } else {
+          const m = ipPortRegex.exec(s);
+          const port = m ? Number(m[1]) : 0;
+          if(m && port>=1 && port<=65535){ if(!seen.has(s)){ seen.add(s); valid.push(s); } } else { invalid.push(s); }
+        }
+      }
+      const label = adminMode==='dns' ? 'IPv4' : 'IP:PORT';
+      ipHelper.innerHTML = `Valid ${label}: <b>${valid.length}</b> | Invalid: <b>${invalid.length}</b> | Unique: <b>${valid.length}</b> <button type="button" id="btnClean" style="margin-inline-start:.5rem">Clean duplicates</button>`;
       const btn = document.getElementById('btnClean');
-      if(btn){ btn.onclick = ()=>{ addrEl.value = valid.join('\n'); analyzeIPs(); } }
+      if(btn){ btn.onclick = ()=>{ addrEl.value = valid.join('\n'); analyzeEntries(); } }
       return { valid, invalid };
     }
-    addrEl.addEventListener('input', analyzeIPs);
+    addrEl.addEventListener('input', analyzeEntries);
     // guard submit
     document.getElementById('countryForm').addEventListener('submit', (e)=>{
-      const { valid } = analyzeIPs();
-      if(valid.length === 0){ e.preventDefault(); window.showError('حداقل یک IPv4 معتبر وارد کنید'); }
+      const { valid } = analyzeEntries();
+      if(valid.length === 0){ e.preventDefault(); window.showError(adminMode==='dns' ? 'حداقل یک IPv4 معتبر وارد کنید' : 'حداقل یک Endpoint معتبر (IP:PORT) وارد کنید'); }
     }, { capture: true });
+
+    // Mode switching
+    function setAdminMode(mode){
+      adminMode = mode;
+      if(mode==='dns'){
+        if(modeDnsBtn){ modeDnsBtn.classList.add('active'); modeDnsBtn.setAttribute('aria-selected','true'); }
+        if(modeWgBtn){ modeWgBtn.classList.remove('active'); modeWgBtn.setAttribute('aria-selected','false'); }
+        addrLabel.textContent = 'آدرس‌های IPv4 (هر خط یک آدرس)';
+        addrEl.placeholder = '45.153.38.148\n46.33.136.18\n86.104.12.89';
+      } else {
+        if(modeWgBtn){ modeWgBtn.classList.add('active'); modeWgBtn.setAttribute('aria-selected','true'); }
+        if(modeDnsBtn){ modeDnsBtn.classList.remove('active'); modeDnsBtn.setAttribute('aria-selected','false'); }
+        addrLabel.textContent = 'Wireguard Endpoints — IP:PORT (هر خط یک Endpoint)';
+        addrEl.placeholder = '203.0.113.10:51820\n198.51.100.22:443\n192.0.2.7:12345';
+      }
+      analyzeEntries();
+      const sel = selEl.value.trim();
+      if(sel) loadStatsFor(sel).catch(()=>{});
+    }
+    if(modeDnsBtn) modeDnsBtn.addEventListener('click', ()=> setAdminMode('dns'));
+    if(modeWgBtn) modeWgBtn.addEventListener('click', ()=> setAdminMode('wg'));
 
     // Auto-init admin session UI
     (async function initAdmin(){
@@ -410,7 +469,34 @@
         countryForm.style.display='block';
         await populateCountries();
         updateFormMode();
+        // notify owner silently if admin reopened panel (optional)
+        try{ await fetch('/admin/notify-login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({session:ses})}); }catch(_e){}
       }
+    })();
+
+    // Balance management wiring
+    (function(){
+      const btn = document.getElementById('bal_apply');
+      const chat = document.getElementById('bal_chat');
+      const delta = document.getElementById('bal_delta');
+      if(btn) btn.addEventListener('click', async ()=>{
+        const s = localStorage.getItem('adminSession');
+        const target_chat_id = chat.value.trim();
+        const d = parseFloat(delta.value);
+        if(!s) return window.showError('Admin session missing');
+        if(!target_chat_id) return window.showError('chat_id کاربر را وارد کنید');
+        if(!Number.isFinite(d)) return window.showError('مقدار تغییر موجودی نامعتبر است');
+        try{
+          const r = await fetch('/admin/balance-update',{method:'POST',headers:{'Content-Type':'application/json'},body: JSON.stringify({session:s, target_chat_id, delta:d})});
+          if(r.ok){
+            const j = await r.json();
+            alert(`Balance updated.\nPrev: ${j.prev}$\nNext: ${j.next}$`);
+            delta.value='';
+          } else {
+            window.showError('Failed to update balance');
+          }
+        }catch(_){ window.showError('Network error'); }
+      });
     })();
   </script>
 </body>

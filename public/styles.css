@@ -16,6 +16,7 @@ body {
   flex-direction: column;
   align-items: center;
   position: relative;
+  padding-bottom: 84px; /* keep content visible above fixed pagination */
 }
 /* prevent horizontal overflow on some browsers */
 html, body { height: 100%; overflow-x: hidden; }
@@ -27,8 +28,11 @@ header {
 }
 header .actions{
   margin-top: .75rem;
-  display: inline-flex;
-  gap: .5rem;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: .6rem;
 }
 main {
   width: 100%;
@@ -94,9 +98,9 @@ main {
 .get-btn{margin-top:0.5rem;padding:0.5rem 1rem;border:none;border-radius:10px;background:#fff;color:#000;font-weight:bold;cursor:pointer;}
 .get-btn:hover{opacity:0.85;}
 .glass-card img.flag-img{
-  width: 96px;     /* standard width */
-  height: auto;    /* keep full image, no crop */
-  object-fit: contain;
+  width: 96px;     /* original width */
+  height: auto;    /* keep natural aspect ratio */
+  object-fit: contain; 
   border-radius: 6px;
   margin-bottom: .5rem;
   border: 1px solid rgba(255,255,255,0.22);
@@ -117,6 +121,8 @@ main {
   box-shadow: 0 8px 24px rgba(0,0,0,0.35);
   position: relative;
   z-index: 3;
+  max-height: 90vh;          /* constrain height to viewport */
+  overflow: auto;            /* allow scrolling inside modal */
 }
 #account .modal-close{
   position: absolute;
@@ -210,6 +216,7 @@ main {
   justify-content: center;
   padding: 1rem;
   z-index: 3;
+  overflow: auto;            /* allow page to scroll when content taller than viewport */
 }
 .modal-container.active,
 .modal-overlay.active{ display: flex; }
@@ -267,8 +274,17 @@ main {
   font-weight: 700;
   border: none;
   cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: .45rem;
 }
 .primary-btn:hover{ opacity: .85; }
+/* Accent variant for Create Account/Dashboard button */
+.accent-btn{
+  background: #7fd1ff;
+  color: #001018;
+}
+.accent-btn:hover{ filter: brightness(1.05); }
 .danger-btn{
   padding: .5rem .9rem;
   border-radius: 10px;
@@ -290,6 +306,62 @@ main {
   align-items: center;
 }
 .tg-btn:hover{ filter: brightness(1.05); }
+/* Tabs under header */
+.tabs{
+  width: 100%;
+  max-width: 1200px;
+  display: flex;
+  gap: .5rem;
+  justify-content: center;
+  z-index: 1;
+}
+.tab{
+  padding: .55rem 1rem;
+  border-radius: 999px;
+  background: rgba(255,255,255,0.08);
+  color: #fff;
+  border: 1px solid rgba(255,255,255,0.18);
+}
+.tab.active{
+  background: #fff;
+  color: #000;
+}
+/* Pagination */
+.pagination{
+  position: fixed;
+  left: 50%;
+  bottom: 12px;
+  transform: translateX(-50%);
+  width: auto;
+  max-width: calc(100% - 24px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: .6rem;
+  padding: .5rem .8rem;
+  border-radius: 999px;
+  background: rgba(255,255,255,0.08);
+  border: 1px solid rgba(255,255,255,0.18);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  box-shadow: 0 8px 28px rgba(0,0,0,0.4);
+  z-index: 9;
+}
+.pagination .page-btn{
+  padding: .45rem .8rem;
+  border-radius: 10px;
+  background: #fff;
+  color: #000;
+  border: none;
+  font-weight: 700;
+}
+.pagination .page-btn[disabled]{ opacity:.5; cursor: not-allowed; }
+.pagination .page-info{ opacity:.95; font-size:.95rem; }
+@media (max-width: 420px){
+  .pagination{ gap:.45rem; padding:.45rem .6rem; }
+  .pagination .page-btn{ padding:.42rem .7rem; }
+  .pagination .page-info{ font-size:.9rem; }
+}
 form {
   max-width: 720px;
   width: 100%;
@@ -320,6 +392,17 @@ input, select, textarea {
   -webkit-backdrop-filter: blur(10px);
   border: 1px solid rgba(255, 255, 255, 0.2);
 }
+/* multiline editor improvements only for textarea */
+textarea{
+  min-height: 220px;           /* easier multi-line editing */
+  resize: vertical;            /* allow vertical resize */
+  line-height: 1.35;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+  font-size: 13.5px;
+  direction: ltr;              /* IPs/endpoints read LTR */
+  unicode-bidi: plaintext;
+  white-space: pre;            /* keep alignment */
+}
 select { width: 100%; }
 button {
   background: #fff;
@@ -341,10 +424,21 @@ button:hover {
   border-radius: 10px;
   text-decoration: none;
   font-weight: bold;
+  display: inline-flex;
+  align-items: center;
+  gap: .45rem;
 }
 .admin-btn:hover {
   opacity: 0.85;
 }
+
+/* small inline icon container in buttons */
+.btn-ico{ display:inline-flex; align-items:center; justify-content:center; }
+.btn-ico svg{ display:block; }
+
+/* tab icons */
+.tabs .tab{ display:inline-flex; align-items:center; gap:.45rem; }
+.tabs .tab img{ width:18px; height:18px; display:block; border-radius:50%; background: rgba(255,255,255,0.9); padding:2px; }
 
 /* background particle canvas */
 
@@ -393,4 +487,5 @@ button:hover {
   backdrop-filter: blur(18px);
   -webkit-backdrop-filter: blur(18px);
   box-shadow: 0 8px 24px rgba(0,0,0,0.35);
+  margin-bottom: 2rem;
 }
