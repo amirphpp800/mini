@@ -241,7 +241,11 @@
         } else {
           try{
             const r2 = await fetch('/wireguard-countries');
-            if(r2.ok) return await r2.json();
+            if(r2.ok){
+              const j = await r2.json();
+              // If backend returns an empty list, fall back to local static file
+              if(Array.isArray(j) && j.length>0) return j;
+            }
           }catch(_){/* fallthrough */}
           const rl2 = await fetch('public/wireguard-countries.json');
           return await rl2.json();
