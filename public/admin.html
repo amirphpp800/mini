@@ -448,15 +448,21 @@
             }catch(__){}
           }
         } else if (adminMode === 'apn') {
-          // APN countries dataset (only those that have APN entries)
+          // APN: allow selecting ANY country (same source as DNS)
+          // so admin can add APN entries to new countries as well
           try{
-            const resApn = await fetch('/apn-countries');
-            if(resApn.ok){
-              countries = await resApn.json();
+            const resCountries = await fetch('/countries');
+            if(resCountries.ok){
+              countries = await resCountries.json();
             } else {
-              countries = [];
+              throw new Error('fallback');
             }
-          } catch(__){ countries = []; }
+          } catch(_){
+            try{
+              const resLocal = await fetch('countries.json');
+              if(resLocal.ok) countries = await resLocal.json();
+            }catch(__){}
+          }
         } else {
           // WireGuard countries dataset (only those that have endpoints)
           try{
