@@ -961,19 +961,29 @@ button:hover {
   background: rgba(255,255,255,0.04);
   border: 1px solid rgba(255,255,255,0.14);
   border-radius: 10px;
-  padding: .2rem .3rem; /* even tighter to further reduce height */
+  padding: .35rem .5rem; /* slightly larger for better tap targets */
+  display: flex;               /* place name and chips in a row */
+  align-items: center;         /* vertical centering */
+  justify-content: space-between; /* name right, chips left */
+  gap: .5rem;                  /* consistent spacing */
+  min-height: 40px;            /* stable height to avoid cramped look */
+  direction: rtl;              /* keep Persian title on the right */
   }
   .dns-tunnel-list .dns-name{
   font-weight: 800;
-  margin-bottom: .08rem; /* even less vertical space */
-  font-size: .8rem;     /* smaller title to compact card */
+  margin: 0;                   /* no extra vertical space */
+  font-size: .9rem;            /* slightly clearer title */
   }
-  .dns-tunnel-list .dns-ips{ display: flex; flex-wrap: wrap; gap: .12rem; }
+  .dns-tunnel-list .dns-ips{ 
+  display: flex; 
+  flex-wrap: wrap; 
+  gap: .22rem;                 /* clearer spacing between chips */
+  }
   .dns-tunnel-list .dns-ips code{
   background: rgba(0,0,0,0.65);
   border: 1px solid rgba(255,255,255,0.18);
   border-radius: 8px;
-  padding: .05rem .22rem; /* reduce chip padding further */
+  padding: .08rem .28rem;      /* readable chip size */
   font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
   font-size: .72rem;      /* smaller text */
   line-height: 1;       /* tighter line height */
@@ -981,6 +991,13 @@ button:hover {
   }
 @media (max-width: 420px){
   .dns-tunnel-list .dns-items{ grid-template-columns: 1fr; }
+  /* Stack name above chips on very small screens for readability */
+  .dns-tunnel-list .dns-item{ 
+    flex-direction: column; 
+    align-items: flex-start; 
+    gap: .25rem; 
+    min-height: auto;
+  }
 }
 
   /* Apply Vazirmatn to all Persian content */
