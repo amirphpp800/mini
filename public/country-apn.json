@@ -1,0 +1,32 @@
+[
+    {
+        "name": "China",
+        "faName": "چین",
+        "code": "cn"
+    },
+    {
+        "name": "England",
+        "faName": "انگلیس",
+        "code": "gb"
+    },
+    {
+        "name": "Germany",
+        "faName": "آلمان",
+        "code": "de"
+    },
+    {
+        "name": "United Arab Emirates",
+        "faName": "امارات",
+        "code": "ae"
+    },
+    {
+        "name": "Qatar",
+        "faName": "قطر",
+        "code": "qa"
+    },
+    {
+        "name": "Turkey",
+        "faName": "ترکیه",
+        "code": "tr"
+    }
+]

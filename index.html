@@ -552,24 +552,12 @@
             }
           }catch(_){ }
         }
-        // Load APN-enabled countries dynamically
+        // Load APN-enabled countries from local JSON file (like other datasets)
         (async ()=>{
           try{
-            const r = await fetch('/apn-countries');
-            if(r.ok){
-              apnCountries = await r.json();
-            } else { apnCountries = []; }
+            const r = await fetch('public/country-apn.json');
+            if(r.ok){ apnCountries = await r.json(); } else { apnCountries = []; }
           }catch(_){ apnCountries = []; }
-          // Fallback to a small default list if backend has no APN countries yet
-          if(!Array.isArray(apnCountries) || apnCountries.length === 0){
-            apnCountries = [
-              { name: 'China', faName: 'چین', code: 'cn' },
-              { name: 'England', faName: 'انگلیس', code: 'gb' },
-              { name: 'Germany', faName: 'آلمان', code: 'de' },
-              { name: 'United Arab Emirates', faName: 'امارات', code: 'ae' },
-              { name: 'Qatar', faName: 'قطر', code: 'qa' }
-            ];
-          }
           // fill select
           sel.innerHTML = '';
           const ph2 = document.createElement('option');
