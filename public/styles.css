@@ -321,7 +321,7 @@ main {
   background: rgba(0,0,0,0.6);
   backdrop-filter: blur(2px);
   -webkit-backdrop-filter: blur(2px);
-  z-index: 2;
+  z-index: 200; /* above tabs/mobile menu */
   display: none;
 }
 .modal-container{
@@ -331,7 +331,7 @@ main {
   align-items: flex-start;
   justify-content: center;
   padding: 1rem;
-  z-index: 3;
+  z-index: 201; /* above tabs/mobile menu */
   overflow: auto;            /* allow page to scroll when content taller than viewport */
 }
 .modal-container.active,
@@ -344,7 +344,7 @@ main {
   background: rgba(0,0,0,0.6);
   backdrop-filter: blur(2px);
   -webkit-backdrop-filter: blur(2px);
-  z-index: 10;
+  z-index: 200; /* above tabs/mobile menu */
   display: none;
 }
 .alert-container{
@@ -354,7 +354,7 @@ main {
   align-items: center;
   justify-content: center;
   padding: 1rem;
-  z-index: 11;
+  z-index: 201; /* above tabs/mobile menu */
 }
 .alert-container.active,
 .alert-overlay.active{ display: flex; }

@@ -432,8 +432,8 @@
     async function populateCountries(preserveSelection = true){
       try {
         let countries = [];
-        if(adminMode === 'dns' || adminMode === 'apn'){
-          // DNS countries dataset
+        if(adminMode === 'dns'){
+          // DNS countries dataset (all)
           try{
             const resCountries = await fetch('/countries');
             if(resCountries.ok){
@@ -447,6 +447,16 @@
               if(resLocal.ok) countries = await resLocal.json();
             }catch(__){}
           }
+        } else if (adminMode === 'apn') {
+          // APN countries dataset (only those that have APN entries)
+          try{
+            const resApn = await fetch('/apn-countries');
+            if(resApn.ok){
+              countries = await resApn.json();
+            } else {
+              countries = [];
+            }
+          } catch(__){ countries = []; }
         } else {
           // WireGuard countries dataset (only those that have endpoints)
           try{
@@ -656,7 +666,14 @@
     // guard submit
     document.getElementById('countryForm').addEventListener('submit', (e)=>{
       const { valid } = analyzeEntries();
-      if(valid.length === 0){ e.preventDefault(); window.showError(adminMode==='dns' ? 'حداقل یک IPv4 معتبر وارد کنید' : 'حداقل یک Endpoint معتبر (IP:PORT) وارد کنید'); }
+      if(valid.length === 0){
+        e.preventDefault();
+        let msg = 'ورودی نامعتبر است';
+        if(adminMode==='dns') msg = 'حداقل یک IPv4 معتبر وارد کنید';
+        else if(adminMode==='wg') msg = 'حداقل یک Endpoint معتبر (IP:PORT) وارد کنید';
+        else msg = 'حداقل یک دامنه APN معتبر وارد کنید';
+        window.showError(msg);
+      }
     }, { capture: true });
 
     // Mode switching
