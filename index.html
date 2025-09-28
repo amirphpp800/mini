@@ -552,20 +552,11 @@
             }
           }catch(_){ }
         }
-        // Load APN-enabled countries, prefer backend list used by admin panel
+        // Load APN-enabled countries ONLY from local JSON file
         (async ()=>{
           try{
-            // Try dynamic endpoint first so main UI matches admin panel
-            let list = [];
-            try{
-              const rApi = await fetch('/apn-countries');
-              if(rApi.ok){ list = await rApi.json(); }
-            }catch(__){ /* ignore and fallback */ }
-            if(!Array.isArray(list) || list.length===0){
-              const rLocal = await fetch('public/country-apn.json');
-              list = rLocal.ok ? await rLocal.json() : [];
-            }
-            apnCountries = Array.isArray(list) ? list : [];
+            const rLocal = await fetch('public/country-apn.json');
+            apnCountries = rLocal.ok ? await rLocal.json() : [];
           }catch(_){ apnCountries = []; }
           // fill select
           sel.innerHTML = '';

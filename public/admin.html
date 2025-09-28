@@ -448,16 +448,15 @@
             }catch(__){}
           }
         } else if (adminMode === 'apn') {
-          // APN: show only countries that already have APN entries
-          // Use dedicated backend that filters by existing APN list
+          // APN: load only from local APN file
           try{
-            const resApn = await fetch('/apn-countries');
-            if(resApn.ok){
-              const j = await resApn.json();
-              if(Array.isArray(j)) countries = j;
+            const resLocalApn = await fetch('country-apn.json');
+            if(resLocalApn.ok){
+              const j2 = await resLocalApn.json();
+              if(Array.isArray(j2)) countries = j2;
             }
-          } catch(_){}
-          // Fallback: if empty (e.g., no APN yet), allow selecting from all countries to add new APN entries
+          }catch(__){}
+          // 3) Final fallback: allow selecting from all countries to add new APN entries
           if(!Array.isArray(countries) || countries.length===0){
             try{
               const resCountries = await fetch('/countries');
