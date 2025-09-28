@@ -142,6 +142,12 @@ main {
   font-family:'Vazirmatn','Poppins',sans-serif !important;
   font-weight:600;
 }
+/* Better wrapping for long country names/subtitles */
+.glass-card h2,
+.glass-card .subtitle-fa{
+  word-wrap: break-word;
+  overflow-wrap: anywhere;
+}
 .counters{display:grid; grid-template-columns: repeat(3, 1fr); margin:1rem 0; gap:.4rem; align-items:stretch;}
 .count{
   min-width: 0;
@@ -295,6 +301,12 @@ main {
   .count{ padding:.4rem .45rem; }
   .count .num{ font-size:.95rem; }
   .count .lbl-en{ font-size:.62rem; }
+}
+/* Mobile card adjustments */
+@media (max-width: 520px){
+  .glass-card{ padding: 1rem; }
+  .glass-card h2{ font-size: 1.1rem; }
+  .get-btn{ width: 100%; }
 }
 @media (max-width: 360px){
   .count{ padding:.35rem .4rem; }
@@ -949,7 +961,38 @@ button:lang(fa), span:lang(fa), div:lang(fa),
 }
 
 /* رنگ لیست گزینه‌ها هنگام باز شدن */
-#countrySelect option {
+ #countrySelect option {
   background: #000;
   color: #fff;
+ }
+
+/* Address modal: responsive long list handling + sticky actions (Copy button) */
+#addrContainer .alert-card{
+  max-height: 82vh;              /* keep the card within viewport */
+  display: flex;                 /* allow header, content, actions layout */
+  flex-direction: column;
+}
+#addrContainer .alert-card .msg{
+  flex: 1;                       /* take remaining height */
+  overflow: auto;                /* scroll only the content */
+  padding-right: .25rem;         /* breathing room for scrollbar */
+}
+#addrContainer .alert-card .msg pre{
+  white-space: pre-wrap;         /* wrap long lines */
+  word-break: break-word;        /* break overly long tokens */
+}
+#addrContainer .alert-card .actions{
+  position: sticky;              /* keep actions visible when scrolling */
+  bottom: 0;
+  background: linear-gradient(180deg, rgba(10,10,10,0), rgba(10,10,10,0.35)) , rgba(255,255,255,0.06);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  border-top: 1px solid rgba(255,255,255,0.18);
+  margin-top: .5rem;
+  padding-top: .6rem;
+}
+
+/* Slightly larger Copy button for easier tap */
+#addrCopy{
+  font-weight: 800;
 }

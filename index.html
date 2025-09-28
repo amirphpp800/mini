@@ -138,6 +138,7 @@
       <div class="msg" id="addrMsg" style="white-space: pre-wrap; direction: ltr;"></div>
       <div class="actions">
         <button id="addrCopy">Copy</button>
+        <button id="addrCheck">بررسی فیلتر</button>
         <button class="btn-close" id="addrOk">OK</button>
       </div>
     </div>
@@ -227,6 +228,7 @@
       const container = document.getElementById('addrContainer');
       const msgEl = document.getElementById('addrMsg');
       const copyBtn = document.getElementById('addrCopy');
+      const checkBtn = document.getElementById('addrCheck');
       const okBtn = document.getElementById('addrOk');
       const xBtn = document.getElementById('addrX');
 
@@ -238,6 +240,11 @@
       }
       function showAddressModal(addresses){
         const text = (addresses||[]).join('\n');
+        // Determine first host for external check (strip port if present)
+        const firstRaw = (addresses&&addresses[0]) ? String(addresses[0]).trim() : '';
+        let hostToCheck = firstRaw;
+        const ipPortMatch = /^([^\s:]+):(\d{1,5})$/.exec(firstRaw);
+        if(ipPortMatch){ hostToCheck = ipPortMatch[1]; }
         // Compose content: addresses + optional DNS note
         let html = `<pre style="white-space:pre-wrap;direction:ltr;margin:0 0 .75rem 0;">${text.replace(/</g,'&lt;')}</pre>`;
         if (window.state && window.state.currentTab === 'dns'){
@@ -294,6 +301,13 @@
         copyBtn.onclick = async ()=>{
           try{ await navigator.clipboard.writeText(text); copyBtn.textContent='Copied!'; setTimeout(()=>copyBtn.textContent='Copy',1500);}catch(_e){}
         };
+        if(checkBtn){
+          checkBtn.onclick = ()=>{
+            if(!hostToCheck) return;
+            const url = `https://check-host.net/check-ping?host=${encodeURIComponent(hostToCheck)}`;
+            window.open(url, '_blank', 'noopener');
+          };
+        }
         okBtn.onclick = close;
         xBtn.onclick = close;
         overlay.onclick = close;
@@ -314,9 +328,13 @@
     const isLocal = /^(localhost|127\.0\.0\.1)/.test(location.hostname);
     // Tab and pagination state
     const pageSize = 14;
+    // Load persisted UI state
+    const savedTab = (localStorage.getItem('ui.currentTab')||'dns');
+    let savedPages = {};
+    try{ savedPages = JSON.parse(localStorage.getItem('ui.pages')||'{}')||{}; }catch(_){ savedPages = {}; }
     const state = {
-      currentTab: 'dns',
-      page: { dns: 1, wg: 1, apn: 1 },
+      currentTab: savedTab || 'dns',
+      page: { dns: Number(savedPages.dns)||1, wg: Number(savedPages.wg)||1, apn: Number(savedPages.apn)||1 },
       data: { dns: [], wg: [], apn: [] }
     };
     // expose for other utilities (e.g., showAddressModal)
@@ -695,6 +713,12 @@
         prev.disabled = page<=1;
         next.disabled = page>=totalPages;
       }
+      // persist current page per tab
+      try{
+        const p = JSON.parse(localStorage.getItem('ui.pages')||'{}')||{};
+        p[state.currentTab] = page;
+        localStorage.setItem('ui.pages', JSON.stringify(p));
+      }catch(_){ }
     }
 
     async function initDatasets(){
@@ -1075,6 +1099,8 @@
       function setActive(tab){
         animateSwitch(()=>{
           state.currentTab = tab;
+          // persist active tab
+          try{ localStorage.setItem('ui.currentTab', tab); }catch(_){}
           // Update all tab states
           const allTabs = [tabDns, tabWg, tabApn, tabAndroid, tabIos];
           allTabs.forEach(t => {
@@ -1129,6 +1155,16 @@
           renderPage();
         });
       });
+      // Activate saved tab on load
+      setTimeout(()=>{
+        const initialTab = (localStorage.getItem('ui.currentTab')||'dns');
+        if(initialTab && initialTab!== 'dns'){
+          setActive(initialTab);
+        } else {
+          // ensure initial render uses saved page for default tab
+          renderPage();
+        }
+      }, 0);
     })();
     </script>
   <script src="public/net.js"></script>

@@ -67,6 +67,7 @@
     <div class="tabs" role="tablist" aria-label="Admin Dataset Mode" style="margin-bottom:.75rem;">
       <button type="button" class="tab active" id="mode-dns" role="tab" aria-selected="true">DNS</button>
       <button type="button" class="tab" id="mode-wg" role="tab" aria-selected="false">Wireguard Endpoints</button>
+      <button type="button" class="tab" id="mode-apn" role="tab" aria-selected="false">APN</button>
     </div>
     <div class="form-grid">
       <div class="form-col">
@@ -201,7 +202,8 @@
   const addrLabel = document.getElementById('addrLabel');
   const modeDnsBtn = document.getElementById('mode-dns');
   const modeWgBtn = document.getElementById('mode-wg');
-  let adminMode = 'dns'; // 'dns' | 'wg'
+  const modeApnBtn = document.getElementById('mode-apn');
+  let adminMode = 'dns'; // 'dns' | 'wg' | 'apn'
   let countriesCache = [];
   // Preview elements
   const prevWrap = document.getElementById('countryPreview');
@@ -387,9 +389,14 @@
       }
       const base = { session, country, code: (codeEl.value||'').trim().toLowerCase(), faName: faEl.value.trim() };
       const lines = addrEl.value.split('\n').map(s=>s.trim()).filter(Boolean);
-      const body = adminMode==='dns' ? { ...base, addresses: lines } : { ...base, endpoints: lines };
+      let body;
+      if(adminMode==='dns') body = { ...base, addresses: lines };
+      else if(adminMode==='wg') body = { ...base, endpoints: lines };
+      else body = { ...base, apn: lines };
       try {
-        const url = adminMode==='dns' ? '/admin/add-address' : '/admin/wg-add';
+        let url = '/admin/add-address';
+        if(adminMode==='wg') url = '/admin/wg-add';
+        if(adminMode==='apn') url = '/admin/apn-add';
         const res = await fetch(url, { method: 'POST', headers: adminHeaders(), body: JSON.stringify(body) });
         if(res.ok){
           window.showMessage('Added!','پیام');
@@ -425,7 +432,7 @@
     async function populateCountries(preserveSelection = true){
       try {
         let countries = [];
-        if(adminMode === 'dns'){
+        if(adminMode === 'dns' || adminMode === 'apn'){
           // DNS countries dataset
           try{
             const resCountries = await fetch('/countries');
@@ -458,7 +465,9 @@
           }
         }
         // Optionally fetch per-country totals for current mode and sort by total desc
-        const endpointBase = adminMode==='dns' ? '/stats/' : '/wg-stats/';
+        let endpointBase = '/stats/';
+        if(adminMode==='wg') endpointBase = '/wg-stats/';
+        if(adminMode==='apn') endpointBase = '/apn-stats/';
         const totals = await Promise.allSettled((countries||[]).map(async (c)=>{
           const name = c && c.name ? String(c.name) : '';
           if(!name) return { name: '', total: 0 };
@@ -564,7 +573,10 @@
     async function loadStatsFor(countryName){
       try{
         if(!countryName){ prevStats.textContent=''; return; }
-        const endpoint = adminMode==='dns' ? `/stats/${countryName}` : `/wg-stats/${countryName}`;
+        let endpoint;
+        if(adminMode==='dns') endpoint = `/stats/${countryName}`;
+        else if(adminMode==='wg') endpoint = `/wg-stats/${countryName}`;
+        else endpoint = `/apn-stats/${countryName}`;
         const r = await fetch(endpoint);
         if(r.ok){
           const s = await r.json();
@@ -579,6 +591,11 @@
     previewAddrsBtn.addEventListener('click', async ()=>{
       const country = selEl.value.trim() || nameEl.value.trim();
       if(!country){ window.showError('ابتدا کشور را انتخاب یا وارد کنید'); return; }
+      // APN list preview may not be supported; show friendly message
+      if(adminMode==='apn'){
+        window.showMessage('پیش‌نمایش لیست برای APN در حال حاضر پشتیبانی نمی‌شود.');
+        return;
+      }
       try{
         const body = { session: localStorage.getItem('adminSession'), country };
         const url = adminMode==='dns' ? '/admin/list-addresses' : '/admin/wg-list';
@@ -599,7 +616,9 @@
       if(!confirm('لیست Busy برای این کشور پاک شود؟')) return;
       try{
         const body = { session: localStorage.getItem('adminSession'), country };
-        const url = adminMode==='dns' ? '/admin/clear-busy' : '/admin/wg-clear-busy';
+        let url = '/admin/clear-busy';
+        if(adminMode==='wg') url = '/admin/wg-clear-busy';
+        if(adminMode==='apn') url = '/admin/apn-clear-busy';
         const r = await fetch(url, { method:'POST', headers: adminHeaders(), body: JSON.stringify(body) });
         if(r.ok){
           window.showMessage('Busy cleared','پیام');
@@ -619,13 +638,15 @@
       for(const s of raw){
         if(adminMode==='dns'){
           if(ipv4Regex.test(s)){ if(!seen.has(s)){ seen.add(s); valid.push(s); } } else { invalid.push(s); }
-        } else {
+        } else if(adminMode==='wg'){
           const m = ipPortRegex.exec(s);
           const port = m ? Number(m[1]) : 0;
           if(m && port>=1 && port<=65535){ if(!seen.has(s)){ seen.add(s); valid.push(s); } } else { invalid.push(s); }
+        } else { // apn domains
+          if(domainRegex.test(s)){ if(!seen.has(s)){ seen.add(s); valid.push(s); } } else { invalid.push(s); }
         }
       }
-      const label = adminMode==='dns' ? 'IPv4' : 'IP:PORT';
+      const label = adminMode==='dns' ? 'IPv4' : (adminMode==='wg' ? 'IP:PORT' : 'Domain');
       ipHelper.innerHTML = `Valid ${label}: <b>${valid.length}</b> | Invalid: <b>${invalid.length}</b> | Unique: <b>${valid.length}</b> <button type="button" id="btnClean" style="margin-inline-start:.5rem">Clean duplicates</button>`;
       const btn = document.getElementById('btnClean');
       if(btn){ btn.onclick = ()=>{ addrEl.value = valid.join('\n'); analyzeEntries(); } }
@@ -639,18 +660,29 @@
     }, { capture: true });
 
     // Mode switching
+    // Domain validator for APN
+    const domainRegex = /^(?=.{1,253}$)(?!-)(?:[A-Za-z0-9](?:[A-Za-z0-9-]{0,61}[A-Za-z0-9])?\.)+[A-Za-z]{2,}$/;
+
     async function setAdminMode(mode){
       adminMode = mode;
       if(mode==='dns'){
         if(modeDnsBtn){ modeDnsBtn.classList.add('active'); modeDnsBtn.setAttribute('aria-selected','true'); }
         if(modeWgBtn){ modeWgBtn.classList.remove('active'); modeWgBtn.setAttribute('aria-selected','false'); }
+        if(modeApnBtn){ modeApnBtn.classList.remove('active'); modeApnBtn.setAttribute('aria-selected','false'); }
         addrLabel.textContent = 'آدرس‌های IPv4 (هر خط یک آدرس)';
         addrEl.placeholder = '45.153.38.148\n46.33.136.18\n86.104.12.89';
-      } else {
+      } else if(mode==='wg'){
         if(modeWgBtn){ modeWgBtn.classList.add('active'); modeWgBtn.setAttribute('aria-selected','true'); }
         if(modeDnsBtn){ modeDnsBtn.classList.remove('active'); modeDnsBtn.setAttribute('aria-selected','false'); }
+        if(modeApnBtn){ modeApnBtn.classList.remove('active'); modeApnBtn.setAttribute('aria-selected','false'); }
         addrLabel.textContent = 'Wireguard Endpoints — IP:PORT (هر خط یک Endpoint)';
         addrEl.placeholder = '203.0.113.10:51820\n198.51.100.22:443\n192.0.2.7:12345';
+      } else { // apn
+        if(modeApnBtn){ modeApnBtn.classList.add('active'); modeApnBtn.setAttribute('aria-selected','true'); }
+        if(modeDnsBtn){ modeDnsBtn.classList.remove('active'); modeDnsBtn.setAttribute('aria-selected','false'); }
+        if(modeWgBtn){ modeWgBtn.classList.remove('active'); modeWgBtn.setAttribute('aria-selected','false'); }
+        addrLabel.textContent = 'APN Domains (هر خط یک دامنه)';
+        addrEl.placeholder = 'mci.net\nmtn.net\nipm.example\nexample.apn';
       }
       analyzeEntries();
       const prev = selEl.value;
@@ -660,6 +692,7 @@
     }
     if(modeDnsBtn) modeDnsBtn.addEventListener('click', ()=> setAdminMode('dns'));
     if(modeWgBtn) modeWgBtn.addEventListener('click', ()=> setAdminMode('wg'));
+    if(modeApnBtn) modeApnBtn.addEventListener('click', ()=> setAdminMode('apn'));
 
     // Auto-init admin session UI
     (async function initAdmin(){
