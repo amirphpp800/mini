@@ -21,29 +21,60 @@
     <div class="actions">
       <a href="public/admin.html" class="admin-btn"><span class="btn-ico" aria-hidden="true">
         <!-- Lucide settings cog icon -->
-        <svg xmlns="http://www.w3.org/2000/svg" width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#f6c454" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 9a3 3 0 1 0 0 6 3 3 0 0 0 0-6"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09a1.65 1.65 0 0 0-1-1.51 1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09a1.65 1.65 0 0 0 1.51-1 1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9c.7 0 1.27.3 1.51 1H21a2 2 0 1 1 0 4h-.09c-.24.7-.81 1-1.51 1Z"/></svg>
+        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 9a3 3 0 1 0 0 6 3 3 0 0 0 0-6"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09a1.65 1.65 0 0 0-1-1.51 1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09a1.65 1.65 0 0 0 1.51-1 1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9c.7 0 1.27.3 1.51 1H21a2 2 0 1 1 0 4h-.09c-.24.7-.81 1-1.51 1Z"/></svg>
       </span>Admin Panel</a>
       <button id="openSignup" class="primary-btn accent-btn"><span class="btn-ico" aria-hidden="true">
         <!-- Lucide user-round icon -->
-        <svg xmlns="http://www.w3.org/2000/svg" width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 20a6 6 0 0 0-12 0"/><circle cx="12" cy="10" r="4"/></svg>
+        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 20a6 6 0 0 0-12 0"/><circle cx="12" cy="10" r="4"/></svg>
       </span><span id="openSignupLabel">Create Account</span></button>
+      <a href="public/buy.html" class="primary-btn usdt-btn" style="text-decoration:none;"><span class="btn-ico" aria-hidden="true">
+        <!-- High quality dollar/money icon -->
+        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M16 8h-6a2 2 0 1 0 0 4h4a2 2 0 1 1 0 4H8"/><path d="M12 18V6"/></svg>
+      </span>Buy USDT</a>
     </div>
   </header>
   <div class="tabs" role="tablist" aria-label="Dataset Tabs">
-    <button class="tab active" id="tab-dns" role="tab" aria-selected="true" aria-controls="panel-dns"><img src="public/dns.png" alt="" aria-hidden="true"/> DNS</button>
-    <button class="tab" id="tab-wg" role="tab" aria-selected="false" aria-controls="panel-wg"><img src="public/wireguard.svg" alt="" aria-hidden="true"/> Wireguard Endpoint</button>
-    <button class="tab" id="tab-apn" type="button" aria-selected="false" title="APN"> 
-      <img src="public/apn.svg" alt="" aria-hidden="true"/>
-      APN
+    <button class="mobile-menu-toggle" id="mobile-menu-toggle">
+      <span>DNS</span>
+      <div class="mobile-menu-icon">
+        <span></span>
+        <span></span>
+        <span></span>
+      </div>
     </button>
-    <button class="tab" id="tab-android" type="button" aria-selected="false" title="Android Settings">
-      <img src="public/android.svg" alt="" aria-hidden="true"/>
-      Android Settings
-    </button>
-    <button class="tab" id="tab-ios" type="button" aria-selected="false" title="iPhone Settings">
-      <img src="public/apple.svg" alt="" aria-hidden="true"/>
-      iPhone Settings
-    </button>
+    <div class="tab-list">
+      <button class="tab active" id="tab-dns" role="tab" aria-selected="true" aria-controls="panel-dns"><img src="public/dns.png" alt="" aria-hidden="true"/> DNS</button>
+      <button class="tab" id="tab-wg" role="tab" aria-selected="false" aria-controls="panel-wg"><img src="public/wireguard.svg" alt="" aria-hidden="true"/> Wireguard Endpoint</button>
+      <button class="tab" id="tab-apn" type="button" aria-selected="false" title="APN"> 
+        <img src="public/apn.svg" alt="" aria-hidden="true"/>
+        APN
+      </button>
+      <button class="tab" id="tab-android" type="button" aria-selected="false" title="Android Settings">
+        <img src="public/android.svg" alt="" aria-hidden="true"/>
+        Android Settings
+      </button>
+      <button class="tab" id="tab-ios" type="button" aria-selected="false" title="iPhone Settings">
+        <img src="public/apple.svg" alt="" aria-hidden="true"/>
+        iPhone Settings
+      </button>
+    </div>
+  </div>
+
+  <!-- Mobile Menu Modal -->
+  <div class="mobile-menu-modal" id="mobile-menu-modal">
+    <div class="mobile-menu-content">
+      <div class="mobile-menu-header">
+        <div class="mobile-menu-title">انتخاب نوع سرویس</div>
+        <button class="mobile-menu-close" id="mobile-menu-close">×</button>
+      </div>
+      <div class="mobile-menu-tabs">
+        <button class="tab active" data-tab="dns"><img src="public/dns.png" alt="" aria-hidden="true"/> DNS</button>
+        <button class="tab" data-tab="wg"><img src="public/wireguard.svg" alt="" aria-hidden="true"/> Wireguard Endpoint</button>
+        <button class="tab" data-tab="apn"><img src="public/apn.svg" alt="" aria-hidden="true"/> APN</button>
+        <button class="tab" data-tab="android"><img src="public/android.svg" alt="" aria-hidden="true"/> Android Settings</button>
+        <button class="tab" data-tab="ios"><img src="public/apple.svg" alt="" aria-hidden="true"/> iPhone Settings</button>
+      </div>
+    </div>
   </div>
   <div class="modal-overlay" id="accOverlay"></div>
   <div class="modal-container" id="accModal">
@@ -207,7 +238,56 @@
       }
       function showAddressModal(addresses){
         const text = (addresses||[]).join('\n');
-        msgEl.textContent = text;
+        // Compose content: addresses + optional DNS note
+        let html = `<pre style="white-space:pre-wrap;direction:ltr;margin:0 0 .75rem 0;">${text.replace(/</g,'&lt;')}</pre>`;
+        if (window.state && window.state.currentTab === 'dns'){
+          html += `
+          <div class="glass-note persian-text" lang="fa" style="text-align:right">
+            <div style="font-weight:800;margin-bottom:.35rem">لیست سرورهایی که آدرس خود را می‌توانید تانل کنید:</div>
+            <div>
+              گوگل<br/>
+              8.8.8.8<br/>
+              8.8.4.4
+            </div>
+            <div style="opacity:.6;margin:.35rem 0">➖➖➖➖➖➖➖➖</div>
+            <div>
+              کلودفلر<br/>
+              1.1.1.1<br/>
+              1.0.0.1
+            </div>
+            <div style="opacity:.6;margin:.35rem 0">➖➖➖➖➖➖➖➖</div>
+            <div>
+              رادار گیم<br/>
+              10.202.10.10<br/>
+              10.202.10.11
+            </div>
+            <div style="opacity:.6;margin:.35rem 0">➖➖➖➖➖➖➖➖</div>
+            <div>
+              الکترو<br/>
+              78.157.42.100<br/>
+              78.157.42.101
+            </div>
+            <div style="opacity:.6;margin:.35rem 0">➖➖➖➖➖➖➖➖</div>
+            <div>
+              اوپن دی‌ان‌اس<br/>
+              208.67.222.222<br/>
+              208.67.220.220
+            </div>
+            <div style="opacity:.6;margin:.35rem 0">➖➖➖➖➖➖➖➖</div>
+            <div>
+              شِکن رایگان<br/>
+              178.22.122.100<br/>
+              185.51.200.2
+            </div>
+            <div style="opacity:.6;margin:.35rem 0">➖➖➖➖➖➖➖➖</div>
+            <div>
+              شِکن پرو<br/>
+              178.22.122.101<br/>
+              185.51.200.1
+            </div>
+          </div>`;
+        }
+        msgEl.innerHTML = html;
         overlay.classList.add('active');
         container.classList.add('active');
         // Handlers
@@ -236,9 +316,11 @@
     const pageSize = 14;
     const state = {
       currentTab: 'dns',
-      page: { dns: 1, wg: 1 },
-      data: { dns: [], wg: [] }
+      page: { dns: 1, wg: 1, apn: 1 },
+      data: { dns: [], wg: [], apn: [] }
     };
+    // expose for other utilities (e.g., showAddressModal)
+    window.state = state;
 
     async function fetchDataset(kind){
       try{
@@ -266,6 +348,190 @@
     }
 
     function renderPage(){
+      const container = document.getElementById('cards');
+      // reset container layout (in case APN altered it previously)
+      container.style.display='';
+      container.style.alignItems='';
+      container.style.justifyContent='';
+
+      // Special unified view for APN
+      if(state.currentTab === 'apn'){
+        // hide pagination in APN tab
+        const pEl = document.getElementById('prevPage');
+        const nEl = document.getElementById('nextPage');
+        const iEl = document.getElementById('pageInfo');
+        if(pEl&&nEl&&iEl){ pEl.style.display='none'; nEl.style.display='none'; iEl.style.display='none'; }
+
+        // center container and enlarge card
+        container.innerHTML = '';
+        container.style.display='flex';
+        container.style.alignItems='center';
+        container.style.justifyContent='center';
+        const card = document.createElement('div');
+        card.className = 'glass-card';
+        card.style.textAlign = 'center';
+        card.style.maxWidth = '760px';
+        card.style.width = '100%';
+        card.style.margin = '0 auto';
+        card.style.padding = '2rem';
+
+        const h2 = document.createElement('h2');
+        h2.textContent = 'APN Service';
+        const sub = document.createElement('div');
+        sub.className = 'subtitle-fa persian-text';
+        sub.textContent = 'وضعیت APN بر اساس کشور';
+        card.appendChild(h2);
+        card.appendChild(sub);
+
+        // country selector
+        const row = document.createElement('div');
+        row.className = 'row';
+        row.style.justifyContent='center';
+        row.style.gap = '.5rem';
+        const sel = document.createElement('select');
+        sel.id = 'apnCountry';
+        sel.style.minWidth='220px';
+        sel.style.background = '#000';
+        sel.style.color = '#fff';
+        sel.style.border = '1px solid rgba(255,255,255,0.3)';
+        sel.style.borderRadius = '12px';
+        sel.style.padding = '.65rem 1rem';
+        sel.style.fontWeight = '600';
+        const countries = [
+          { name: 'China', faName: 'چین', code: 'cn' },
+          { name: 'England', faName: 'انگلیس', code: 'gb' },
+          { name: 'Germany', faName: 'آلمان', code: 'de' },
+          { name: 'United Arab Emirates', faName: 'امارات', code: 'ae' },
+          { name: 'Qatar', faName: 'قطر', code: 'qa' }
+        ];
+        row.appendChild(sel);
+        countries.forEach(c=>{
+          const opt = document.createElement('option');
+          opt.value = c.name;
+          opt.textContent = c.faName || c.name;
+          sel.appendChild(opt);
+        });
+        card.appendChild(row);
+
+        // black details panel with flag and random speed
+        const details = document.createElement('div');
+        details.className = 'apn-speed';
+        details.style.marginTop = '1rem';
+        details.style.background = '#000';
+        details.style.color = '#fff';
+        details.style.border = '1px solid rgba(255,255,255,0.18)';
+        details.style.borderRadius = '16px';
+        details.style.padding = '1rem';
+        details.style.display = 'flex';
+        details.style.alignItems = 'center';
+        details.style.justifyContent = 'center';
+        details.style.flexDirection = 'column';
+        details.style.gap = '1rem';
+
+        function randomSpeed(){
+          return (Math.random() * 80 + 20).toFixed(1); // 20.0 - 100.0 Mbps
+        }
+        function countryInfoByName(name){
+          const c = (countries||[]).find(x=> String(x.name).toLowerCase() === String(name||'').toLowerCase());
+          return c || { name, code: 'gb', faName: name };
+        }
+        function flagUrl(code){
+          const cc = String(code||'gb').toLowerCase();
+          return `https://flagcdn.com/w40/${cc}.png`;
+        }
+        function renderDetails(){
+          const cval = sel.value;
+          const ci = countryInfoByName(cval);
+          const spd = randomSpeed();
+          const mbps = (Number(spd)/8).toFixed(2);
+          details.innerHTML = '';
+          const img = new Image();
+          img.src = flagUrl(ci.code);
+          img.alt = `${ci.name} flag`;
+          img.width = 48; img.height = 32; img.style.borderRadius = '6px'; img.loading = 'lazy';
+          img.style.boxShadow = '0 6px 18px rgba(0,0,0,0.35)';
+          const textBox = document.createElement('div');
+          textBox.innerHTML = `<div class="persian-text" lang="fa" style="font-weight:800">${ci.faName||ci.name}</div>
+                               <div class="muted" style="margin-top:.15rem">میانگین سرعت لحظه‌ای:<br/><b>${spd} Mbps</b></div>
+                               <div class="muted" style="margin-top:.1rem">معادل مگابایت بر ثانیه:<br/><b>${mbps} MB/s</b></div>`;
+          details.appendChild(img);
+          details.appendChild(textBox);
+        }
+        renderDetails();
+        card.appendChild(details);
+
+        // counters
+        const counters = document.createElement('div');
+        counters.className = 'counters';
+        counters.innerHTML = `
+          <div class="count total"><div class="num">0</div><div class="lbl-en">Total APNs</div></div>
+          <div class="count free"><div class="num">0</div><div class="lbl-en">Available</div></div>
+          <div class="count busy"><div class="num">0</div><div class="lbl-en">In Use</div></div>`;
+        card.appendChild(counters);
+
+        // purchase button
+        const btn = document.createElement('button');
+        btn.className = 'get-btn';
+        btn.textContent = 'Get APN ($1.5)';
+        btn.addEventListener('click', async ()=>{
+          const country = sel.value;
+          const session = localStorage.getItem('userSession');
+          if(!session){ if (window.openSignupModal) window.openSignupModal(); else window.showError('Please verify your account first.'); return; }
+          try{
+            // pricing
+            let price = 1.5;
+            try{ const rp=await fetch('/pricing'); if(rp.ok){ const pj=await rp.json(); if(pj&&pj.apn!=null) price=Number(pj.apn)||1.5; } }catch(_){ }
+            // balance
+            let currentBal = null;
+            try{ const rb = await fetch('/user/balance', { headers:{ 'Authorization': `Bearer ${session}` } }); if(rb.ok){ const bj=await rb.json(); currentBal = parseFloat(bj.balance); } }catch(_){ }
+            if(currentBal != null && Number.isFinite(currentBal)){
+              const after = +((currentBal - (Number(price)||0))).toFixed(2);
+              if((Number(price)||0)>0){
+                if(currentBal < price){ window.showError(`موجودی فعلی شما $${currentBal.toFixed(2)} است و برای این عملیات $${Number(price).toFixed(2)} نیاز است. لطفاً برای افزایش موجودی با ادمین تماس بگیرید: @Minimalcraft`, 'موجودی کافی نیست'); return; }
+                const ok = await window.showConfirm(`هزینه این درخواست: $${Number(price).toFixed(2)}\nموجودی فعلی: $${currentBal.toFixed(2)}\nموجودی پس از کسر: $${after.toFixed(2)}\nآیا تایید می‌کنید؟`, 'تایید کسر موجودی');
+                if(!ok) return;
+              }
+            }
+            const r = await fetch(`/apn/${encodeURIComponent(country.toLowerCase())}`, { headers:{ 'Authorization': `Bearer ${session}` } });
+            if(!r.ok){ if(r.status===402){ window.showError('موجودی کافی نیست', 'موجودی کافی نیست'); } else { window.showError('Failed to fetch APN'); } return; }
+            const { apn=[] } = await r.json();
+            if(!apn || apn.length===0){ window.showError('No APN available yet.'); return; }
+            // show simple modal list (reuse address modal presenter)
+            if(window.showAddressModal) window.showAddressModal(apn);
+            // refresh counters after
+            loadStats(sel.value);
+          }catch(e){ console.error(e); window.showError('Network error while fetching APN'); }
+        });
+        card.appendChild(btn);
+
+        container.appendChild(card);
+
+        async function loadStats(country){
+          try{
+            if(isLocal) return;
+            const r = await fetch(`/apn-stats/${encodeURIComponent(country)}`);
+            if(r.ok){ const s = await r.json();
+              card.querySelector('.total .num').textContent = s.total;
+              card.querySelector('.free .num').textContent = s.free;
+              card.querySelector('.busy .num').textContent = s.busy;
+            }
+          }catch(_){ }
+        }
+        // init with first option
+        if(sel.options.length>0){ loadStats(sel.value); }
+        sel.addEventListener('change', ()=> { loadStats(sel.value); renderDetails(); });
+
+        return; // stop normal rendering path for APN
+      }
+
+      // default list rendering for DNS/WG
+      // show pagination again (it was hidden in APN view)
+      (function(){
+        const pEl = document.getElementById('prevPage');
+        const nEl = document.getElementById('nextPage');
+        const iEl = document.getElementById('pageInfo');
+        if(pEl&&nEl&&iEl){ pEl.style.display=''; nEl.style.display=''; iEl.style.display=''; }
+      })();
       const list = state.data[state.currentTab] || [];
       const totalPages = Math.max(1, Math.ceil(list.length / pageSize));
       let page = state.page[state.currentTab] || 1;
@@ -273,7 +539,6 @@
 
       const start = (page-1)*pageSize;
       const slice = list.slice(start, start + pageSize);
-      const container = document.getElementById('cards');
       container.innerHTML = '';
 
       slice.forEach(c => {
@@ -299,15 +564,26 @@
 
         const counters = document.createElement('div');
         counters.className = 'counters';
-        counters.innerHTML = `
+        if(state.currentTab==='apn'){
+          counters.innerHTML = `
+            <div class="count total"><div class="num">0</div><div class="lbl-en">Total APNs</div></div>
+            <div class="count free"><div class="num">0</div><div class="lbl-en">Available</div></div>
+            <div class="count busy"><div class="num">0</div><div class="lbl-en">In Use</div></div>`;
+        } else {
+          counters.innerHTML = `
             <div class="count total"><div class="num">0</div><div class="lbl-en">Total IPs</div></div>
             <div class="count free"><div class="num">0</div><div class="lbl-en">Free</div></div>
             <div class="count busy"><div class="num">0</div><div class="lbl-en">Busy</div></div>`;
+        }
         card.appendChild(counters);
 
         const btn = document.createElement('button');
         btn.className = 'get-btn';
-        btn.textContent = state.currentTab==='dns' ? 'Get Addresses' : 'Get Endpoints';
+        if(state.currentTab==='apn'){
+          btn.textContent = 'Get APN ($1.5)';
+        } else {
+          btn.textContent = state.currentTab==='dns' ? 'Get Addresses' : 'Get Endpoints';
+        }
         btn.addEventListener('click', async ()=>{
           const session = localStorage.getItem('userSession');
           if(!session){
@@ -322,7 +598,9 @@
               const rp = await fetch('/pricing');
               if(rp.ok){
                 const pj = await rp.json();
-                price = state.currentTab==='dns' ? (pj.dns ?? 0.5) : (pj.wg ?? 1.0);
+                if(state.currentTab==='dns') price = pj.dns ?? 0.5;
+                else if(state.currentTab==='wg') price = pj.wg ?? 1.0;
+                else if(state.currentTab==='apn') price = pj.apn ?? 1.5;
               }
             }catch(_){/* ignore */}
             let currentBal = null;
@@ -341,7 +619,10 @@
                 if(!ok) return;
               }
             }
-            const path = state.currentTab==='dns' ? `/addresses/${(c.name||'').toLowerCase()}` : `/wg/${(c.name||'').toLowerCase()}`;
+            let path;
+            if(state.currentTab==='dns') path = `/addresses/${(c.name||'').toLowerCase()}`;
+            else if(state.currentTab==='wg') path = `/wg/${(c.name||'').toLowerCase()}`;
+            else if(state.currentTab==='apn') path = `/apn/${(c.name||'').toLowerCase()}`;
             const r = await fetch(path, { headers:{ 'Authorization': `Bearer ${session}` } });
             if(!r.ok){
               if(r.status===401||r.status===403){
@@ -388,7 +669,10 @@
         async function loadStats(){
           try{
             if(isLocal) return;
-            const endpoint = state.currentTab==='dns' ? `/stats/${c.name}` : `/wg-stats/${c.name}`;
+            let endpoint;
+            if(state.currentTab==='dns') endpoint = `/stats/${c.name}`;
+            else if(state.currentTab==='wg') endpoint = `/wg-stats/${c.name}`;
+            else if(state.currentTab==='apn') endpoint = `/apn-stats/${c.name}`;
             const r=await fetch(endpoint);
             if(r.ok){
               const s=await r.json();
@@ -416,12 +700,16 @@
     async function initDatasets(){
       state.data.dns = await fetchDataset('dns');
       try{ state.data.wg = await fetchDataset('wg'); }catch(_){ state.data.wg = []; }
+      try{ state.data.apn = await fetchDataset('apn'); }catch(_){ state.data.apn = []; }
 
       // Sort by total IPs desc for better UX
       async function sortByTotals(kind){
         try{
           const list = Array.isArray(state.data[kind]) ? state.data[kind] : [];
-          const base = kind==='dns' ? '/stats/' : '/wg-stats/';
+          let base;
+          if(kind==='dns') base = '/stats/';
+          else if(kind==='wg') base = '/wg-stats/';
+          else if(kind==='apn') base = '/apn-stats/';
           const totals = await Promise.allSettled(list.map(async (c)=>{
             const name = c && c.name ? String(c.name) : '';
             if(!name) return { name: '', total: 0 };
@@ -440,7 +728,7 @@
           });
         }catch(__){}
       }
-      await Promise.allSettled([sortByTotals('dns'), sortByTotals('wg')]);
+      await Promise.allSettled([sortByTotals('dns'), sortByTotals('wg'), sortByTotals('apn')]);
       renderPage();
     }
     initDatasets();
@@ -678,6 +966,84 @@
       if(overlay) overlay.addEventListener('click', close);
       document.addEventListener('keydown', (e)=>{ if(e.key==='Escape') close(); });
     })();
+    // Mobile menu modal functionality
+    (function(){
+      const mobileMenuToggle = document.getElementById('mobile-menu-toggle');
+      const mobileMenuModal = document.getElementById('mobile-menu-modal');
+      const mobileMenuClose = document.getElementById('mobile-menu-close');
+      const mobileMenuTabs = document.querySelectorAll('.mobile-menu-modal .tab');
+      
+      function openModal(){
+        mobileMenuModal.classList.add('active');
+        mobileMenuToggle.classList.add('active');
+      }
+      
+      function closeModal(){
+        mobileMenuModal.classList.remove('active');
+        mobileMenuToggle.classList.remove('active');
+      }
+      
+      // Open modal when toggle is clicked
+      if(mobileMenuToggle){
+        mobileMenuToggle.addEventListener('click', openModal);
+      }
+      
+      // Close modal when close button is clicked
+      if(mobileMenuClose){
+        mobileMenuClose.addEventListener('click', closeModal);
+      }
+      
+      // Close modal when clicking outside content
+      if(mobileMenuModal){
+        mobileMenuModal.addEventListener('click', function(e){
+          if(e.target === mobileMenuModal){
+            closeModal();
+          }
+        });
+      }
+      
+      // Handle tab selection in modal
+      mobileMenuTabs.forEach(tab => {
+        tab.addEventListener('click', function(){
+          const tabType = this.getAttribute('data-tab');
+          const tabText = this.textContent.trim();
+          
+          // Update active state in modal
+          mobileMenuTabs.forEach(t => t.classList.remove('active'));
+          this.classList.add('active');
+          
+          // Update main tabs and trigger the actual tab functionality
+          const mainTabs = document.querySelectorAll('.tabs .tab-list .tab');
+          mainTabs.forEach(t => {
+            t.classList.remove('active');
+            t.setAttribute('aria-selected', 'false');
+          });
+          
+          // Find and activate the corresponding main tab
+          const targetTab = document.getElementById(`tab-${tabType}`);
+          if(targetTab){
+            targetTab.classList.add('active');
+            targetTab.setAttribute('aria-selected', 'true');
+            // Trigger the actual tab click to switch content
+            targetTab.click();
+          }
+          
+          // Update toggle button text
+          mobileMenuToggle.querySelector('span').textContent = tabText;
+          
+          // Close modal
+          closeModal();
+        });
+      });
+      
+      // Close modal on escape key
+      document.addEventListener('keydown', function(e){
+        if(e.key === 'Escape' && mobileMenuModal.classList.contains('active')){
+          closeModal();
+        }
+      });
+    })();
+
     // Tabs & Pagination wiring
     (function(){
       const tabDns = document.getElementById('tab-dns');
@@ -688,6 +1054,7 @@
       const prev = document.getElementById('prevPage');
       const next = document.getElementById('nextPage');
       const cards = document.getElementById('cards');
+      const tabsWrap = document.querySelector('.tabs');
 
       async function animateSwitch(fn){
         if(cards){
@@ -704,18 +1071,38 @@
           });
         }
       }
+
       function setActive(tab){
         animateSwitch(()=>{
           state.currentTab = tab;
-          if(tabDns&&tabWg){
-            if(tab==='dns'){ tabDns.classList.add('active'); tabDns.setAttribute('aria-selected','true'); tabWg.classList.remove('active'); tabWg.setAttribute('aria-selected','false'); }
-            else { tabWg.classList.add('active'); tabWg.setAttribute('aria-selected','true'); tabDns.classList.remove('active'); tabDns.setAttribute('aria-selected','false'); }
-          }
+          // Update all tab states
+          const allTabs = [tabDns, tabWg, tabApn, tabAndroid, tabIos];
+          allTabs.forEach(t => {
+            if(t){
+              t.classList.remove('active');
+              t.setAttribute('aria-selected','false');
+            }
+          });
+          
+          // Set active tab
+          if(tab==='dns' && tabDns){ tabDns.classList.add('active'); tabDns.setAttribute('aria-selected','true'); }
+          else if(tab==='wg' && tabWg){ tabWg.classList.add('active'); tabWg.setAttribute('aria-selected','true'); }
+          else if(tab==='apn' && tabApn){ tabApn.classList.add('active'); tabApn.setAttribute('aria-selected','true'); }
+          else if(tab==='android' && tabAndroid){ tabAndroid.classList.add('active'); tabAndroid.setAttribute('aria-selected','true'); }
+          else if(tab==='ios' && tabIos){ tabIos.classList.add('active'); tabIos.setAttribute('aria-selected','true'); }
+          
           renderPage();
+          // ensure active tab is visible on small screens
+          try{ const active = document.querySelector('.tabs .tab.active'); if(active && tabsWrap){ active.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' }); } }catch(__){}
         });
       }
       if(tabDns) tabDns.addEventListener('click',()=> setActive('dns'));
       if(tabWg) tabWg.addEventListener('click',()=> setActive('wg'));
+      if(tabApn) tabApn.addEventListener('click',()=> setActive('apn'));
+      if(tabAndroid) tabAndroid.addEventListener('click',()=> setActive('android'));
+      if(tabIos) tabIos.addEventListener('click',()=> setActive('ios'));
+      // On load: make sure the default active tab is visible
+      try{ const active = document.querySelector('.tabs .tab.active'); if(active && tabsWrap){ active.scrollIntoView({ behavior: 'auto', inline: 'center', block: 'nearest' }); } }catch(__){}
       function showComingSoon(kind){
         const titles = { apn: 'APN', android: 'Android Settings', ios: 'iPhone Settings' };
         const icons = {
@@ -726,7 +1113,6 @@
         const msg = `<div style="display:flex;align-items:center;gap:.6rem;">${icons[kind]}<div><div style="font-weight:800">به زودی</div><div class="muted">این بخش در حال توسعه است و موقتا غیر فعال می‌باشد.</div></div></div>`;
         window.showMessage(msg, titles[kind]);
       }
-      if(tabApn) tabApn.addEventListener('click', ()=> showComingSoon('apn'));
       if(tabAndroid) tabAndroid.addEventListener('click', ()=> showComingSoon('android'));
       if(tabIos) tabIos.addEventListener('click', ()=> showComingSoon('ios'));
       if(prev) prev.addEventListener('click',()=>{

@@ -2,11 +2,46 @@
 @keyframes fadeIn{0%{opacity:0;transform:translateY(20px);}100%{opacity:1;transform:translateY(0);}}
 @keyframes float{0%{transform:translateY(0);}50%{transform:translateY(-6px);}100%{transform:translateY(0);}}
 
+/* Persian text font support */
+.persian-text, 
+.subtitle-fa, 
+.glass-note,
+[lang="fa"],
+.fa-text {
+  font-family: 'Vazirmatn', 'Poppins', sans-serif !important;
+  direction: rtl;
+  unicode-bidi: plaintext;
+}
+
+/* Custom scrollbar styling */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 4px;
+  backdrop-filter: blur(10px);
+}
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.3);
+}
+::-webkit-scrollbar-corner {
+  background: rgba(255, 255, 255, 0.05);
+}
+/* Global styles with custom scrollbar */
 * {
   box-sizing: border-box;
   margin: 0;
   padding: 0;
   font-family:'Poppins', sans-serif;
+  /* Firefox scrollbar */
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 255, 255, 0.2) rgba(255, 255, 255, 0.05);
 }
 body {
   background: #0a0a0a;
@@ -29,10 +64,18 @@ header {
 header .actions{
   margin-top: .75rem;
   display: flex;
-  flex-direction: column;
+  flex-direction: row;
+  flex-wrap: wrap;
   justify-content: center;
   align-items: center;
-  gap: .6rem;
+  gap: .5rem;
+}
+/* Responsive header buttons on mobile */
+@media (max-width: 640px){
+  header .actions{
+    flex-direction: column;
+    gap: .4rem;
+  }
 }
 /* Brand block for logo + name */
 .brand{
@@ -68,6 +111,15 @@ main {
   gap: 2rem;
   position: relative;
   z-index: 1;
+  margin-top: 1rem;
+}
+/* Add extra spacing on mobile when tabs are vertical */
+@media (max-width: 520px){
+  main {
+    margin-top: 0;
+    padding-top: 3rem;
+    clear: both;
+  }
 }
 .glass-card {
   background: rgba(255, 255, 255, 0.04);
@@ -87,7 +139,7 @@ main {
   margin-top:0.25rem;
   direction: rtl;
   unicode-bidi: plaintext;
-  font-family:'Vazirmatn','Poppins',sans-serif;
+  font-family:'Vazirmatn','Poppins',sans-serif !important;
   font-weight:600;
 }
 .counters{display:grid; grid-template-columns: repeat(3, 1fr); margin:1rem 0; gap:.4rem; align-items:stretch;}
@@ -347,14 +399,40 @@ main {
   display: inline-flex;
   align-items: center;
   gap: .45rem;
+  text-decoration: none;
+  white-space: nowrap;
 }
-.primary-btn:hover{ opacity: .85; }
+.primary-btn:hover{ filter: brightness(1.05); }
 /* Accent variant for Create Account/Dashboard button */
 .accent-btn{
   background: #7fd1ff;
-  color: #001018;
+  color: #000;
 }
 .accent-btn:hover{ filter: brightness(1.05); }
+/* Dedicated style for Buy USDT button */
+.usdt-btn{
+  background: #22c55e;
+  color: #000;
+}
+.usdt-btn:hover{ filter: brightness(1.06); }
+/* Header buttons - consistent sizing and font */
+header .actions .primary-btn,
+header .actions .admin-btn{
+  min-width: 140px;
+  justify-content: center;
+  font-size: 0.9rem;
+  font-weight: 700;
+  letter-spacing: 0.3px;
+}
+@media (max-width: 640px){
+  header .actions .primary-btn,
+  header .actions .admin-btn{
+    min-width: 200px;
+    width: 100%;
+    max-width: 280px;
+    font-size: 0.85rem;
+  }
+}
 .danger-btn{
   padding: .5rem .9rem;
   border-radius: 10px;
@@ -383,7 +461,16 @@ main {
   display: flex;
   gap: .5rem;
   justify-content: center;
-  z-index: 1;
+  position: relative;        /* ensure stacking context */
+  z-index: 20;               /* keep tabs above cards/animations */
+  /* Make tabs responsive on small screens */
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  scroll-snap-type: x mandatory;
+  padding: .25rem .5rem; /* breathing room for scroll */
+  min-height: 48px;         /* prevent collapse on some mobile browsers */
+  align-items: center;      /* keep buttons vertically centered */
+  margin-bottom: 1rem;      /* space between tabs and content */
 }
 .tab{
   padding: .55rem 1rem;
@@ -396,7 +483,12 @@ main {
   letter-spacing: .2px;
   transition: background .18s ease, color .18s ease, box-shadow .18s ease, transform .18s ease;
   box-shadow: 0 4px 14px rgba(0,0,0,0.2);
+  flex: 0 0 auto;              /* prevent shrinking in scroll row */
+  scroll-snap-align: start;    /* snap each tab nicely */
+  white-space: nowrap;         /* prevent text wrapping */
+  min-width: fit-content;      /* ensure minimum width for content */
 }
+/* Tab visibility handled in main responsive section above */
 .tab.active{
   background: #fff;
   color: #000;
@@ -443,6 +535,9 @@ main {
 .tabs.underline .tab.active::after{
   transform: scaleX(1);
 }
+/* Hide scrollbars where possible for cleaner look */
+.tabs::-webkit-scrollbar{ display: none; }
+.tabs{ scrollbar-width: none; }
 /* Pagination */
 .pagination{
   position: fixed;
@@ -478,6 +573,178 @@ main {
   .pagination{ gap:.45rem; padding:.45rem .6rem; }
   .pagination .page-btn{ padding:.42rem .7rem; }
   .pagination .page-info{ font-size:.9rem; }
+}
+/* Desktop: Show horizontal tabs */
+@media (min-width: 1025px){
+  .mobile-menu-toggle {
+    display: none;
+  }
+  .tabs .tab-list {
+    display: flex;
+    gap: .5rem;
+    width: 100%;
+    justify-content: center;
+  }
+  .tabs{
+    padding: .25rem .5rem;
+    position: relative;
+    background: transparent;
+    backdrop-filter: none;
+  }
+}
+/* Mobile menu toggle button */
+.mobile-menu-toggle {
+  display: none;
+  width: 100%;
+  padding: .8rem 1rem;
+  background: rgba(255,255,255,0.08);
+  border: 1px solid rgba(255,255,255,0.18);
+  border-radius: 12px;
+  color: #fff;
+  font-weight: 700;
+  font-size: .9rem;
+  cursor: pointer;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: .5rem;
+  font-family: 'Vazirmatn', 'Poppins', sans-serif;
+  direction: rtl;
+}
+.mobile-menu-toggle:hover {
+  background: rgba(255,255,255,0.12);
+}
+.mobile-menu-icon {
+  width: 20px;
+  height: 20px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+.mobile-menu-icon span {
+  display: block;
+  height: 2px;
+  background: #fff;
+  border-radius: 1px;
+  transition: all 0.3s ease;
+}
+.mobile-menu-toggle.active .mobile-menu-icon span:nth-child(1) {
+  transform: rotate(45deg) translate(6px, 6px);
+}
+.mobile-menu-toggle.active .mobile-menu-icon span:nth-child(2) {
+  opacity: 0;
+}
+.mobile-menu-toggle.active .mobile-menu-icon span:nth-child(3) {
+  transform: rotate(-45deg) translate(6px, -6px);
+}
+
+/* Mobile menu modal */
+.mobile-menu-modal {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.8);
+  backdrop-filter: blur(4px);
+  z-index: 100;
+  display: none;
+  align-items: flex-start;
+  justify-content: center;
+  padding: 1rem;
+  padding-top: 5rem;
+}
+.mobile-menu-modal.active {
+  display: flex;
+}
+.mobile-menu-content {
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  border-radius: 16px;
+  backdrop-filter: blur(20px);
+  padding: 1.5rem;
+  width: 100%;
+  max-width: 400px;
+  max-height: 70vh;
+  overflow-y: auto;
+  position: relative;
+  z-index: 110;
+}
+.mobile-menu-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+.mobile-menu-title {
+  font-family: 'Vazirmatn', 'Poppins', sans-serif;
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #fff;
+  direction: rtl;
+}
+.mobile-menu-close {
+  background: transparent;
+  border: none;
+  color: #ff3b30;
+  font-size: 1.5rem;
+  cursor: pointer;
+  padding: .25rem;
+  line-height: 1;
+}
+
+@media (max-width: 1024px){
+  .mobile-menu-toggle {
+    display: flex;
+  }
+  .tabs{
+    position: sticky;
+    top: 0;
+    background: rgba(10, 10, 10, 0.95);
+    backdrop-filter: blur(10px);
+    border-radius: 12px;
+    z-index: 30;
+    margin-bottom: 1rem;
+    padding: .5rem;
+  }
+  .tabs .tab-list {
+    display: none;
+  }
+  .mobile-menu-modal .tab{
+    width: 100%;
+    min-height: 52px;
+    padding: .8rem 1rem;
+    font-size: .9rem;
+    justify-content: flex-start;
+    text-align: right;
+    flex: none;
+    margin-bottom: .5rem;
+    border-radius: 12px;
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    gap: .6rem;
+    direction: rtl;
+  }
+  .mobile-menu-modal .tab img {
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.9);
+    padding: 2px;
+    flex-shrink: 0;
+  }
+  .mobile-menu-modal .tab:hover {
+    background: rgba(255, 255, 255, 0.12);
+    transform: translateX(-4px);
+  }
+  .mobile-menu-modal .tab.active {
+    background: #fff;
+    color: #000;
+  }
+  .mobile-menu-modal .tab.active img {
+    background: rgba(0, 0, 0, 0.1);
+  }
 }
 form {
   max-width: 720px;
@@ -531,22 +798,23 @@ button:hover {
   opacity: 0.8;
 }
 
-/* admin button style */
+/* admin button style - now consistent with primary buttons */
 .admin-btn {
-  display: inline-block;
-  margin-top: 1rem;
-  padding: 0.6rem 1.2rem;
-  background: #fff;
-  color: #000;
-  border-radius: 10px;
-  text-decoration: none;
-  font-weight: bold;
   display: inline-flex;
   align-items: center;
   gap: .45rem;
+  padding: 0.6rem 1rem;
+  background: #f6c454;
+  color: #000;
+  border-radius: 10px;
+  text-decoration: none;
+  font-weight: 700;
+  border: none;
+  cursor: pointer;
+  margin: 0;
 }
 .admin-btn:hover {
-  opacity: 0.85;
+  filter: brightness(1.05);
 }
 
 /* small inline icon container in buttons */
@@ -556,6 +824,11 @@ button:hover {
 /* tab icons */
 .tabs .tab{ display:inline-flex; align-items:center; gap:.45rem; }
 .tabs .tab img{ width:22px; height:22px; display:block; border-radius:50%; background: rgba(255,255,255,0.9); padding:2px; }
+/* Responsive tab icons for mobile/tablet */
+@media (max-width: 1024px){
+  .tabs .tab img{ width:18px; height:18px; }
+  .tabs .tab{ gap:.4rem; }
+}
 
 /* underline variant refinements */
 .tabs.underline .tab{ box-shadow: none; }
@@ -656,8 +929,16 @@ button:hover {
   -webkit-backdrop-filter: blur(12px);
   direction: rtl;
   unicode-bidi: plaintext;
-  font-family:'Vazirmatn','Poppins',sans-serif; /* Vazirmatn for Persian */
+  font-family:'Vazirmatn','Poppins',sans-serif !important; /* Vazirmatn for Persian */
   line-height: 1.9;
+}
+
+/* Apply Vazirmatn to all Persian content */
+.lbl, .muted, .ttl, .msg, 
+button:lang(fa), span:lang(fa), div:lang(fa),
+.alert-card .ttl, .alert-card .msg,
+.hist-header, .brand-name:lang(fa) {
+  font-family:'Vazirmatn','Poppins',sans-serif !important;
 }
 
 /* Admin: country dropdown dark theme */

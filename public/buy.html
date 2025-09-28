@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Buy USDT — Top-up Plans</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;600&display=swap" rel="stylesheet">
+  <link rel="icon" href="../Logo/Logo.svg" type="image/svg+xml" />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <header>
+    <div class="brand">
+      <img class="brand-logo" src="../Logo/Logo.svg" alt="Pro TooLs logo" />
+      <span class="brand-name">Buy USDT</span>
+    </div>
+    <div class="actions">
+      <a href="../index.html" class="admin-btn"><span class="btn-ico" aria-hidden="true">
+        <!-- Back arrow icon -->
+        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m12 19-7-7 7-7"/><path d="M19 12H5"/></svg>
+      </span>Back to Home</a>
+    </div>
+  </header>
+
+  <!-- Global glassy error modal (for consistency) -->
+  <div class="alert-overlay" id="alertOverlay"></div>
+  <div class="alert-container" id="alertContainer">
+    <div class="alert-card" role="dialog" aria-modal="true" aria-labelledby="alertTitle">
+      <div class="hdr">
+        <div class="ttl" id="alertTitle">پیام</div>
+        <button class="btn-close" id="alertX">×</button>
+      </div>
+      <div class="msg" id="alertMsg"></div>
+      <div class="actions">
+        <button class="btn-close" id="alertOk">باشه</button>
+      </div>
+    </div>
+  </div>
+
+  <main id="plans" style="width:100%;max-width:1000px;padding:1rem;display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:1rem;">
+    <!-- Cards injected by JS -->
+  </main>
+
+  <script>
+    // Minimal modal helpers (same style as other pages)
+    (function(){
+      const overlay = document.getElementById('alertOverlay');
+      const container = document.getElementById('alertContainer');
+      const titleEl = document.getElementById('alertTitle');
+      const msgEl = document.getElementById('alertMsg');
+      const okBtn = document.getElementById('alertOk');
+      const xBtn = document.getElementById('alertX');
+      function close(){ overlay.classList.remove('active'); container.classList.remove('active'); }
+      function open(title, message, asHtml){
+        titleEl.textContent = title || 'پیام';
+        if(asHtml){ msgEl.innerHTML = message || ''; } else { msgEl.textContent = message || ''; }
+        overlay.classList.add('active');
+        container.classList.add('active');
+      }
+      window.showMessage = (m,t)=> open(t||'پیام', m, false);
+      if(okBtn) okBtn.addEventListener('click', close);
+      if(xBtn) xBtn.addEventListener('click', close);
+      if(overlay) overlay.addEventListener('click', close);
+    })();
+
+    const plans = [
+      { usd: 5,  label: '$5' },
+      { usd: 10, label: '$10' },
+      { usd: 20, label: '$20' },
+      { usd: 30, label: '$30' },
+      { usd: 50, label: '$50' },
+      { usd: 100,label: '$100' }
+    ];
+
+    function tgLink(amount){
+      const base = 'https://t.me/Minimalcraft';
+      const text = `سلام، می‌خوام موجودی اکانتم رو ${amount} USDT افزایش بدم.`;
+      const url = new URL(base);
+      url.searchParams.set('text', text);
+      return url.toString();
+    }
+
+    function render(){
+      const root = document.getElementById('plans');
+      root.innerHTML = '';
+      plans.forEach(p => {
+        const card = document.createElement('div');
+        card.className = 'glass-card';
+        card.style.textAlign = 'center';
+        const h2 = document.createElement('h2');
+        h2.textContent = p.label;
+        const sub = document.createElement('div');
+        sub.className = 'subtitle-fa';
+        sub.textContent = 'افزایش موجودی با تتر';
+        const btn = document.createElement('a');
+        btn.href = tgLink(p.usd);
+        btn.target = '_blank';
+        btn.rel = 'noopener';
+        btn.className = 'primary-btn';
+        btn.style.marginTop = '.6rem';
+        btn.innerHTML = '<span class="btn-ico" aria-hidden="true">\
+          <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#000" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 7H8a4 4 0 0 0-4 4v4a3 3 0 0 0 3 3h13a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2Z"/><path d="M16 11h4"/></svg>\
+        </span>ارتباط با ادمین';
+        const note = document.createElement('div');
+        note.className = 'muted';
+        note.style.marginTop = '.4rem';
+        note.textContent = 'پس از کلیک، در تلگرام با ادمین در ارتباط باشید.';
+        card.appendChild(h2);
+        card.appendChild(sub);
+        card.appendChild(btn);
+        card.appendChild(note);
+        root.appendChild(card);
+      });
+
+      // Extra card for custom amount
+      const custom = document.createElement('div');
+      custom.className = 'glass-card';
+      const h2 = document.createElement('h2'); h2.textContent = 'Custom';
+      const sub = document.createElement('div'); sub.className = 'subtitle-fa'; sub.textContent = 'مبلغ دلخواه';
+      const row = document.createElement('div'); 
+      row.style.display = 'flex';
+      row.style.flexDirection = 'column';
+      row.style.gap = '.5rem';
+      row.style.alignItems = 'center';
+      const input = document.createElement('input'); 
+      input.type='number'; 
+      input.placeholder='Amount (USDT)'; 
+      input.style.width='100%';
+      input.style.maxWidth='200px';
+      input.step='1';
+      const a = document.createElement('a'); 
+      a.className='primary-btn'; 
+      a.textContent='تماس با ادمین'; 
+      a.style.whiteSpace='nowrap'; 
+      a.target='_blank'; 
+      a.rel='noopener';
+      a.addEventListener('click', (e)=>{
+        const v = parseFloat(input.value);
+        if(!Number.isFinite(v) || v<=0){ e.preventDefault(); window.showMessage('مبلغ معتبر وارد کنید.'); return; }
+        a.href = tgLink(v);
+      });
+      row.appendChild(input);
+      row.appendChild(a);
+      custom.appendChild(h2);
+      custom.appendChild(sub);
+      custom.appendChild(row);
+      const tip = document.createElement('div'); tip.className='muted'; tip.style.marginTop='.4rem'; tip.textContent='پرداخت با USDT (TRC20/ERC20). پس از هماهنگی با ادمین.';
+      custom.appendChild(tip);
+      document.getElementById('plans').appendChild(custom);
+    }
+
+    render();
+  </script>
+</body>
+</html>
