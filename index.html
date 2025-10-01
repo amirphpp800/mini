@@ -327,13 +327,32 @@
       }
       window.showAddressModal = showAddressModal;
     })();
+    // Helper function to normalize country names
+    function normalizeCountryName(country) {
+      const normalized = String(country || '').toLowerCase().trim();
+      // Normalize England, UK, United Kingdom to a single name
+      if (normalized === 'england' || normalized === 'uk' || normalized === 'united kingdom' || normalized === 'great britain') {
+        return 'United Kingdom';
+      }
+      // Normalize America, USA, United States to a single name
+      if (normalized === 'america' || normalized === 'usa' || normalized === 'united states' || normalized === 'united states of america') {
+        return 'United States';
+      }
+      // Return original country name with proper capitalization
+      return String(country || '').trim();
+    }
+
     // simple mapper to Persian names
     function nameToFa(name){
       const map = {
-        'england': 'انگلیس',
+        'england': 'بریتانیا',
         'united kingdom': 'بریتانیا',
         'uk': 'بریتانیا',
-        'great britain': 'بریتانیا'
+        'great britain': 'بریتانیا',
+        'america': 'آمریکا',
+        'usa': 'آمریکا',
+        'united states': 'آمریکا',
+        'united states of america': 'آمریکا'
       };
       const key = String(name||'').toLowerCase();
       return map[key] || '';
@@ -730,7 +749,7 @@
             try{
               const key = 'userAddrHistory';
               const hist = JSON.parse(localStorage.getItem(key) || '[]');
-              const entry = { country: c.name, count: addresses.length, addresses, ts: Date.now(), type: state.currentTab };
+              const entry = { country: normalizeCountryName(c.name), count: addresses.length, addresses, ts: Date.now(), type: state.currentTab };
               hist.unshift(entry);
               localStorage.setItem(key, JSON.stringify(hist.slice(0,20)));
               if(window.renderUserHistory) window.renderUserHistory();

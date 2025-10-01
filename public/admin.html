@@ -237,6 +237,21 @@
   </section>
   </div>
   <script>
+    // Helper function to normalize country names
+    function normalizeCountryName(country) {
+      const normalized = String(country || '').toLowerCase().trim();
+      // Normalize England, UK, United Kingdom to a single name
+      if (normalized === 'england' || normalized === 'uk' || normalized === 'united kingdom' || normalized === 'great britain') {
+        return 'United Kingdom';
+      }
+      // Normalize America, USA, United States to a single name
+      if (normalized === 'america' || normalized === 'usa' || normalized === 'united states' || normalized === 'united states of america') {
+        return 'United States';
+      }
+      // Return original country name with proper capitalization
+      return String(country || '').trim();
+    }
+
     // --- Error modal helper ---
     (function(){
       const overlay = document.getElementById('alertOverlay');
@@ -685,7 +700,8 @@
 
     // --- Delete country logic ---
     document.getElementById('deleteBtn').addEventListener('click', async ()=>{
-      const country = (document.getElementById('countrySelect').value || document.getElementById('name').value || '').trim();
+      const rawCountry = (document.getElementById('countrySelect').value || document.getElementById('name').value || '').trim();
+      const country = normalizeCountryName(rawCountry);
       if(!country){ window.showError('ابتدا یک کشور انتخاب یا نام آن را وارد کنید'); return; }
       if(!confirm(`حذف کشور «${country}» و تمام IP های مرتبط؟`)) return;
       const body = { session: localStorage.getItem('adminSession'), country };
@@ -736,7 +752,8 @@
     // --- Add country form logic ---
     document.getElementById('countryForm').addEventListener('submit', async (e) => {
       e.preventDefault();
-      const country = selEl.value.trim() || nameEl.value.trim();
+      const rawCountry = selEl.value.trim() || nameEl.value.trim();
+      const country = normalizeCountryName(rawCountry);
       const session = localStorage.getItem('adminSession');
       if(!session){ window.showError('Unauthorized: لطفاً ابتدا در بالا با OTP وارد شوید تا سشن ادمین فعال شود.'); return; }
       // If creating a NEW country (no selection), require a valid 2-letter ISO code
@@ -959,10 +976,11 @@
     async function loadStatsFor(countryName){
       try{
         if(!countryName){ prevStats.textContent=''; return; }
+        const normalizedCountry = normalizeCountryName(countryName);
         let endpoint;
-        if(adminMode==='dns') endpoint = `/stats/${countryName}`;
-        else if(adminMode==='wg') endpoint = `/wg-stats/${countryName}`;
-        else endpoint = `/apn-stats/${countryName}`;
+        if(adminMode==='dns') endpoint = `/stats/${encodeURIComponent(normalizedCountry)}`;
+        else if(adminMode==='wg') endpoint = `/wg-stats/${encodeURIComponent(normalizedCountry)}`;
+        else endpoint = `/apn-stats/${encodeURIComponent(normalizedCountry)}`;
         const r = await fetch(endpoint);
         if(r.ok){
           const s = await r.json();
@@ -975,7 +993,8 @@
 
     refreshStatsBtn.addEventListener('click', ()=> loadStatsFor(selEl.value.trim()));
     previewAddrsBtn.addEventListener('click', async ()=>{
-      const country = selEl.value.trim() || nameEl.value.trim();
+      const rawCountry = selEl.value.trim() || nameEl.value.trim();
+      const country = normalizeCountryName(rawCountry);
       if(!country){ window.showError('ابتدا کشور را انتخاب یا وارد کنید'); return; }
       // APN list preview may not be supported; show friendly message
       if(adminMode==='apn'){
@@ -997,7 +1016,8 @@
       }catch(_){ window.showError('Network error'); }
     });
     clearBusyBtn.addEventListener('click', async ()=>{
-      const country = selEl.value.trim();
+      const rawCountry = selEl.value.trim();
+      const country = normalizeCountryName(rawCountry);
       if(!country){ window.showError('ابتدا یک کشور موجود انتخاب کنید'); return; }
       if(!confirm('لیست Busy برای این کشور پاک شود؟')) return;
       try{

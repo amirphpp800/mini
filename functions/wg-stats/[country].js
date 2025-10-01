@@ -1,5 +1,21 @@
 export const onRequestGet = async ({ params, env }) => {
-  const country = params.country?.toLowerCase();
+  // Helper function to normalize country names
+  function normalizeCountryName(country) {
+    const normalized = String(country || '').toLowerCase().trim();
+    // Normalize England, UK, United Kingdom to a single name
+    if (normalized === 'england' || normalized === 'uk' || normalized === 'united kingdom' || normalized === 'great britain') {
+      return 'united kingdom';
+    }
+    // Normalize America, USA, United States to a single name
+    if (normalized === 'america' || normalized === 'usa' || normalized === 'united states' || normalized === 'united states of america') {
+      return 'united states';
+    }
+    // Return normalized lowercase country name
+    return normalized;
+  }
+
+  const rawCountry = params.country;
+  const country = normalizeCountryName(rawCountry);
   if (!country) return new Response('Not found', { status: 404 });
 
   const allRaw = await env.KV.get(`wg_ips:${country}`);

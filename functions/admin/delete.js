@@ -1,8 +1,24 @@
 export const onRequestPost = async ({ request, env }) => {
   try {
+    // Helper function to normalize country names
+    function normalizeCountryName(country) {
+      const normalized = String(country || '').toLowerCase().trim();
+      // Normalize England, UK, United Kingdom to a single name
+      if (normalized === 'england' || normalized === 'uk' || normalized === 'united kingdom' || normalized === 'great britain') {
+        return 'united kingdom';
+      }
+      // Normalize America, USA, United States to a single name
+      if (normalized === 'america' || normalized === 'usa' || normalized === 'united states' || normalized === 'united states of america') {
+        return 'united states';
+      }
+      // Return normalized lowercase country name
+      return normalized;
+    }
+
     const url = new URL(request.url);
     const body = await request.json();
-    const { session: bodySession, country } = body || {};
+    const { session: bodySession, country: rawCountry } = body || {};
+    const country = normalizeCountryName(rawCountry);
     const auth = request.headers.get('Authorization') || '';
     const m = /^Bearer\s+(.+)/i.exec(auth);
     const session = bodySession || (m && m[1]) || url.searchParams.get('session') || '';
