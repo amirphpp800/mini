@@ -1,0 +1,478 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Dashboard — Pro TooLs</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;600&family=Vazirmatn:wght@400;600&display=swap" rel="stylesheet">
+  <link rel="icon" href="Logo/Logo.svg" type="image/svg+xml" />
+  <link rel="stylesheet" href="public/styles.css" />
+  <style>
+    .dashboard-container {
+      max-width: 800px;
+      margin: 2rem auto;
+      padding: 0 1rem;
+    }
+    .dashboard-header {
+      text-align: center;
+      margin-bottom: 2rem;
+    }
+    .dashboard-card {
+      background: rgba(255,255,255,0.08);
+      border: 1px solid rgba(255,255,255,0.18);
+      backdrop-filter: blur(14px);
+      border-radius: 20px;
+      padding: 2rem;
+      margin-bottom: 1.5rem;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+    }
+    .home-btn {
+      position: fixed;
+      bottom: 2rem;
+      right: 2rem;
+      width: 60px;
+      height: 60px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      border: none;
+      color: white;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+      transition: all 0.3s ease;
+      z-index: 1000;
+    }
+    .home-btn:hover {
+      transform: scale(1.1);
+      box-shadow: 0 12px 32px rgba(0, 0, 0, 0.45);
+    }
+    .row {
+      display: flex;
+      gap: 0.5rem;
+      margin-bottom: 1rem;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+    .row input, .row button {
+      padding: 0.75rem 1rem;
+      border-radius: 12px;
+      border: 1px solid rgba(255,255,255,0.3);
+      background: rgba(0,0,0,0.5);
+      color: white;
+      font-weight: 600;
+    }
+    .row button {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+    .row button:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 16px rgba(0,0,0,0.3);
+    }
+    .danger-btn {
+      background: linear-gradient(135deg, #ff6b6b 0%, #ee5a52 100%) !important;
+    }
+    .alt-btn {
+      background: transparent !important;
+      border: 1px solid rgba(255,255,255,0.3) !important;
+    }
+    .muted {
+      color: rgba(255,255,255,0.7);
+      font-size: 0.9rem;
+    }
+    .persian-text {
+      font-family: 'Vazirmatn', 'Poppins', sans-serif;
+      direction: rtl;
+    }
+    .hist-row {
+      background: rgba(255,255,255,0.05);
+      border-radius: 12px;
+      padding: 1rem;
+      margin-bottom: 0.5rem;
+    }
+    .hist-header {
+      font-weight: 600;
+      margin-bottom: 0.5rem;
+    }
+    .hist-geo-list {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 0.5rem;
+      margin-top: 0.5rem;
+    }
+    .hist-geo-card {
+      background: rgba(0,0,0,0.3);
+      padding: 0.5rem;
+      border-radius: 8px;
+      font-size: 0.8rem;
+    }
+    .geo-ip {
+      font-weight: 600;
+      color: #7fd1ff;
+    }
+    .geo-meta {
+      color: rgba(255,255,255,0.7);
+      margin-top: 0.2rem;
+    }
+  </style>
+</head>
+<body>
+  <canvas id="bg-net"></canvas>
+  
+  <!-- Home Button -->
+  <button class="home-btn" onclick="window.location.href='index.html'" title="بازگشت به خانه">
+    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
+      <polyline points="9,22 9,12 15,12 15,22"/>
+    </svg>
+  </button>
+
+  <div class="dashboard-container">
+    <div class="dashboard-header">
+      <div class="brand">
+        <img class="brand-logo" src="Logo/Logo.svg" alt="Pro TooLs logo" />
+        <span class="brand-name">Dashboard</span>
+      </div>
+    </div>
+
+    <!-- Status Card -->
+    <div class="dashboard-card">
+      <h2>Account Status</h2>
+      <div class="status-line" id="accStatus">Checking status...</div>
+      
+      <div class="row" id="u_balance_row" style="display:none">
+        <div class="muted">Balance: <span id="u_balance_value">$0.00</span></div>
+      </div>
+      
+      <div class="row" id="u_id_row" style="display:none">
+        <div class="muted">Your ID: <span id="u_id_value"></span></div>
+      </div>
+      
+      <div class="row" id="u_logged" style="display:none">
+        <span>Logged in</span>
+        <button id="u_logout" class="danger-btn">Logout</button>
+      </div>
+    </div>
+
+    <!-- Gift Code Card -->
+    <div class="dashboard-card" id="u_gift_card" style="display:none">
+      <h2>Gift Code</h2>
+      <div class="row" style="gap:.5rem; align-items:center;">
+        <input type="text" id="u_gift_code" placeholder="Gift code" style="flex:1;" />
+        <button id="u_gift_redeem">Redeem</button>
+      </div>
+    </div>
+
+    <!-- Password Management Card -->
+    <div class="dashboard-card" id="u_setpwd_card" style="display:none">
+      <h2>Change Password</h2>
+      <div class="row">
+        <input type="password" id="u_setpwd_1" placeholder="New password (min 6)" />
+        <input type="password" id="u_setpwd_2" placeholder="Repeat new password" />
+        <button id="u_setpwd_btn">Set Password</button>
+      </div>
+    </div>
+
+    <!-- Address History Card -->
+    <div class="dashboard-card" id="u_history_wrap" style="display:none">
+      <h2>Your Fetched Addresses</h2>
+      <p class="muted persian-text">از طریق داشبورد حساب کاربری می‌توانید به آدرس‌های دریافت‌شده خود دسترسی داشته باشید و دوباره آن‌ها را مشاهده یا کپی کنید.</p>
+      <div id="u_history" style="display:flex;flex-direction:column;gap:.5rem;margin-top:1rem;"></div>
+    </div>
+
+    <!-- Login Card (if not logged in) -->
+    <div class="dashboard-card" id="login_card">
+      <h2>Login Required</h2>
+      <p class="muted">Please login to access your dashboard.</p>
+      <div class="row" style="justify-content:center;margin-top:1rem;">
+        <button onclick="window.location.href='login.html'">Go to Login</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Global glassy error modal -->
+  <div class="alert-overlay" id="alertOverlay"></div>
+  <div class="alert-container" id="alertContainer">
+    <div class="alert-card" role="dialog" aria-modal="true" aria-labelledby="alertTitle">
+      <div class="hdr">
+        <div class="ttl" id="alertTitle">خطا</div>
+        <button class="btn-close" id="alertX">×</button>
+      </div>
+      <div class="msg" id="alertMsg"></div>
+      <div class="actions">
+        <button class="btn-close" id="alertOk">OK</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Confirm modal -->
+  <div class="alert-overlay" id="confirmOverlay"></div>
+  <div class="alert-container" id="confirmContainer">
+    <div class="alert-card" role="dialog" aria-modal="true" aria-labelledby="confirmTitle">
+      <div class="hdr">
+        <div class="ttl" id="confirmTitle">تایید</div>
+        <button class="btn-close" id="confirmX">×</button>
+      </div>
+      <div class="msg" id="confirmMsg"></div>
+      <div class="actions">
+        <button id="confirmNo">Cancel</button>
+        <button id="confirmYes" class="primary-btn">Confirm</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Error/Message modal helper
+    (function(){
+      const overlay = document.getElementById('alertOverlay');
+      const container = document.getElementById('alertContainer');
+      const titleEl = document.getElementById('alertTitle');
+      const msgEl = document.getElementById('alertMsg');
+      const okBtn = document.getElementById('alertOk');
+      const xBtn = document.getElementById('alertX');
+      function close(){ overlay.classList.remove('active'); container.classList.remove('active'); }
+      function open(title, message, asHtml){
+        titleEl.textContent = title || 'پیام';
+        if(asHtml){ msgEl.innerHTML = message || ''; }
+        else { msgEl.textContent = message || ''; }
+        overlay.classList.add('active');
+        container.classList.add('active');
+      }
+      function showError(message, title){ open(title || 'خطا', message, false); }
+      function showMessage(message, title){
+        const html = String(message||'').replace(/\n/g,'<br>');
+        open(title || 'پیام', html, true);
+      }
+      okBtn.addEventListener('click', close);
+      xBtn.addEventListener('click', close);
+      overlay.addEventListener('click', close);
+      window.showError = showError;
+      window.showMessage = showMessage;
+    })();
+
+    // Confirm modal helper
+    (function(){
+      const overlay = document.getElementById('confirmOverlay');
+      const container = document.getElementById('confirmContainer');
+      const titleEl = document.getElementById('confirmTitle');
+      const msgEl = document.getElementById('confirmMsg');
+      const yesBtn = document.getElementById('confirmYes');
+      const noBtn = document.getElementById('confirmNo');
+      const xBtn = document.getElementById('confirmX');
+
+      let resolver = null;
+      function close(){ overlay.classList.remove('active'); container.classList.remove('active'); }
+      function open(message, title){
+        titleEl.textContent = title || 'تایید';
+        msgEl.textContent = message || '';
+        overlay.classList.add('active');
+        container.classList.add('active');
+      }
+      function resolve(val){ if(resolver){ const r=resolver; resolver=null; r(val); } close(); }
+      if(yesBtn) yesBtn.onclick = ()=> resolve(true);
+      if(noBtn) noBtn.onclick = ()=> resolve(false);
+      if(xBtn) xBtn.onclick = ()=> resolve(false);
+      if(overlay) overlay.onclick = ()=> resolve(false);
+      document.addEventListener('keydown', (e)=>{ if(e.key==='Escape' && overlay && overlay.classList.contains('active')) resolve(false); });
+
+      function showConfirm(message, title){
+        return new Promise((resolveFn)=>{ resolver = resolveFn; open(message, title); });
+      }
+      window.showConfirm = showConfirm;
+    })();
+
+    // Dashboard Logic
+    (function(){
+      const isLocal = /^(localhost|127\.0\.0\.1)/.test(location.hostname);
+      const statusEl = document.getElementById('accStatus');
+      const balRow = document.getElementById('u_balance_row');
+      const balVal = document.getElementById('u_balance_value');
+      const loggedRow = document.getElementById('u_logged');
+      const logoutBtn = document.getElementById('u_logout');
+      const histWrap = document.getElementById('u_history_wrap');
+      const histList = document.getElementById('u_history');
+      const idRow = document.getElementById('u_id_row');
+      const idVal = document.getElementById('u_id_value');
+      const loginCard = document.getElementById('login_card');
+      const giftCard = document.getElementById('u_gift_card');
+      const setpwdCard = document.getElementById('u_setpwd_card');
+
+      async function loadMe(session){
+        if(!session) return;
+        try{
+          const r = await fetch('/auth/me', { headers:{ 'Authorization': `Bearer ${session}` } });
+          if(r.ok){
+            const { chat_id } = await r.json();
+            if(idVal) idVal.textContent = chat_id || '';
+          } else {
+            if(idVal) idVal.textContent = '';
+          }
+        }catch(_){ if(idVal) idVal.textContent=''; }
+        
+        // Load balance
+        try{
+          const rb = await fetch('/user/balance', { headers:{ 'Authorization': `Bearer ${session}` } });
+          if(rb.ok){
+            const { balance } = await rb.json();
+            if(balVal) balVal.textContent = `$${balance}`;
+            if(balRow) balRow.style.display='flex';
+          } else {
+            if(balRow) balRow.style.display='none';
+          }
+        }catch(_e){ if(balRow) balRow.style.display='none'; }
+      }
+
+      async function renderDashboard(){
+        const ses = localStorage.getItem('userSession');
+        if(ses){
+          loginCard.style.display='none';
+          loggedRow.style.display='flex';
+          histWrap.style.display='block';
+          giftCard.style.display='block';
+          setpwdCard.style.display='block';
+          if(idRow) idRow.style.display='flex';
+          await loadMe(ses);
+          renderUserHistory();
+        } else {
+          loginCard.style.display='block';
+          loggedRow.style.display='none';
+          histWrap.style.display='none';
+          giftCard.style.display='none';
+          setpwdCard.style.display='none';
+          if(idRow) idRow.style.display='none';
+          if(idVal) idVal.textContent = '';
+          if(balRow) balRow.style.display='none';
+        }
+      }
+
+      // Initialize
+      (async()=>{
+        try{
+          if(isLocal){
+            statusEl.textContent = 'Local mode';
+            statusEl.style.color = '#ffd27a';
+          } else {
+            const r = await fetch('/status');
+            if(r.ok){
+              const {kv, bot} = await r.json();
+              statusEl.textContent = `KV: ${kv? 'Connected':'Not available'} | Bot token: ${bot? 'Configured':'Missing'}`;
+              statusEl.style.color = kv && bot ? '#9cff9c' : '#ffd27a';
+            } else {
+              statusEl.textContent = 'Unable to read status endpoint';
+              statusEl.style.color = '#ffd27a';
+            }
+          }
+        }catch(e){
+          statusEl.textContent = 'Status check failed';
+          statusEl.style.color = '#ffd27a';
+        }
+        renderDashboard();
+      })();
+
+      // Logout functionality
+      logoutBtn.addEventListener('click', async ()=>{
+        if(await window.showConfirm('آیا از خروج از حساب اطمینان دارید؟','تایید خروج')){
+          localStorage.removeItem('userSession');
+          await renderDashboard();
+        }
+      });
+
+      // Gift redeem functionality
+      const giftBtn = document.getElementById('u_gift_redeem');
+      if(giftBtn){
+        giftBtn.addEventListener('click', async ()=>{
+          const codeEl = document.getElementById('u_gift_code');
+          const code = (codeEl && codeEl.value || '').trim();
+          if(!code){ window.showError('Enter a gift code'); return; }
+          const session = localStorage.getItem('userSession');
+          if(!session){ window.showError('Please login first'); return; }
+          try{
+            const r = await fetch('/gift/redeem', { method:'POST', headers:{ 'Content-Type':'application/json', 'Authorization': `Bearer ${session}` }, body: JSON.stringify({ code }) });
+            if(!r.ok){
+              let msg = 'Redeem failed';
+              try{ const j = await r.json(); if(j && (j.error||j.message)) msg = j.message || j.error; }catch(_){ }
+              window.showError(msg);
+              return;
+            }
+            const j = await r.json();
+            window.showMessage(`Gift applied: $${Number(j.amount||0).toFixed(2)}`,'Success');
+            // refresh balance
+            await loadMe(session);
+            if(codeEl) codeEl.value='';
+          }catch(e){ window.showError('Network error'); }
+        });
+      }
+
+      // Set password functionality
+      const setpwdBtn = document.getElementById('u_setpwd_btn');
+      if(setpwdBtn){
+        setpwdBtn.addEventListener('click', async ()=>{
+          const a = String(document.getElementById('u_setpwd_1').value||'');
+          const b = String(document.getElementById('u_setpwd_2').value||'');
+          if(a.length<6){ window.showError('Password too short (min 6)'); return; }
+          if(a!==b){ window.showError('Passwords do not match'); return; }
+          const session = localStorage.getItem('userSession');
+          if(!session){ window.showError('Please login first'); return; }
+          try{
+            const r = await fetch('/auth/set-password',{ method:'POST', headers:{ 'Content-Type':'application/json', 'Authorization': `Bearer ${session}` }, body: JSON.stringify({ new_password: a }) });
+            if(!r.ok){ window.showError('Failed to set password'); return; }
+            window.showMessage('Password updated','Success');
+            document.getElementById('u_setpwd_1').value='';
+            document.getElementById('u_setpwd_2').value='';
+          }catch(e){ window.showError('Network error'); }
+        });
+      }
+
+      // Render user address history
+      function renderUserHistory(){
+        try{
+          const arr = JSON.parse(localStorage.getItem('userAddrHistory') || '[]');
+          histList.innerHTML = '';
+          if(arr.length===0){
+            const p = document.createElement('div');
+            p.className = 'muted';
+            p.textContent = 'No addresses fetched yet.';
+            histList.appendChild(p);
+            return;
+          }
+          for(const item of arr){
+            const row = document.createElement('div');
+            row.className = 'hist-row';
+            const header = document.createElement('div');
+            header.className = 'hist-header';
+            header.textContent = `${item.country} — ${item.count} IPs`;
+            const actions = document.createElement('div');
+            const copy = document.createElement('button');
+            copy.textContent = 'Copy';
+            copy.style.padding = '0.5rem 1rem';
+            copy.style.borderRadius = '8px';
+            copy.style.border = 'none';
+            copy.style.background = 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)';
+            copy.style.color = 'white';
+            copy.style.cursor = 'pointer';
+            copy.addEventListener('click', async ()=>{
+              try{ await navigator.clipboard.writeText((item.addresses||[]).join('\n')); window.showMessage('Copied to clipboard'); }catch(_e){ window.showError('Failed to copy'); }
+            });
+            actions.appendChild(copy);
+            const top = document.createElement('div');
+            top.style.display = 'flex';
+            top.style.justifyContent = 'space-between';
+            top.style.alignItems = 'center';
+            top.appendChild(header);
+            top.appendChild(actions);
+            row.appendChild(top);
+            histList.appendChild(row);
+          }
+        }catch(e){ histList.innerHTML='<div class="muted">Error loading history</div>'; }
+      }
+    })();
+  </script>
+  <script src="public/net.js"></script>
+</body>
+</html>

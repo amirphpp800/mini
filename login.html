@@ -1,0 +1,403 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Login — Pro TooLs</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;600&family=Vazirmatn:wght@400;600&display=swap" rel="stylesheet">
+  <link rel="icon" href="Logo/Logo.svg" type="image/svg+xml" />
+  <link rel="stylesheet" href="public/styles.css" />
+  <style>
+    .login-container {
+      max-width: 500px;
+      margin: 4rem auto;
+      padding: 0 1rem;
+    }
+    .login-card {
+      background: rgba(255,255,255,0.08);
+      border: 1px solid rgba(255,255,255,0.18);
+      backdrop-filter: blur(14px);
+      border-radius: 20px;
+      padding: 2rem;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+      text-align: center;
+    }
+    .home-btn {
+      position: fixed;
+      bottom: 2rem;
+      right: 2rem;
+      width: 60px;
+      height: 60px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      border: none;
+      color: white;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+      transition: all 0.3s ease;
+      z-index: 1000;
+    }
+    .home-btn:hover {
+      transform: scale(1.1);
+      box-shadow: 0 12px 32px rgba(0, 0, 0, 0.45);
+    }
+    .row {
+      display: flex;
+      gap: 0.5rem;
+      margin-bottom: 1rem;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+    .row input, .row button {
+      padding: 0.75rem 1rem;
+      border-radius: 12px;
+      border: 1px solid rgba(255,255,255,0.3);
+      background: rgba(0,0,0,0.5);
+      color: white;
+      font-weight: 600;
+      width: 100%;
+    }
+    .row button {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+    .row button:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 16px rgba(0,0,0,0.3);
+    }
+    .alt-btn {
+      background: transparent !important;
+      border: 1px solid rgba(255,255,255,0.3) !important;
+      font-size: 0.9rem;
+      padding: 0.5rem 1rem !important;
+    }
+    .tg-btn {
+      background: linear-gradient(135deg, #0088cc 0%, #005577 100%);
+      color: white;
+      text-decoration: none;
+      padding: 0.75rem 1rem;
+      border-radius: 12px;
+      display: inline-block;
+      font-weight: 600;
+      transition: all 0.3s ease;
+      width: 100%;
+      text-align: center;
+    }
+    .tg-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 16px rgba(0,0,0,0.3);
+    }
+    .muted {
+      color: rgba(255,255,255,0.7);
+      font-size: 0.9rem;
+    }
+    .status-line {
+      margin-bottom: 1rem;
+      padding: 0.5rem;
+      border-radius: 8px;
+      background: rgba(0,0,0,0.3);
+      font-size: 0.9rem;
+    }
+    .divider {
+      text-align: center;
+      margin: 1rem 0;
+      color: rgba(255,255,255,0.5);
+    }
+  </style>
+</head>
+<body>
+  <canvas id="bg-net"></canvas>
+  
+  <!-- Home Button -->
+  <button class="home-btn" onclick="window.location.href='index.html'" title="بازگشت به خانه">
+    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
+      <polyline points="9,22 9,12 15,12 15,22"/>
+    </svg>
+  </button>
+
+  <div class="login-container">
+    <div class="login-card">
+      <div class="brand" style="margin-bottom: 2rem;">
+        <img class="brand-logo" src="Logo/Logo.svg" alt="Pro TooLs logo" />
+        <span class="brand-name">Login</span>
+      </div>
+
+      <div class="status-line" id="accStatus">Checking status...</div>
+
+      <!-- Telegram Login -->
+      <div class="row">
+        <a class="tg-btn" href="tg://resolve?domain=minidnsverify_bot">Start Telegram Bot</a>
+      </div>
+      
+      <div class="row">
+        <input type="number" id="u_chat_id" placeholder="Telegram ID" />
+      </div>
+      
+      <div class="row">
+        <button id="u_send">Send Code</button>
+      </div>
+      
+      <div class="row" id="u_otp_row" style="display:none">
+        <input type="number" id="u_otp" placeholder="Enter verification code" />
+      </div>
+      
+      <div class="row" id="u_otp_row2" style="display:none">
+        <button id="u_verify">Verify</button>
+      </div>
+
+      <div class="divider">— or —</div>
+
+      <!-- Password Login -->
+      <div class="row">
+        <input type="number" id="u_login_chat" placeholder="Telegram ID" />
+      </div>
+      
+      <div class="row">
+        <input type="password" id="u_login_pwd" placeholder="Password" />
+      </div>
+      
+      <div class="row">
+        <button id="u_login_btn">Login with Password</button>
+      </div>
+      
+      <div class="row" style="justify-content:center;margin-top:1rem">
+        <button id="u_forgot_btn" class="alt-btn">Forgot password?</button>
+      </div>
+
+      <small class="muted" style="display:block;margin-top:1.5rem;">
+        If you didn't receive a message, open the Telegram bot above, press Start, then try again:
+        <a href="https://t.me/minidnsverify_bot" target="_blank" rel="noopener" style="color:#7fd1ff">@minidnsverify_bot</a>
+      </small>
+    </div>
+  </div>
+
+  <!-- Reset Password Modal -->
+  <div class="alert-overlay" id="resetOverlay"></div>
+  <div class="alert-container" id="resetContainer">
+    <div class="alert-card" role="dialog" aria-modal="true" aria-labelledby="resetTitle">
+      <div class="hdr">
+        <div class="ttl" id="resetTitle">Reset Password</div>
+        <button class="btn-close" id="resetX">×</button>
+      </div>
+      <div class="msg" id="resetBody">
+        <div class="row" style="margin-bottom:.5rem">
+          <input type="number" id="r_chat" placeholder="Telegram ID" />
+          <button id="r_send">Send Code</button>
+        </div>
+        <div class="row" style="margin-bottom:.5rem">
+          <input type="number" id="r_code" placeholder="Code" />
+        </div>
+        <div class="row">
+          <input type="password" id="r_pwd1" placeholder="New password (min 6)" />
+          <input type="password" id="r_pwd2" placeholder="Repeat new password" />
+          <button id="r_apply">Apply</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Global glassy error modal -->
+  <div class="alert-overlay" id="alertOverlay"></div>
+  <div class="alert-container" id="alertContainer">
+    <div class="alert-card" role="dialog" aria-modal="true" aria-labelledby="alertTitle">
+      <div class="hdr">
+        <div class="ttl" id="alertTitle">خطا</div>
+        <button class="btn-close" id="alertX">×</button>
+      </div>
+      <div class="msg" id="alertMsg"></div>
+      <div class="actions">
+        <button class="btn-close" id="alertOk">OK</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Error/Message modal helper
+    (function(){
+      const overlay = document.getElementById('alertOverlay');
+      const container = document.getElementById('alertContainer');
+      const titleEl = document.getElementById('alertTitle');
+      const msgEl = document.getElementById('alertMsg');
+      const okBtn = document.getElementById('alertOk');
+      const xBtn = document.getElementById('alertX');
+      function close(){ overlay.classList.remove('active'); container.classList.remove('active'); }
+      function open(title, message, asHtml){
+        titleEl.textContent = title || 'پیام';
+        if(asHtml){ msgEl.innerHTML = message || ''; }
+        else { msgEl.textContent = message || ''; }
+        overlay.classList.add('active');
+        container.classList.add('active');
+      }
+      function showError(message, title){ open(title || 'خطا', message, false); }
+      function showMessage(message, title){
+        const html = String(message||'').replace(/\n/g,'<br>');
+        open(title || 'پیام', html, true);
+      }
+      okBtn.addEventListener('click', close);
+      xBtn.addEventListener('click', close);
+      overlay.addEventListener('click', close);
+      window.showError = showError;
+      window.showMessage = showMessage;
+    })();
+
+    // Reset modal helper
+    (function(){
+      const overlay = document.getElementById('resetOverlay');
+      const container = document.getElementById('resetContainer');
+      const xBtn = document.getElementById('resetX');
+      function open(){ overlay.classList.add('active'); container.classList.add('active'); }
+      function close(){ overlay.classList.remove('active'); container.classList.remove('active'); }
+      if(xBtn) xBtn.onclick = close; if(overlay) overlay.onclick = close;
+      window.openResetModal = open; window.closeResetModal = close;
+    })();
+
+    // Login Logic
+    (function(){
+      const isLocal = /^(localhost|127\.0\.0\.1)/.test(location.hostname);
+      const statusEl = document.getElementById('accStatus');
+      const chatEl = document.getElementById('u_chat_id');
+      const sendBtn = document.getElementById('u_send');
+      const otpRow = document.getElementById('u_otp_row');
+      const otpRow2 = document.getElementById('u_otp_row2');
+      const otpEl = document.getElementById('u_otp');
+      const verifyBtn = document.getElementById('u_verify');
+
+      // Initialize status
+      (async()=>{
+        try{
+          if(isLocal){
+            statusEl.textContent = 'Local mode';
+            statusEl.style.color = '#ffd27a';
+          } else {
+            const r = await fetch('/status');
+            if(r.ok){
+              const {kv, bot} = await r.json();
+              statusEl.textContent = `KV: ${kv? 'Connected':'Not available'} | Bot token: ${bot? 'Configured':'Missing'}`;
+              statusEl.style.color = kv && bot ? '#9cff9c' : '#ffd27a';
+            } else {
+              statusEl.textContent = 'Unable to read status endpoint';
+              statusEl.style.color = '#ffd27a';
+            }
+          }
+        }catch(e){
+          statusEl.textContent = 'Status check failed';
+          statusEl.style.color = '#ffd27a';
+        }
+      })();
+
+      // Check if already logged in
+      const session = localStorage.getItem('userSession');
+      if(session){
+        window.location.href = 'dashboard.html';
+        return;
+      }
+
+      // Prefill chat id from localStorage
+      chatEl.value = localStorage.getItem('userChatId') || '';
+
+      // Send code functionality
+      sendBtn.addEventListener('click', async (e)=>{
+        e.preventDefault();
+        const chat_id = chatEl.value.trim();
+        if(!chat_id) return window.showError('Enter ID');
+        localStorage.setItem('userChatId', chat_id);
+        if(isLocal){
+          window.showError('In local mode, sending the code may not work. Please test again after deployment.');
+        }
+        try{
+          const r = await fetch('/auth/send-code',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({chat_id})});
+            if(r.ok){
+              const {next_retry_sec=30} = await r.json().catch(()=>({}));
+              otpRow.style.display='flex';
+              otpRow2.style.display='flex';
+              sendBtn.disabled = true; let left = next_retry_sec||30; const original = sendBtn.getAttribute('data-original-label') || sendBtn.textContent || 'Send Code';
+              const t = setInterval(()=>{ left--; if(left<=0){clearInterval(t); sendBtn.disabled=false; sendBtn.textContent=original;} else { sendBtn.textContent=`${original} (${left} seconds left)`; } },1000);
+            } else {
+            const j = await r.json().catch(()=>({}));
+            if(r.status===429 && j.next_retry_sec){
+              window.showError(`Please wait ${j.next_retry_sec} seconds.`, 'لطفاً صبر کنید');
+              } else {
+              window.showError('Error sending code');
+              }
+            }
+        }catch(e){ window.showError('Network error'); }
+      });
+
+      // Verify code functionality
+      verifyBtn.addEventListener('click', async (e)=>{
+        const chat_id = chatEl.value.trim();
+        const code = otpEl.value.trim();
+        if(!code) { window.showError('Enter code'); return; }
+        try{
+          const r = await fetch('/auth/verify',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({chat_id,code})});
+          if(r.ok){
+            const {session} = await r.json();
+            localStorage.setItem('userSession', session);
+            window.showMessage('Your account has been verified.','پیام');
+            setTimeout(() => window.location.href = 'dashboard.html', 1500);
+          } else {
+            window.showError('Verification failed');
+          }
+        }catch(e){ window.showError('Network error'); }
+      });
+
+      // Password login functionality
+      const loginBtn = document.getElementById('u_login_btn');
+      if(loginBtn){
+        loginBtn.addEventListener('click', async ()=>{
+          const chat = String(document.getElementById('u_login_chat').value||'').trim();
+          const pwd = String(document.getElementById('u_login_pwd').value||'');
+          if(!chat || !pwd){ window.showError('Enter chat_id and password'); return; }
+          try{
+            const r = await fetch('/auth/login',{ method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ chat_id: chat, password: pwd }) });
+            if(!r.ok){ window.showError('Invalid credentials'); return; }
+            const j = await r.json();
+            localStorage.setItem('userSession', j.session);
+            window.showMessage('Login successful!','Success');
+            setTimeout(() => window.location.href = 'dashboard.html', 1500);
+          }catch(e){ window.showError('Network error'); }
+        });
+      }
+
+      // Forgot password functionality
+      const forgotBtn = document.getElementById('u_forgot_btn');
+      if(forgotBtn){ forgotBtn.addEventListener('click', ()=>{ if(window.openResetModal) window.openResetModal(); }); }
+      
+      const sendResetBtn = document.getElementById('r_send');
+      const applyResetBtn = document.getElementById('r_apply');
+      if(sendResetBtn){ sendResetBtn.addEventListener('click', async ()=>{
+        const chat = String(document.getElementById('r_chat').value||'').trim();
+        if(!chat){ window.showError('Enter Telegram ID'); return; }
+        try{
+          const r = await fetch('/auth/send-reset-code',{ method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ chat_id: chat }) });
+          if(r.ok){ window.showMessage('Code sent to your Telegram'); } else { window.showError('Failed to send code'); }
+        }catch(e){ window.showError('Network error'); }
+      }); }
+      if(applyResetBtn){ applyResetBtn.addEventListener('click', async ()=>{
+        const chat = String(document.getElementById('r_chat').value||'').trim();
+        const code = String(document.getElementById('r_code').value||'').trim();
+        const a = String(document.getElementById('r_pwd1').value||'');
+        const b = String(document.getElementById('r_pwd2').value||'');
+        if(!chat || !code){ window.showError('Enter ID and code'); return; }
+        if(a.length<6){ window.showError('Password too short (min 6)'); return; }
+        if(a!==b){ window.showError('Passwords do not match'); return; }
+        try{
+          const r = await fetch('/auth/reset',{ method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ chat_id: chat, code, new_password: a }) });
+          if(!r.ok){ let m='Reset failed'; try{ const j=await r.json(); if(j&&(j.error||j.message)) m=j.message||j.error; }catch(_){ } window.showError(m); return; }
+          window.showMessage('Password changed. You can now login with password.','Success');
+          if(window.closeResetModal) window.closeResetModal();
+        }catch(e){ window.showError('Network error'); }
+      }); }
+    })();
+  </script>
+  <script src="public/net.js"></script>
+</body>
+</html>

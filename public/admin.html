@@ -125,6 +125,37 @@
       <button type="button" id="bal_apply">اعمال تغییر موجودی</button>
     </div>
   </form>
+  <!-- Gift Code Management -->
+  <section id="giftSection" style="display:none; margin-top:1rem;">
+    <h3 style="margin:.25rem 0 .5rem;">ایجاد گیفت کد</h3>
+    <div class="form-grid">
+      <div class="form-col">
+        <label class="lbl" for="gift_code">کد (اختیاری؛ خالی بماند تا خودکار ساخته شود)</label>
+        <input type="text" id="gift_code" placeholder="مثال: WELCOME2025" />
+      </div>
+      <div class="form-col">
+        <label class="lbl" for="gift_amount">مبلغ (دلار)</label>
+        <input type="number" id="gift_amount" placeholder="مثال: 5.00" step="0.01" />
+      </div>
+    </div>
+    <div class="form-grid" style="margin-top:.5rem; align-items:end;">
+      <div class="form-col">
+        <label class="lbl" for="gift_max">حداکثر استفاده (0 = نامحدود)</label>
+        <input type="number" id="gift_max" placeholder="0" />
+      </div>
+      <div class="form-col">
+        <label class="lbl" for="gift_once">محدودیت هر کاربر</label>
+        <div style="display:flex;align-items:center;gap:.5rem;">
+          <input type="checkbox" id="gift_once" checked />
+          <label for="gift_once" class="muted">هر کاربر یک بار</label>
+        </div>
+      </div>
+    </div>
+    <div class="row end" style="margin-top:.5rem">
+      <button type="button" id="gift_create_btn">ایجاد گیفت کد</button>
+    </div>
+    <div id="gift_result" class="muted" style="margin-top:.5rem"></div>
+  </section>
   <!-- Admin Stats Section -->
   <section id="adminStatsSection" style="display:none">
     <div class="form-grid" style="align-items:flex-end">
@@ -169,6 +200,33 @@
         overlay.classList.add('active');
         container.classList.add('active');
       }
+
+    // Gift Create wiring
+    (function(){
+      const btn = document.getElementById('gift_create_btn');
+      if(!btn) return;
+      btn.addEventListener('click', async ()=>{
+        const code = (document.getElementById('gift_code').value||'').trim();
+        const amount = parseFloat(document.getElementById('gift_amount').value||'0');
+        const max_uses = parseInt(document.getElementById('gift_max').value||'0',10) || 0;
+        const per_user_once = !!document.getElementById('gift_once').checked;
+        if(!Number.isFinite(amount) || amount<=0){ window.showError('مبلغ نامعتبر'); return; }
+        const body = { session: localStorage.getItem('adminSession'), code, amount, per_user_once, max_uses };
+        try{
+          const r = await fetch('/admin/gift-create',{ method:'POST', headers: adminHeaders(), body: JSON.stringify(body) });
+          if(!r.ok){
+            let msg = 'ایجاد نشد';
+            try{ const j = await r.json(); if(j && (j.message||j.error)) msg = j.message || j.error; }catch(_){ }
+            window.showError(msg);
+            return;
+          }
+          const j = await r.json();
+          const res = document.getElementById('gift_result');
+          if(res){ res.textContent = `کد ساخته شد: ${j.gift && j.gift.code ? j.gift.code : ''} | مبلغ: $${(j.gift && j.gift.amount!=null? j.gift.amount.toFixed(2):'0.00')} | محدودیت: ${j.gift && j.gift.max_uses? j.gift.max_uses : 'نامحدود'}`; }
+          window.showMessage('گیفت کد ساخته شد','پیام');
+        }catch(e){ window.showError('Network error'); }
+      });
+    })();
       function showError(message, title){
         open(title || 'خطا', message, false);
       }
@@ -365,6 +423,9 @@
         localStorage.setItem('adminSession',session);
         loginSection.style.display='none';
         countryForm.style.display='block';
+        // show gift section once admin logged in
+        const giftSec = document.getElementById('giftSection');
+        if(giftSec) giftSec.style.display='block';
         // populate countries select
         await populateCountries();
         // notify owner about admin login

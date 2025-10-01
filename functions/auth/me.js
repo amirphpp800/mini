@@ -14,6 +14,11 @@ export const onRequestGet = async ({ request, env }) => {
     const chat_id = await env.KV.get(`session:${session}`);
     if (!chat_id) return new Response('Unauthorized', { status: 401 });
 
+    // Sliding expiration: extend session TTL to 30 days on every valid access
+    try {
+      await env.KV.put(`session:${session}`, chat_id, { expirationTtl: 2592000 });
+    } catch (_) { /* ignore refresh errors */ }
+
     return new Response(JSON.stringify({ chat_id }), {
       headers: { 'Content-Type': 'application/json' },
     });

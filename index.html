@@ -26,7 +26,7 @@
       <button id="openSignup" class="primary-btn accent-btn"><span class="btn-ico" aria-hidden="true">
         <!-- Lucide user-round icon -->
         <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 20a6 6 0 0 0-12 0"/><circle cx="12" cy="10" r="4"/></svg>
-      </span><span id="openSignupLabel">Create Account</span></button>
+      </span><span id="openSignupLabel">Dashboard</span></button>
       <a href="public/buy.html" class="primary-btn usdt-btn" style="text-decoration:none;"><span class="btn-ico" aria-hidden="true">
         <!-- High quality dollar/money icon -->
         <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M16 8h-6a2 2 0 1 0 0 4h4a2 2 0 1 1 0 4H8"/><path d="M12 18V6"/></svg>
@@ -75,43 +75,6 @@
         <button class="tab" data-tab="ios"><img src="public/apple.svg" alt="" aria-hidden="true"/> iPhone Settings</button>
       </div>
     </div>
-  </div>
-  <div class="modal-overlay" id="accOverlay"></div>
-  <div class="modal-container" id="accModal">
-    <section id="account" class="account-panel" role="dialog" aria-modal="true" aria-labelledby="accTitle">
-      <button class="modal-close" id="closeSignup" aria-label="Close">×</button>
-      <h2 id="accTitle">User Account</h2>
-      <div class="status-line" id="accStatus">Checking status...</div>
-      <div class="row" id="u_balance_row" style="display:none">
-        <div class="muted">Balance: <span id="u_balance_value">$0.00</span></div>
-      </div>
-      <div class="row" id="u_tg_row">
-        <a class="tg-btn" href="tg://resolve?domain=minidnsverify_bot">Start Telegram Bot</a>
-      </div>
-      <div class="row" id="u_chat_row">
-        <input type="number" id="u_chat_id" placeholder="Telegram ID" />
-        <button id="u_send">Send Code</button>
-      </div>
-      <div class="row" id="u_otp_row" style="display:none">
-        <input type="number" id="u_otp" placeholder="Enter verification code" />
-        <button id="u_verify">Verify</button>
-      </div>
-      <div class="row" id="u_logged" style="display:none">
-        <span>Logged in</span>
-        <button id="u_logout">Logout</button>
-      </div>
-      <div class="row" id="u_id_row" style="display:none">
-        <div class="muted">Your ID: <span id="u_id_value"></span></div>
-      </div>
-      <div id="u_history_wrap" style="display:none; margin-top: .75rem;">
-        <div class="lbl" style="margin:.25rem 0">Your fetched addresses</div>
-        <p class="muted glass-note">از طریق داشبورد حساب کاربری می‌توانید به آدرس‌های دریافت‌شده خود دسترسی داشته باشید و دوباره آن‌ها را مشاهده یا کپی کنید.</p>
-        <div id="u_history" style="display:flex;flex-direction:column;gap:.5rem;"></div>
-      </div>
-      <small id="u_tg_hint">If you didn’t receive a message, open the Telegram bot below, press Start, then try again:
-        <a href="https://t.me/minidnsverify_bot" target="_blank" rel="noopener" style="color:#7fd1ff">@minidnsverify_bot</a>
-      </small>
-    </section>
   </div>
   <!-- Global glassy error modal -->
   <div class="alert-overlay" id="alertOverlay"></div>
@@ -168,6 +131,32 @@
       </div>
     </div>
   </div>
+  
+  <!-- Reset Password Modal -->
+  <div class="alert-overlay" id="resetOverlay"></div>
+  <div class="alert-container" id="resetContainer">
+    <div class="alert-card" role="dialog" aria-modal="true" aria-labelledby="resetTitle">
+      <div class="hdr">
+        <div class="ttl" id="resetTitle">Reset Password</div>
+        <button class="btn-close" id="resetX">×</button>
+      </div>
+      <div class="msg" id="resetBody">
+        <div class="row" style="margin-bottom:.5rem">
+          <input type="number" id="r_chat" placeholder="Telegram ID" />
+          <button id="r_send">Send Code</button>
+        </div>
+        <div class="row" style="margin-bottom:.5rem">
+          <input type="number" id="r_code" placeholder="Code" />
+        </div>
+        <div class="row">
+          <input type="password" id="r_pwd1" placeholder="New password (min 6)" />
+          <input type="password" id="r_pwd2" placeholder="Repeat new password" />
+          <button id="r_apply">Apply</button>
+        </div>
+      </div>
+    </div>
+  </div>
+  
   <main id="cards"></main>
   <div class="pagination" id="pagination">
     <button class="page-btn" id="prevPage">Prev</button>
@@ -364,6 +353,42 @@
     // expose for other utilities (e.g., showAddressModal)
     window.state = state;
 
+
+    // Inject development tabs (Python panel, Website panel) into the main and mobile tab lists, disabled like placeholders
+    function ensureDevTabs(){
+      function mkTab(icon, enLabel, cls){
+        const btn = document.createElement('button');
+        btn.className = `tab ${cls}`;
+        btn.type = 'button';
+        btn.setAttribute('aria-selected','false');
+        btn.setAttribute('aria-disabled','true');
+        btn.disabled = true;
+        const img = new Image();
+        img.src = `public/${icon}`;
+        img.alt = '';
+        img.loading = 'lazy';
+        btn.appendChild(img);
+        const text = document.createElement('span');
+        text.style.marginInlineStart = '.25rem';
+        text.textContent = enLabel;
+        btn.appendChild(text);
+        btn.title = 'در حال توسعه';
+        return btn;
+      }
+      function applyTo(container){
+        if(!container) return;
+        if(container.querySelector('.tab.dev-python')) return;
+        const py = mkTab('python.svg','Python Panel','dev-python');
+        const web = mkTab('html-5.svg','Website Panel','dev-website');
+        container.appendChild(py);
+        container.appendChild(web);
+      }
+      try{
+        applyTo(document.querySelector('.tab-list'));
+        applyTo(document.querySelector('#mobile-menu-modal .mobile-menu-tabs'));
+      }catch(_){ }
+    }
+
     async function fetchDataset(kind){
       try{
         // Try dynamic endpoints first for DNS; for WG keep static for now
@@ -390,6 +415,8 @@
     }
 
     function renderPage(){
+      // make sure dev tabs exist and look like other tabs
+      ensureDevTabs();
       const container = document.getElementById('cards');
       // reset container layout (in case APN altered it previously)
       container.style.display='';
@@ -725,9 +752,9 @@
           try{
             if(isLocal) return;
             let endpoint;
-            if(state.currentTab==='dns') endpoint = `/stats/${c.name}`;
-            else if(state.currentTab==='wg') endpoint = `/wg-stats/${c.name}`;
-            else if(state.currentTab==='apn') endpoint = `/apn-stats/${c.name}`;
+            if(state.currentTab==='dns') endpoint = `/stats/${encodeURIComponent(c.name)}`;
+            else if(state.currentTab==='wg') endpoint = `/wg-stats/${encodeURIComponent(c.name)}`;
+            else if(state.currentTab==='apn') endpoint = `/apn-stats/${encodeURIComponent(c.name)}`;
             const r=await fetch(endpoint);
             if(r.ok){
               const s=await r.json();
@@ -793,239 +820,37 @@
       renderPage();
     }
     initDatasets();
-    // --- User account logic ---
+
+    // --- Dashboard redirect ---
     (function(){
-      const isLocal = /^(localhost|127\.0\.0\.1)/.test(location.hostname);
-      const statusEl = document.getElementById('accStatus');
-      const balRow = document.getElementById('u_balance_row');
-      const balVal = document.getElementById('u_balance_value');
-      const chatEl = document.getElementById('u_chat_id');
-      const sendBtn = document.getElementById('u_send');
-      const otpRow = document.getElementById('u_otp_row');
-      const otpEl = document.getElementById('u_otp');
-      const verifyBtn = document.getElementById('u_verify');
-      const loggedRow = document.getElementById('u_logged');
-      const logoutBtn = document.getElementById('u_logout');
-      const histWrap = document.getElementById('u_history_wrap');
-      const histList = document.getElementById('u_history');
       const openBtn = document.getElementById('openSignup');
       const openLabel = document.getElementById('openSignupLabel');
-      const tgRow = document.getElementById('u_tg_row');
-      const chatRow = document.getElementById('u_chat_row');
-      const tgHint = document.getElementById('u_tg_hint');
-      const idRow = document.getElementById('u_id_row');
-      const idVal = document.getElementById('u_id_value');
-
-      async function loadMe(session){
-        if(!session) return;
-        try{
-          const r = await fetch('/auth/me', { headers:{ 'Authorization': `Bearer ${session}` } });
-          if(r.ok){
-            const { chat_id } = await r.json();
-            if(idVal) idVal.textContent = chat_id || '';
-          } else {
-            if(idVal) idVal.textContent = '';
-          }
-        }catch(_){ if(idVal) idVal.textContent=''; }
-        // Load balance
-        try{
-          const rb = await fetch('/user/balance', { headers:{ 'Authorization': `Bearer ${session}` } });
-          if(rb.ok){
-            const { balance } = await rb.json();
-            if(balVal) balVal.textContent = `$${balance}`;
-            if(balRow) balRow.style.display='flex';
-          } else {
-            if(balRow) balRow.style.display='none';
-          }
-        }catch(_e){ if(balRow) balRow.style.display='none'; }
-      }
-
-      async function renderLogged(){
-        const ses = localStorage.getItem('userSession');
-        if(ses){
-          loggedRow.style.display='flex';
-          otpRow.style.display='none';
-          histWrap.style.display='block';
-          if(openLabel){ openLabel.textContent = 'Dashboard'; }
-          // hide onboarding rows when logged in
-          if(tgRow) tgRow.style.display='none';
-          if(chatRow) chatRow.style.display='none';
-          if(tgHint) tgHint.style.display='none';
-          if(idRow) idRow.style.display='flex';
-          await loadMe(ses);
+      
+      function openDashboard(){ 
+        const session = localStorage.getItem('userSession');
+        if(session){
+          window.location.href = 'dashboard.html'; 
         } else {
-          loggedRow.style.display='none';
-          histWrap.style.display='none';
-          if(openLabel){ openLabel.textContent = 'Create Account'; }
-          // show onboarding rows when logged out
-          if(tgRow) tgRow.style.display='flex';
-          if(chatRow) chatRow.style.display='flex';
-          if(tgHint) tgHint.style.display='block';
-          if(idRow) idRow.style.display='none';
-          if(idVal) idVal.textContent = '';
-          if(balRow) balRow.style.display='none';
+          window.location.href = 'login.html';
         }
       }
-
-      (async()=>{
-        try{
-          if(isLocal){
-            statusEl.textContent = 'Local mode';
-            statusEl.style.color = '#ffd27a';
-          } else {
-            const r = await fetch('/status');
-            if(r.ok){
-              const {kv, bot} = await r.json();
-              statusEl.textContent = `KV: ${kv? 'Connected':'Not available'} | Bot token: ${bot? 'Configured':'Missing'}`;
-              statusEl.style.color = kv && bot ? '#9cff9c' : '#ffd27a';
-            } else {
-              statusEl.textContent = 'Unable to read status endpoint';
-              statusEl.style.color = '#ffd27a';
-            }
-          }
-        }catch(e){
-          statusEl.textContent = 'Status check failed';
-          statusEl.style.color = '#ffd27a';
+      
+      // Update button label based on login status
+      function updateButtonLabel(){
+        const session = localStorage.getItem('userSession');
+        if(openLabel){
+          openLabel.textContent = session ? 'Dashboard' : 'Login';
         }
-        renderLogged();
-      })();
-
-      // Prefill chat id from localStorage
-      chatEl.value = localStorage.getItem('userChatId') || '';
-
-      sendBtn.addEventListener('click', async (e)=>{
-        e.preventDefault();
-        const chat_id = chatEl.value.trim();
-        if(!chat_id) return window.showError('Enter ID');
-        localStorage.setItem('userChatId', chat_id);
-        if(isLocal){
-          window.showError('In local mode, sending the code may not work. Please test again after deployment.');
-        }
-        try{
-          const r = await fetch('/auth/send-code',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({chat_id})});
-            if(r.ok){
-              const {next_retry_sec=30} = await r.json().catch(()=>({}));
-              otpRow.style.display='flex';
-              verifyBtn.style.display='inline-block';
-              sendBtn.disabled = true; let left = next_retry_sec||30; const original = sendBtn.getAttribute('data-original-label') || sendBtn.textContent || 'Send Code';
-              const t = setInterval(()=>{ left--; if(left<=0){clearInterval(t); sendBtn.disabled=false; sendBtn.textContent=original;} else { sendBtn.textContent=`${original} (${left} seconds left)`; } },1000);
-            } else {
-            const j = await r.json().catch(()=>({}));
-            if(r.status===429 && j.next_retry_sec){
-              window.showError(`Please wait ${j.next_retry_sec} seconds.`, 'لطفاً صبر کنید');
-              } else {
-              window.showError('Error sending code');
-              }
-            }
-        }catch(e){ window.showError('Network error'); }
-      });
-
-      verifyBtn.addEventListener('click', async (e)=>{
-        const chat_id = chatEl.value.trim();
-        const code = otpEl.value.trim();
-        if(!code) { window.showError('Enter code'); return; }
-        try{
-          const r = await fetch('/auth/verify',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({chat_id,code})});
-          if(r.ok){
-            const {session} = await r.json();
-            localStorage.setItem('userSession', session);
-            window.showMessage('Your account has been verified.','پیام');
-            await renderLogged();
-          } else {
-            window.showError('Verification failed');
-          }
-        }catch(e){ window.showError('Network error'); }
-      });
-
-      // style logout button and add confirmation
-      logoutBtn.classList.add('danger-btn');
-      logoutBtn.addEventListener('click', async ()=>{
-        if(await window.showConfirm('آیا از خروج از حساب اطمینان دارید؟','تایید خروج')){
-          localStorage.removeItem('userSession');
-          await renderLogged();
-        }
-      });
-
-      // Render user address history
-      window.renderUserHistory = async function(){
-        try{
-          const arr = JSON.parse(localStorage.getItem('userAddrHistory') || '[]');
-          histList.innerHTML = '';
-          if(arr.length===0){
-            const p = document.createElement('div');
-            p.className = 'muted';
-            p.textContent = 'No addresses fetched yet.';
-            histList.appendChild(p);
-            return;
-          }
-          for(const item of arr){
-            const row = document.createElement('div');
-            row.className = 'hist-row';
-            const header = document.createElement('div');
-            header.className = 'hist-header';
-            header.textContent = `${item.country} — ${item.count} IPs`;
-            const actions = document.createElement('div');
-            const copy = document.createElement('button');
-            copy.textContent = 'Copy';
-            copy.addEventListener('click', async ()=>{
-              try{ await navigator.clipboard.writeText((item.addresses||[]).join('\n')); }catch(_e){}
-            });
-            actions.appendChild(copy);
-            const top = document.createElement('div');
-            top.className = 'hist-top';
-            top.appendChild(header);
-            top.appendChild(actions);
-            row.appendChild(top);
-
-            // Geolocate up to first 8 IPs from this entry
-            const ips = (item.addresses||[]).slice(0,8);
-            if(ips.length){
-              try{
-                const r = await fetch('/geo', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ ips }) });
-                if(r.ok){
-                  const { results=[] } = await r.json();
-                  const list = document.createElement('div');
-                  list.className = 'hist-geo-list';
-                  for(const g of results){
-                    const card = document.createElement('div');
-                    card.className = 'hist-geo-card';
-                    const ip = document.createElement('div'); ip.className = 'geo-ip'; ip.textContent = g.query || '';
-                    const meta = document.createElement('div'); meta.className = 'geo-meta';
-                    const parts = [];
-                    if(g.countryCode){ parts.push(g.countryCode); }
-                    if(g.city){ parts.push(g.city); }
-                    if(g.isp){ parts.push(g.isp); }
-                    meta.textContent = parts.join(' • ');
-                    card.appendChild(ip);
-                    card.appendChild(meta);
-                    list.appendChild(card);
-                  }
-                  row.appendChild(list);
-                }
-              }catch(_e){}
-            }
-            histList.appendChild(row);
-          }
-        }catch(e){ histList.innerHTML=''; }
       }
-    })();
+      
+      // For backward compatibility
+      window.openSignupModal = openDashboard;
+      window.closeSignupModal = function(){};
 
-    // --- Modal open/close for account panel ---
-    (function(){
-      const openBtn = document.getElementById('openSignup');
-      const overlay = document.getElementById('accOverlay');
-      const modal = document.getElementById('accModal');
-      const closeBtn = document.getElementById('closeSignup');
-
-      function open(){ overlay.classList.add('active'); modal.classList.add('active'); if(window.renderUserHistory) window.renderUserHistory(); }
-      function close(){ overlay.classList.remove('active'); modal.classList.remove('active'); }
-      window.openSignupModal = open;
-      window.closeSignupModal = close;
-
-      if(openBtn) openBtn.addEventListener('click', open);
-      if(closeBtn) closeBtn.addEventListener('click', close);
-      if(overlay) overlay.addEventListener('click', close);
-      document.addEventListener('keydown', (e)=>{ if(e.key==='Escape') close(); });
+      if(openBtn) openBtn.addEventListener('click', openDashboard);
+      
+      // Update label on page load
+      updateButtonLabel();
     })();
     // Mobile menu modal functionality
     (function(){
@@ -1203,6 +1028,7 @@
         }
       }, 0);
     })();
+
     </script>
   <script src="public/net.js"></script>
 </body>

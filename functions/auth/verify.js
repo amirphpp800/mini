@@ -16,10 +16,12 @@ export const onRequestPost = async ({ request, env }) => {
 
     // Generate simple session token
     const session = crypto.randomUUID();
-    await env.KV.put(`session:${session}`, chat_id, { expirationTtl: 86400 }); // 1 day
+    // Persist session for 30 days
+    await env.KV.put(`session:${session}`, chat_id, { expirationTtl: 2592000 }); // 30 days
     await env.KV.delete(`otp:${chat_id}`);
     // mark user as verified (can be used later)
-    await env.KV.put(`user:${chat_id}:verified`, '1', { expirationTtl: 86400 });
+    // Make verified flag persistent (no TTL)
+    await env.KV.put(`user:${chat_id}:verified`, '1');
 
     return new Response(JSON.stringify({ session }), {
       headers: { 'Content-Type': 'application/json' },
