@@ -1,11 +1,13 @@
+import { verifyAdminSession, createAdminErrorResponse } from '../_admin-auth.js';
+
 /**
- * Admin Gift Code Deactivate - Deactivate a gift code by setting max_uses to current usage
+ * Admin Gift Code Deactivate - Set max_uses to current used to deactivate
  * POST /admin/gift-deactivate
  */
 
 export async function onRequest(context) {
   const { request, env } = context;
-  
+
   if (request.method !== 'POST') {
     return new Response(JSON.stringify({ error: 'Method not allowed' }), {
       status: 405,
@@ -14,68 +16,49 @@ export async function onRequest(context) {
   }
 
   try {
-    const body = await request.json();
-    const { session, code } = body;
+    // Verify admin authorization
+    const authResult = await verifyAdminSession(request, env);
+    if (!authResult.success) {
+      return createAdminErrorResponse(authResult);
+    }
 
-    if (!session || !code) {
-      return new Response(JSON.stringify({ error: 'Missing session or code' }), {
+    const body = await request.json().catch(() => ({}));
+    const code = String(body.code || '').trim();
+
+    if (!code) {
+      return new Response(JSON.stringify({ error: 'Missing code' }), {
         status: 400,
         headers: { 'Content-Type': 'application/json' }
       });
     }
 
-    // Verify admin session
-    const adminData = await env.KV.get(`admin_session:${session}`);
-    if (!adminData) {
-      return new Response(JSON.stringify({ error: 'Invalid admin session' }), {
-        status: 401,
-        headers: { 'Content-Type': 'application/json' }
-      });
-    }
-
-    // Check if gift code exists
-    const giftKey = `gift_code:${code}`;
-    const giftData = await env.KV.get(giftKey);
-    
-    if (!giftData) {
+    // Read gift by unified key
+    const giftKey = `gift:${code}`;
+    const raw = await env.KV.get(giftKey);
+    if (!raw) {
       return new Response(JSON.stringify({ error: 'Gift code not found' }), {
         status: 404,
         headers: { 'Content-Type': 'application/json' }
       });
     }
 
-    const giftInfo = JSON.parse(giftData);
-    
-    // Get current usage count
-    const usageKey = `gift_usage:${code}`;
-    const usageData = await env.KV.get(usageKey);
-    const usageInfo = usageData ? JSON.parse(usageData) : { count: 0, users: [] };
-    
-    // Set max_uses to current usage count to deactivate
-    const updatedGift = {
-      ...giftInfo,
-      max_uses: Math.max(usageInfo.count, 1), // Ensure at least 1 to mark as used up
+    const gift = JSON.parse(raw);
+    const used = Number(gift.used || 0);
+    const updated = {
+      ...gift,
+      max_uses: Math.max(used, 1),
       deactivated_at: new Date().toISOString(),
-      deactivated_by: 'admin'
+      deactivated_by: authResult.chat_id || 'admin'
     };
 
-    // Update the gift code
-    await env.KV.put(giftKey, JSON.stringify(updatedGift));
+    await env.KV.put(giftKey, JSON.stringify(updated));
 
-    return new Response(JSON.stringify({
-      success: true,
-      message: 'Gift code deactivated successfully',
-      code: code,
-      previous_max_uses: giftInfo.max_uses || 0,
-      new_max_uses: updatedGift.max_uses,
-      current_usage: usageInfo.count
-    }), {
+    return new Response(JSON.stringify({ success: true }), {
       status: 200,
       headers: { 'Content-Type': 'application/json' }
     });
 
   } catch (error) {
-    console.error('Gift deactivate error:', error);
     return new Response(JSON.stringify({ 
       error: 'Internal server error',
       message: error.message 

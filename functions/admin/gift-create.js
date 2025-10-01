@@ -40,7 +40,8 @@ export const onRequestPost = async ({ request, env }) => {
       amount: +amt.toFixed(2),
       per_user_once: !!per_user_once,
       max_uses: uses, // 0 => unlimited
-      used: 0
+      used: 0,
+      created_at: new Date().toISOString()
     };
 
     await env.KV.put(key, JSON.stringify(payload));

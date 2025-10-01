@@ -20,6 +20,7 @@ export const onRequestPost = async ({ request, env }) => {
     const body = await request.json();
     const { session: bodySession, country: rawCountry } = body || {};
     const country = normalizeCountryName(rawCountry);
+    const auth = request.headers.get('Authorization') || '';
     const m = /^Bearer\s+(.+)/i.exec(auth);
     const session = bodySession || (m && m[1]) || url.searchParams.get('session') || '';
     if (!session || !country) return new Response(JSON.stringify({ error: 'invalid_input' }), { status: 400, headers: { 'Content-Type': 'application/json' } });
