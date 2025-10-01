@@ -63,16 +63,27 @@ export const onRequestGet = async ({ request, params, env }) => {
       });
     }
     const next = +(balance - price).toFixed(2);
-    await env.KV.put(balKey, String(next));
 
-    // Assign and persist
-    const key = String(candidate).toLowerCase();
-    const newCount = Math.min(3, Number(busyMap[key] || 0) + 1);
-    busyMap[key] = newCount;
-    await env.KV.put(`apn_busy:${country}`, JSON.stringify(busyMap));
-
-    userSet.add(key);
-    await env.KV.put(userHistKey, JSON.stringify(Array.from(userSet)));
+    // Perform all KV operations in parallel for better performance and consistency
+    try {
+      // Assign and persist
+      const key = String(candidate).toLowerCase();
+      const newCount = Math.min(3, Number(busyMap[key] || 0) + 1);
+      busyMap[key] = newCount;
+      userSet.add(key);
+      
+      await Promise.all([
+        env.KV.put(balKey, String(next)),
+        env.KV.put(`apn_busy:${country}`, JSON.stringify(busyMap)),
+        env.KV.put(userHistKey, JSON.stringify(Array.from(userSet)))
+      ]);
+    } catch (kvError) {
+      // If KV operations fail, return error to avoid inconsistent state
+      return new Response(JSON.stringify({ error: 'storage_error', message: 'Failed to save transaction' }), {
+        status: 500,
+        headers: { 'Content-Type': 'application/json' },
+      });
+    }
 
     return new Response(JSON.stringify({ country, apn: [candidate] }), { headers: { 'Content-Type': 'application/json' } });
   } catch (e) {

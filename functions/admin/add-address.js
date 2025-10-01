@@ -65,13 +65,19 @@ export const onRequestPost = async ({ request, env }) => {
     if (ipv4.length === 0) {
       return new Response(JSON.stringify({ error: 'no_valid_ipv4', message: 'No valid IPv4 addresses provided.' }), { status: 400, headers: { 'Content-Type': 'application/json' } });
     }
-    ipv4.forEach((ip) => {
-      if (!list.includes(ip)) list.push(ip);
-    });
+    
+    // Count actually added IPs (not duplicates)
+    let added = 0;
+    for (const ip of ipv4) {
+      if (!list.includes(ip)) {
+        list.push(ip);
+        added++;
+      }
+    }
 
     await env.KV.put(addrKey, JSON.stringify(list));
 
-    return new Response(JSON.stringify({ ok: true, added: ipv4.length, total: list.length }), { status: 200, headers: { 'Content-Type': 'application/json' } });
+    return new Response(JSON.stringify({ ok: true, added, total: list.length }), { status: 200, headers: { 'Content-Type': 'application/json' } });
   } catch (err) {
     return new Response(JSON.stringify({ error: 'server_error' }), { status: 500, headers: { 'Content-Type': 'application/json' } });
   }

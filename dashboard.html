@@ -169,13 +169,19 @@
       </div>
     </div>
 
-    <!-- Password Management Card -->
+    <!-- Password Management Button -->
     <div class="dashboard-card" id="u_setpwd_card" style="display:none">
-      <h2>Change Password</h2>
-      <div class="row">
-        <input type="password" id="u_setpwd_1" placeholder="New password (min 6)" />
-        <input type="password" id="u_setpwd_2" placeholder="Repeat new password" />
-        <button id="u_setpwd_btn">Set Password</button>
+      <h2>Security Settings</h2>
+      <div class="row" style="justify-content:center;">
+        <button id="u_open_setpwd" class="primary-btn">
+          <span class="btn-ico" aria-hidden="true">
+            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="m7 11V7a5 5 0 0 1 10 0v4"/></svg>
+          </span>
+          <span id="u_setpwd_btn_text">Set Password</span>
+        </button>
+      </div>
+      <div id="u_setpwd_notice" class="muted persian-text" style="display:none; margin-top:1rem; padding:0.75rem; background:rgba(255,193,7,0.15); border:1px solid rgba(255,193,7,0.3); border-radius:8px; color:#ffc107;">
+        برای امنیت حساب کاربری، تنظیم رمز عبور الزامی است. لطفاً یک رمز عبور قوی (حداقل ۶ کاراکتر) انتخاب کنید.
       </div>
     </div>
 
@@ -223,6 +229,30 @@
       <div class="actions">
         <button id="confirmNo">Cancel</button>
         <button id="confirmYes" class="primary-btn">Confirm</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Password Modal -->
+  <div class="alert-overlay" id="passwordOverlay"></div>
+  <div class="alert-container" id="passwordContainer">
+    <div class="alert-card" role="dialog" aria-modal="true" aria-labelledby="passwordTitle" style="max-width:500px;">
+      <div class="hdr">
+        <div class="ttl" id="passwordTitle">Set Password</div>
+        <button class="btn-close" id="passwordX">×</button>
+      </div>
+      <div class="msg" style="padding:0;">
+        <div style="margin-bottom:1rem;">
+          <input type="password" id="modal_setpwd_1" placeholder="New password (min 6)" style="width:100%; margin-bottom:0.5rem;" />
+          <input type="password" id="modal_setpwd_2" placeholder="Repeat new password" style="width:100%;" />
+        </div>
+        <div id="modal_setpwd_notice" class="muted persian-text" style="display:none; margin-bottom:1rem; padding:0.75rem; background:rgba(255,193,7,0.15); border:1px solid rgba(255,193,7,0.3); border-radius:8px; color:#ffc107;">
+          برای امنیت حساب کاربری، تنظیم رمز عبور الزامی است. لطفاً یک رمز عبور قوی (حداقل ۶ کاراکتر) انتخاب کنید.
+        </div>
+      </div>
+      <div class="actions">
+        <button id="passwordCancel">Cancel</button>
+        <button id="passwordSave" class="primary-btn">Save Password</button>
       </div>
     </div>
   </div>
@@ -287,6 +317,42 @@
       window.showConfirm = showConfirm;
     })();
 
+    // Password modal helper
+    (function(){
+      const overlay = document.getElementById('passwordOverlay');
+      const container = document.getElementById('passwordContainer');
+      const titleEl = document.getElementById('passwordTitle');
+      const noticeEl = document.getElementById('modal_setpwd_notice');
+      const input1 = document.getElementById('modal_setpwd_1');
+      const input2 = document.getElementById('modal_setpwd_2');
+      const saveBtn = document.getElementById('passwordSave');
+      const cancelBtn = document.getElementById('passwordCancel');
+      const xBtn = document.getElementById('passwordX');
+
+      function close(){ 
+        overlay.classList.remove('active'); 
+        container.classList.remove('active'); 
+        if(input1) input1.value = '';
+        if(input2) input2.value = '';
+      }
+      
+      function open(isRequired = false){
+        if(titleEl) titleEl.textContent = isRequired ? 'Set Password (Required)' : 'Change Password';
+        if(noticeEl) noticeEl.style.display = isRequired ? 'block' : 'none';
+        if(cancelBtn) cancelBtn.style.display = isRequired ? 'none' : 'inline-block';
+        overlay.classList.add('active');
+        container.classList.add('active');
+        if(input1) input1.focus();
+      }
+
+      if(cancelBtn) cancelBtn.onclick = close;
+      if(xBtn) xBtn.onclick = close;
+      if(overlay) overlay.onclick = (e) => { if(e.target === overlay) close(); };
+      
+      window.openPasswordModal = open;
+      window.closePasswordModal = close;
+    })();
+
     // Dashboard Logic
     (function(){
       const isLocal = /^(localhost|127\.0\.0\.1)/.test(location.hostname);
@@ -314,6 +380,42 @@
             if(idVal) idVal.textContent = '';
           }
         }catch(_){ if(idVal) idVal.textContent=''; }
+        
+        // Check if user has password set
+        try{
+          const rp = await fetch('/auth/has-password', { headers:{ 'Authorization': `Bearer ${session}` } });
+          if(rp.ok){
+            const { hasPassword } = await rp.json();
+            const btnText = document.getElementById('u_setpwd_btn_text');
+            const noticeEl = document.getElementById('u_setpwd_notice');
+            const setpwdCard = document.getElementById('u_setpwd_card');
+            
+            if(!hasPassword){
+              // Force password setup
+              if(btnText) btnText.textContent = 'Set Password (Required)';
+              if(noticeEl) noticeEl.style.display = 'block';
+              if(setpwdCard) {
+                setpwdCard.style.display = 'block';
+                setpwdCard.style.order = '-1'; // Show at top
+              }
+              
+              // Hide other cards until password is set
+              const giftCard = document.getElementById('u_gift_card');
+              const histWrap = document.getElementById('u_history_wrap');
+              if(giftCard) giftCard.style.display = 'none';
+              if(histWrap) histWrap.style.display = 'none';
+              
+              // Auto-open modal for required password
+              setTimeout(() => {
+                if(window.openPasswordModal) window.openPasswordModal(true);
+              }, 500);
+            } else {
+              // Password exists, normal behavior
+              if(btnText) btnText.textContent = 'Change Password';
+              if(noticeEl) noticeEl.style.display = 'none';
+            }
+          }
+        }catch(_){}
         
         // Load balance
         try{
@@ -409,12 +511,22 @@
         });
       }
 
-      // Set password functionality
-      const setpwdBtn = document.getElementById('u_setpwd_btn');
-      if(setpwdBtn){
-        setpwdBtn.addEventListener('click', async ()=>{
-          const a = String(document.getElementById('u_setpwd_1').value||'');
-          const b = String(document.getElementById('u_setpwd_2').value||'');
+      // Open password modal button
+      const openSetpwdBtn = document.getElementById('u_open_setpwd');
+      if(openSetpwdBtn){
+        openSetpwdBtn.addEventListener('click', ()=>{
+          const btnText = document.getElementById('u_setpwd_btn_text');
+          const isRequired = btnText && btnText.textContent.includes('Required');
+          if(window.openPasswordModal) window.openPasswordModal(isRequired);
+        });
+      }
+
+      // Set password functionality (modal version)
+      const modalSaveBtn = document.getElementById('passwordSave');
+      if(modalSaveBtn){
+        modalSaveBtn.addEventListener('click', async ()=>{
+          const a = String(document.getElementById('modal_setpwd_1').value||'');
+          const b = String(document.getElementById('modal_setpwd_2').value||'');
           if(a.length<6){ window.showError('Password too short (min 6)'); return; }
           if(a!==b){ window.showError('Passwords do not match'); return; }
           const session = localStorage.getItem('userSession');
@@ -423,14 +535,18 @@
             const r = await fetch('/auth/set-password',{ method:'POST', headers:{ 'Content-Type':'application/json', 'Authorization': `Bearer ${session}` }, body: JSON.stringify({ new_password: a }) });
             if(!r.ok){ window.showError('Failed to set password'); return; }
             window.showMessage('Password updated','Success');
-            document.getElementById('u_setpwd_1').value='';
-            document.getElementById('u_setpwd_2').value='';
+            
+            // Close modal and reload dashboard
+            if(window.closePasswordModal) window.closePasswordModal();
+            setTimeout(() => {
+              renderDashboard();
+            }, 1000);
           }catch(e){ window.showError('Network error'); }
         });
       }
 
-      // Render user address history
-      function renderUserHistory(){
+      // Render user address history grouped by country with flags
+      async function renderUserHistory(){
         try{
           const arr = JSON.parse(localStorage.getItem('userAddrHistory') || '[]');
           histList.innerHTML = '';
@@ -441,25 +557,132 @@
             histList.appendChild(p);
             return;
           }
+          
+          // Group addresses by country and collect all IPs
+          const countryGroups = new Map();
+          const allIps = [];
+          
           for(const item of arr){
+            if(!countryGroups.has(item.country)){
+              countryGroups.set(item.country, {
+                country: item.country,
+                addresses: [],
+                count: 0,
+                type: item.type || 'dns'
+              });
+            }
+            const group = countryGroups.get(item.country);
+            group.addresses.push(...(item.addresses || []));
+            group.count += item.count || 0;
+            allIps.push(...(item.addresses || []));
+          }
+          
+          // Get geolocation for all IPs at once
+          let geoResults = [];
+          try{
+            const session = localStorage.getItem('userSession');
+            if(session && allIps.length > 0){
+              const geoRes = await fetch('/geo', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ ips: allIps })
+              });
+              
+              if(geoRes.ok){
+                const geoData = await geoRes.json();
+                geoResults = geoData.results || [];
+              }
+            }
+          }catch(e){
+            console.error('Geo lookup failed:', e);
+          }
+          
+          // Create a map for quick geo lookup
+          const geoMap = new Map();
+          for(const geo of geoResults){
+            if(geo.query) geoMap.set(geo.query, geo);
+          }
+          
+          // Helper function to get country code from geo data or fallback
+          function getCountryCode(countryName, addresses){
+            // Try to get from geo data first
+            for(const addr of addresses){
+              const geo = geoMap.get(addr);
+              if(geo && geo.countryCode) return geo.countryCode.toLowerCase();
+            }
+            
+            // Fallback mapping for common countries
+            const countryCodeMap = {
+              'england': 'gb', 'united kingdom': 'gb', 'uk': 'gb',
+              'united states': 'us', 'usa': 'us', 'america': 'us',
+              'germany': 'de', 'deutschland': 'de',
+              'france': 'fr', 'canada': 'ca', 'australia': 'au',
+              'netherlands': 'nl', 'holland': 'nl',
+              'turkey': 'tr', 'türkiye': 'tr',
+              'china': 'cn', 'japan': 'jp', 'south korea': 'kr',
+              'singapore': 'sg', 'hong kong': 'hk',
+              'united arab emirates': 'ae', 'uae': 'ae',
+              'qatar': 'qa', 'bahrain': 'bh',
+              'italy': 'it', 'spain': 'es', 'belgium': 'be',
+              'sweden': 'se', 'finland': 'fi', 'denmark': 'dk',
+              'switzerland': 'ch', 'austria': 'at', 'norway': 'no'
+            };
+            
+            const key = countryName.toLowerCase();
+            return countryCodeMap[key] || 'xx'; // xx for unknown
+          }
+          
+          // Render each country group
+          for(const [countryName, group] of countryGroups){
             const row = document.createElement('div');
-            row.className = 'hist-row';
+            row.className = 'hist-row country-group';
+            
+            // Country header with flag
+            const countryCode = getCountryCode(countryName, group.addresses);
             const header = document.createElement('div');
-            header.className = 'hist-header';
-            header.textContent = `${item.country} — ${item.count} IPs`;
+            header.className = 'hist-header country-header';
+            header.style.display = 'flex';
+            header.style.alignItems = 'center';
+            header.style.gap = '0.75rem';
+            
+            // Flag
+            const flag = document.createElement('img');
+            flag.src = `https://flagcdn.com/w40/${countryCode}.png`;
+            flag.srcset = `https://flagcdn.com/w80/${countryCode}.png 2x`;
+            flag.alt = `${countryName} flag`;
+            flag.style.width = '32px';
+            flag.style.height = '21px';
+            flag.style.borderRadius = '4px';
+            flag.style.objectFit = 'cover';
+            flag.style.boxShadow = '0 2px 8px rgba(0,0,0,0.2)';
+            flag.loading = 'lazy';
+            
+            // Country name and count
+            const nameDiv = document.createElement('div');
+            nameDiv.innerHTML = `<strong>${countryName}</strong> <span class="muted">(${group.count} IPs)</span>`;
+            
+            header.appendChild(flag);
+            header.appendChild(nameDiv);
+            
+            // Copy button for all country IPs
             const actions = document.createElement('div');
             const copy = document.createElement('button');
-            copy.textContent = 'Copy';
-            copy.style.padding = '0.5rem 1rem';
-            copy.style.borderRadius = '8px';
-            copy.style.border = 'none';
-            copy.style.background = 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)';
-            copy.style.color = 'white';
+            copy.textContent = 'Copy All';
+            copy.className = 'copy-btn';
+            copy.style.padding = '0.4rem 0.8rem';
+            copy.style.borderRadius = '6px';
             copy.style.cursor = 'pointer';
+            copy.style.fontSize = '0.85rem';
             copy.addEventListener('click', async ()=>{
-              try{ await navigator.clipboard.writeText((item.addresses||[]).join('\n')); window.showMessage('Copied to clipboard'); }catch(_e){ window.showError('Failed to copy'); }
+              try{ 
+                await navigator.clipboard.writeText(group.addresses.join('\n')); 
+                window.showMessage('All IPs copied to clipboard'); 
+              }catch(_e){ 
+                window.showError('Failed to copy'); 
+              }
             });
             actions.appendChild(copy);
+            
             const top = document.createElement('div');
             top.style.display = 'flex';
             top.style.justifyContent = 'space-between';
@@ -467,9 +690,70 @@
             top.appendChild(header);
             top.appendChild(actions);
             row.appendChild(top);
+            
+            // Group IPs by their actual geo country (in case of mixed countries)
+            const ipsByGeoCountry = new Map();
+            
+            for(const addr of group.addresses){
+              const geo = geoMap.get(addr);
+              const geoCountry = geo?.country || countryName;
+              
+              if(!ipsByGeoCountry.has(geoCountry)){
+                ipsByGeoCountry.set(geoCountry, []);
+              }
+              ipsByGeoCountry.get(geoCountry).push({
+                ip: addr,
+                geo: geo
+              });
+            }
+            
+            // Render IP groups
+            const geoList = document.createElement('div');
+            geoList.className = 'hist-geo-list';
+            geoList.style.marginTop = '0.75rem';
+            
+            for(const [geoCountry, ips] of ipsByGeoCountry){
+              // Create subgroup header if multiple geo countries
+              if(ipsByGeoCountry.size > 1){
+                const subHeader = document.createElement('div');
+                subHeader.style.fontWeight = '600';
+                subHeader.style.fontSize = '0.9rem';
+                subHeader.style.marginBottom = '0.5rem';
+                subHeader.style.color = 'rgba(255,255,255,0.8)';
+                subHeader.textContent = geoCountry;
+                geoList.appendChild(subHeader);
+              }
+              
+              // Render IPs for this geo country
+              for(const {ip, geo} of ips){
+                const geoCard = document.createElement('div');
+                geoCard.className = 'hist-geo-card';
+                
+                const ipDiv = document.createElement('div');
+                ipDiv.className = 'geo-ip';
+                ipDiv.textContent = ip;
+                
+                const metaDiv = document.createElement('div');
+                metaDiv.className = 'geo-meta';
+                const parts = [];
+                if(geo?.country) parts.push(geo.country);
+                if(geo?.city) parts.push(geo.city);
+                if(geo?.isp) parts.push(geo.isp);
+                metaDiv.textContent = parts.join(' • ') || 'No geo data';
+                
+                geoCard.appendChild(ipDiv);
+                geoCard.appendChild(metaDiv);
+                geoList.appendChild(geoCard);
+              }
+            }
+            
+            row.appendChild(geoList);
             histList.appendChild(row);
           }
-        }catch(e){ histList.innerHTML='<div class="muted">Error loading history</div>'; }
+        }catch(e){ 
+          console.error('History render error:', e);
+          histList.innerHTML='<div class="muted">Error loading history</div>'; 
+        }
       }
     })();
   </script>

@@ -64,14 +64,26 @@ export const onRequestGet = async ({ request, params, env }) => {
       });
     }
     const next = +(balance - price).toFixed(2);
-    await env.KV.put(balKey, String(next));
 
-    // Mark as consumed globally and record in user's history
-    busySet.add(freeIp);
-    busy = Array.from(busySet);
-    await env.KV.put(`ips_busy:${country}`, JSON.stringify(busy));
-    userHistSet.add(freeIp);
-    await env.KV.put(userHistKey, JSON.stringify(Array.from(userHistSet)));
+    // Perform all KV operations in parallel for better performance and consistency
+    try {
+      // Mark as consumed globally and record in user's history
+      busySet.add(freeIp);
+      busy = Array.from(busySet);
+      userHistSet.add(freeIp);
+      
+      await Promise.all([
+        env.KV.put(balKey, String(next)),
+        env.KV.put(`ips_busy:${country}`, JSON.stringify(busy)),
+        env.KV.put(userHistKey, JSON.stringify(Array.from(userHistSet)))
+      ]);
+    } catch (kvError) {
+      // If KV operations fail, return error to avoid inconsistent state
+      return new Response(JSON.stringify({ error: 'storage_error', message: 'Failed to save transaction' }), {
+        status: 500,
+        headers: { 'Content-Type': 'application/json' },
+      });
+    }
 
     return new Response(JSON.stringify({ country, addresses: [freeIp] }), {
       headers: { 'Content-Type': 'application/json' },

@@ -41,16 +41,27 @@ export const onRequestPost = async ({ request, env }) => {
     const current = balRaw ? parseFloat(balRaw) : 0;
     const amount = Number(gift.amount || 0);
     const next = +(current + amount).toFixed(2);
-    await env.KV.put(balKey, String(next));
 
-    // Mark per-user usage
-    if (gift.per_user_once) {
-      await env.KV.put(usedKey, '1');
+    // Perform all KV operations atomically
+    try {
+      const operations = [
+        env.KV.put(balKey, String(next)),
+        env.KV.put(giftKey, JSON.stringify({ ...gift, used: used + 1 }))
+      ];
+
+      // Mark per-user usage if required
+      if (gift.per_user_once) {
+        operations.push(env.KV.put(usedKey, '1'));
+      }
+
+      await Promise.all(operations);
+    } catch (kvError) {
+      // If KV operations fail, return error to avoid inconsistent state
+      return new Response(JSON.stringify({ error: 'storage_error', message: 'Failed to redeem gift code' }), {
+        status: 500,
+        headers: { 'Content-Type': 'application/json' },
+      });
     }
-
-    // Increment total used
-    const newGift = { ...gift, used: used + 1 };
-    await env.KV.put(giftKey, JSON.stringify(newGift));
 
     return new Response(JSON.stringify({ ok: true, amount, balance: next }), { headers: { 'Content-Type': 'application/json' } });
   } catch (e) {

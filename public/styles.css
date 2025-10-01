@@ -882,14 +882,74 @@ button:hover {
   display:flex; align-items:center; justify-content:space-between; gap:.5rem;
 }
 .hist-header{ font-weight:700; letter-spacing:.2px; }
+
+/* Country group styling */
+.country-group{
+  margin-bottom: 1rem;
+  padding: 1rem;
+  background: rgba(255,255,255,0.06);
+  border: 1px solid rgba(255,255,255,0.2);
+  box-shadow: 0 4px 16px rgba(0,0,0,0.15);
+}
+.country-header{
+  font-size: 1.1rem;
+  font-weight: 800;
+  letter-spacing: 0.3px;
+}
+.country-header img{
+  flex-shrink: 0;
+  border: 1px solid rgba(255,255,255,0.3);
+}
+.country-header .muted{
+  font-weight: 400;
+  font-size: 0.9rem;
+}
+
 .hist-geo-list{
-  display:grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap:.5rem;
+  display:grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap:.6rem;
 }
 .hist-geo-card{
-  padding:.5rem .6rem; border:1px solid rgba(255,255,255,0.14); border-radius:10px; background: rgba(255,255,255,0.04);
+  padding:.6rem .7rem; 
+  border:1px solid rgba(255,255,255,0.16); 
+  border-radius:10px; 
+  background: rgba(255,255,255,0.06);
+  transition: all 0.2s ease;
 }
-.hist-geo-card .geo-ip{ font-weight:700; font-size:.92rem; }
-.hist-geo-card .geo-meta{ font-size:.8rem; opacity:.9; margin-top:.1rem; }
+.hist-geo-card:hover{
+  background: rgba(255,255,255,0.08);
+  border-color: rgba(255,255,255,0.25);
+  transform: translateY(-1px);
+}
+.hist-geo-card .geo-ip{ 
+  font-weight:700; 
+  font-size:.95rem; 
+  color: #7fd1ff;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+}
+.hist-geo-card .geo-meta{ 
+  font-size:.82rem; 
+  opacity:.9; 
+  margin-top:.3rem; 
+  line-height: 1.4;
+}
+
+/* Mobile responsive adjustments */
+@media (max-width: 640px){
+  .country-header{
+    font-size: 1rem;
+    gap: 0.5rem !important;
+  }
+  .country-header img{
+    width: 28px !important;
+    height: 18px !important;
+  }
+  .hist-geo-list{
+    grid-template-columns: 1fr;
+  }
+  .country-group{
+    padding: 0.75rem;
+  }
+}
 
 /* Admin container center glass */
 .admin-container{
@@ -1060,13 +1120,28 @@ button:hover {
   justify-content: flex-end;     /* align to end */
 }
 
-/* Slightly larger Copy button for easier tap */
-#addrCopy{
-  font-weight: 800;
-  background: #7fd1ff;          /* sky accent */
-  color: #000;
+/* Copy buttons - white background with black text and icon */
+#addrCopy,
+button[id*="copy"],
+button[class*="copy"],
+.copy-btn{
+  font-weight: 700;
+  background: #fff !important;
+  color: #000 !important;
+  border: none !important;
+  display: inline-flex;
+  align-items: center;
+  gap: .4rem;
 }
-#addrCopy:hover{ filter: brightness(1.06); }
+/* Copy button hover effects */
+#addrCopy:hover,
+button[id*="copy"]:hover,
+button[class*="copy"]:hover,
+.copy-btn:hover{ 
+  filter: brightness(0.95); 
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+}
 /* Ping Check as amber accent */
 #addrCheck{
   background: #fbbf24;          /* nicer amber/yellow */

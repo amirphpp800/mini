@@ -826,9 +826,21 @@
       const openBtn = document.getElementById('openSignup');
       const openLabel = document.getElementById('openSignupLabel');
       
-      function openDashboard(){ 
+      async function openDashboard(){ 
         const session = localStorage.getItem('userSession');
         if(session){
+          // Check if user has password set, if not redirect to dashboard to force setup
+          try{
+            const r = await fetch('/auth/has-password', { headers:{ 'Authorization': `Bearer ${session}` } });
+            if(r.ok){
+              const { hasPassword } = await r.json();
+              if(!hasPassword){
+                // User needs to set password
+                window.location.href = 'dashboard.html';
+                return;
+              }
+            }
+          }catch(_){}
           window.location.href = 'dashboard.html'; 
         } else {
           window.location.href = 'login.html';
