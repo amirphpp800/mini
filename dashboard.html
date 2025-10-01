@@ -571,9 +571,10 @@
           // Helper function to normalize country names
           function normalizeCountryName(country) {
             const normalized = String(country || '').toLowerCase().trim();
-            // Normalize England, UK, United Kingdom to a single name
-            if (normalized === 'england' || normalized === 'uk' || normalized === 'united kingdom' || normalized === 'great britain') {
-              return 'United Kingdom';
+            // Normalize England, UK, United Kingdom, Great Britain, GB to England
+            if (normalized === 'england' || normalized === 'uk' || normalized === 'united kingdom' || 
+                normalized === 'great britain' || normalized === 'gb' || normalized === 'انگلیس') {
+              return 'England';
             }
             // Normalize America, USA, United States to a single name
             if (normalized === 'america' || normalized === 'usa' || normalized === 'united states' || normalized === 'united states of america') {
@@ -639,7 +640,7 @@
             
             // Fallback mapping for common countries
             const countryCodeMap = {
-              'england': 'gb', 'united kingdom': 'gb', 'uk': 'gb',
+              'england': 'gb', 'united kingdom': 'gb', 'uk': 'gb', 'great britain': 'gb', 'gb': 'gb', 'انگلیس': 'gb',
               'united states': 'us', 'usa': 'us', 'america': 'us',
               'germany': 'de', 'deutschland': 'de',
               'france': 'fr', 'canada': 'ca', 'australia': 'au',
@@ -676,9 +677,17 @@
               const normalizedGeoCountry = normalizeCountryName(geoCountry);
               const normalizedCountryName = normalizeCountryName(countryName);
               
-              const isMatch = normalizedGeoCountry.toLowerCase().includes(normalizedCountryName.toLowerCase()) || 
+              // Special handling for England/UK variations
+              const isEnglandMatch = (
+                (normalizedGeoCountry === 'England' && ['United Kingdom', 'UK', 'Great Britain', 'GB'].includes(geoCountry)) ||
+                (normalizedCountryName === 'England' && ['United Kingdom', 'UK', 'Great Britain', 'GB'].includes(geoCountry)) ||
+                (geoCountry === 'United Kingdom' && normalizedCountryName === 'England')
+              );
+              
+              const isMatch = normalizedGeoCountry === normalizedCountryName ||
+                             isEnglandMatch ||
+                             normalizedGeoCountry.toLowerCase().includes(normalizedCountryName.toLowerCase()) || 
                              normalizedCountryName.toLowerCase().includes(normalizedGeoCountry.toLowerCase()) ||
-                             normalizedGeoCountry === normalizedCountryName ||
                              geoCountry.toLowerCase().includes(countryName.toLowerCase()) || 
                              countryName.toLowerCase().includes(geoCountry.toLowerCase()) ||
                              geoCountry === countryName;
@@ -841,6 +850,7 @@
             
             // Header text
             const nameDiv = document.createElement('div');
+            nameDiv.className = 'persian-text';
             nameDiv.innerHTML = `<strong style="color:#fbbf24;">آدرس‌های نامطابق</strong> <span class="muted">(${mismatchedAddresses.length} IPs)</span>`;
             nameDiv.style.color = '#fbbf24';
             
@@ -879,7 +889,7 @@
             
             // Description
             const description = document.createElement('div');
-            description.className = 'muted';
+            description.className = 'muted persian-text';
             description.style.marginTop = '0.5rem';
             description.style.fontSize = '0.9rem';
             description.style.color = '#fbbf24';
@@ -914,7 +924,7 @@
               });
               
               const metaDiv = document.createElement('div');
-              metaDiv.className = 'geo-meta';
+              metaDiv.className = 'geo-meta persian-text';
               metaDiv.innerHTML = `
                 <div style="color:#ef4444;">انتظار: ${expectedCountry}</div>
                 <div style="color:#22c55e;">واقعی: ${actualCountry}</div>
