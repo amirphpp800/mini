@@ -330,9 +330,10 @@
     // Helper function to normalize country names
     function normalizeCountryName(country) {
       const normalized = String(country || '').toLowerCase().trim();
-      // Normalize England, UK, United Kingdom to a single name
-      if (normalized === 'england' || normalized === 'uk' || normalized === 'united kingdom' || normalized === 'great britain') {
-        return 'United Kingdom';
+      // Normalize England, UK, United Kingdom, Great Britain, GB to England
+      if (normalized === 'england' || normalized === 'uk' || normalized === 'united kingdom' || 
+          normalized === 'great britain' || normalized === 'gb' || normalized === 'انگلیس') {
+        return 'England';
       }
       // Normalize America, USA, United States to a single name
       if (normalized === 'america' || normalized === 'usa' || normalized === 'united states' || normalized === 'united states of america') {
@@ -345,10 +346,11 @@
     // simple mapper to Persian names
     function nameToFa(name){
       const map = {
-        'england': 'بریتانیا',
-        'united kingdom': 'بریتانیا',
-        'uk': 'بریتانیا',
-        'great britain': 'بریتانیا',
+        'england': 'انگلیس',
+        'united kingdom': 'انگلیس',
+        'uk': 'انگلیس',
+        'great britain': 'انگلیس',
+        'gb': 'انگلیس',
         'america': 'آمریکا',
         'usa': 'آمریکا',
         'united states': 'آمریکا',
