@@ -643,10 +643,53 @@
             return countryCodeMap[key] || 'xx'; // xx for unknown
           }
           
-          // Sort country groups alphabetically
-          const sortedCountries = Array.from(countryGroups.entries()).sort((a, b) => a[0].localeCompare(b[0]));
+          // Separate matching and mismatched addresses
+          const matchingCountries = new Map();
+          const mismatchedAddresses = [];
           
-          // Render each country group
+          for(const [countryName, group] of countryGroups){
+            const matchingIPs = [];
+            const mismatchedIPs = [];
+            
+            for(const addr of group.addresses){
+              const geo = geoMap.get(addr);
+              const geoCountry = geo?.country || '';
+              
+              // Check if geo country matches the expected country (case insensitive)
+              const isMatch = geoCountry.toLowerCase().includes(countryName.toLowerCase()) || 
+                             countryName.toLowerCase().includes(geoCountry.toLowerCase()) ||
+                             geoCountry === countryName;
+              
+              if(isMatch || !geoCountry){
+                matchingIPs.push({ ip: addr, geo: geo });
+              } else {
+                mismatchedIPs.push({ 
+                  ip: addr, 
+                  geo: geo, 
+                  expectedCountry: countryName,
+                  actualCountry: geoCountry 
+                });
+              }
+            }
+            
+            // Only add to matching countries if there are matching IPs
+            if(matchingIPs.length > 0){
+              matchingCountries.set(countryName, {
+                ...group,
+                addresses: matchingIPs.map(item => item.ip),
+                matchingIPs: matchingIPs,
+                count: matchingIPs.length
+              });
+            }
+            
+            // Add mismatched IPs to the global mismatched list
+            mismatchedAddresses.push(...mismatchedIPs);
+          }
+          
+          // Sort matching countries alphabetically
+          const sortedCountries = Array.from(matchingCountries.entries()).sort((a, b) => a[0].localeCompare(b[0]));
+          
+          // Render each matching country group
           for(const [countryName, group] of sortedCountries){
             const row = document.createElement('div');
             row.className = 'hist-row country-group';
@@ -711,76 +754,158 @@
             top.appendChild(actions);
             row.appendChild(top);
             
-            // Group IPs by their actual geo country (in case of mixed countries)
-            const ipsByGeoCountry = new Map();
-            
-            for(const addr of group.addresses){
-              const geo = geoMap.get(addr);
-              const geoCountry = geo?.country || countryName;
-              
-              if(!ipsByGeoCountry.has(geoCountry)){
-                ipsByGeoCountry.set(geoCountry, []);
-              }
-              ipsByGeoCountry.get(geoCountry).push({
-                ip: addr,
-                geo: geo
-              });
-            }
-            
-            // Render IP groups
+            // Render matching IPs for this country
             const geoList = document.createElement('div');
             geoList.className = 'hist-geo-list';
             geoList.style.marginTop = '0.75rem';
             
-            for(const [geoCountry, ips] of ipsByGeoCountry){
-              // Create subgroup header if multiple geo countries
-              if(ipsByGeoCountry.size > 1){
-                const subHeader = document.createElement('div');
-                subHeader.style.fontWeight = '600';
-                subHeader.style.fontSize = '0.9rem';
-                subHeader.style.marginBottom = '0.5rem';
-                subHeader.style.color = 'rgba(255,255,255,0.8)';
-                subHeader.textContent = geoCountry;
-                geoList.appendChild(subHeader);
-              }
+            // Render IPs that match this country
+            for(const {ip, geo} of group.matchingIPs){
+              const geoCard = document.createElement('div');
+              geoCard.className = 'hist-geo-card';
               
-              // Render IPs for this geo country
-              for(const {ip, geo} of ips){
-                const geoCard = document.createElement('div');
-                geoCard.className = 'hist-geo-card';
-                
-                const ipDiv = document.createElement('div');
-                ipDiv.className = 'geo-ip';
-                ipDiv.textContent = ip;
-                ipDiv.style.cursor = 'pointer';
-                ipDiv.title = 'Click to copy';
-                
-                // Add click to copy functionality
-                ipDiv.addEventListener('click', async () => {
-                  try {
-                    await navigator.clipboard.writeText(ip);
-                    window.showMessage(`IP ${ip} copied to clipboard`);
-                  } catch (e) {
-                    window.showError('Failed to copy IP');
-                  }
-                });
-                
-                const metaDiv = document.createElement('div');
-                metaDiv.className = 'geo-meta';
-                const parts = [];
-                if(geo?.country) parts.push(geo.country);
-                if(geo?.city) parts.push(geo.city);
-                if(geo?.isp) parts.push(geo.isp);
-                metaDiv.textContent = parts.join(' • ') || 'No geo data';
-                
-                geoCard.appendChild(ipDiv);
-                geoCard.appendChild(metaDiv);
-                geoList.appendChild(geoCard);
-              }
+              const ipDiv = document.createElement('div');
+              ipDiv.className = 'geo-ip';
+              ipDiv.textContent = ip;
+              ipDiv.style.cursor = 'pointer';
+              ipDiv.title = 'Click to copy';
+              
+              // Add click to copy functionality
+              ipDiv.addEventListener('click', async () => {
+                try {
+                  await navigator.clipboard.writeText(ip);
+                  window.showMessage(`IP ${ip} copied to clipboard`);
+                } catch (e) {
+                  window.showError('Failed to copy IP');
+                }
+              });
+              
+              const metaDiv = document.createElement('div');
+              metaDiv.className = 'geo-meta';
+              const parts = [];
+              if(geo?.country) parts.push(geo.country);
+              if(geo?.city) parts.push(geo.city);
+              if(geo?.isp) parts.push(geo.isp);
+              metaDiv.textContent = parts.join(' • ') || 'No geo data';
+              
+              geoCard.appendChild(ipDiv);
+              geoCard.appendChild(metaDiv);
+              geoList.appendChild(geoCard);
             }
             
             row.appendChild(geoList);
             histList.appendChild(row);
+          }
+          
+          // Render mismatched addresses section if any exist
+          if(mismatchedAddresses.length > 0){
+            const mismatchRow = document.createElement('div');
+            mismatchRow.className = 'hist-row country-group';
+            mismatchRow.style.borderLeft = '4px solid #fbbf24';
+            mismatchRow.style.background = 'rgba(251, 191, 36, 0.1)';
+            
+            // Mismatched header
+            const header = document.createElement('div');
+            header.className = 'hist-header country-header';
+            header.style.display = 'flex';
+            header.style.alignItems = 'center';
+            header.style.gap = '0.75rem';
+            
+            // Warning icon
+            const warningIcon = document.createElement('span');
+            warningIcon.innerHTML = '⚠️';
+            warningIcon.style.fontSize = '24px';
+            
+            // Header text
+            const nameDiv = document.createElement('div');
+            nameDiv.innerHTML = `<strong style="color:#fbbf24;">آدرس‌های نامطابق</strong> <span class="muted">(${mismatchedAddresses.length} IPs)</span>`;
+            nameDiv.style.color = '#fbbf24';
+            
+            header.appendChild(warningIcon);
+            header.appendChild(nameDiv);
+            
+            // Copy button for mismatched IPs
+            const actions = document.createElement('div');
+            const copy = document.createElement('button');
+            copy.textContent = 'Copy All';
+            copy.className = 'copy-btn';
+            copy.style.padding = '0.4rem 0.8rem';
+            copy.style.borderRadius = '6px';
+            copy.style.cursor = 'pointer';
+            copy.style.fontSize = '0.85rem';
+            copy.style.background = '#fbbf24';
+            copy.style.color = '#000';
+            copy.addEventListener('click', async ()=>{
+              try{ 
+                const ips = mismatchedAddresses.map(item => item.ip);
+                await navigator.clipboard.writeText(ips.join('\n')); 
+                window.showMessage('Mismatched IPs copied to clipboard'); 
+              }catch(_e){ 
+                window.showError('Failed to copy'); 
+              }
+            });
+            actions.appendChild(copy);
+            
+            const top = document.createElement('div');
+            top.style.display = 'flex';
+            top.style.justifyContent = 'space-between';
+            top.style.alignItems = 'center';
+            top.appendChild(header);
+            top.appendChild(actions);
+            mismatchRow.appendChild(top);
+            
+            // Description
+            const description = document.createElement('div');
+            description.className = 'muted';
+            description.style.marginTop = '0.5rem';
+            description.style.fontSize = '0.9rem';
+            description.style.color = '#fbbf24';
+            description.textContent = 'این آدرس‌ها از کشور مورد انتظار دریافت شده‌اند اما موقعیت جغرافیایی واقعی‌شان متفاوت است:';
+            mismatchRow.appendChild(description);
+            
+            // Render mismatched IPs
+            const mismatchList = document.createElement('div');
+            mismatchList.className = 'hist-geo-list';
+            mismatchList.style.marginTop = '0.75rem';
+            
+            for(const {ip, geo, expectedCountry, actualCountry} of mismatchedAddresses){
+              const geoCard = document.createElement('div');
+              geoCard.className = 'hist-geo-card';
+              geoCard.style.border = '1px solid rgba(251, 191, 36, 0.3)';
+              
+              const ipDiv = document.createElement('div');
+              ipDiv.className = 'geo-ip';
+              ipDiv.textContent = ip;
+              ipDiv.style.cursor = 'pointer';
+              ipDiv.title = 'Click to copy';
+              ipDiv.style.color = '#fbbf24';
+              
+              // Add click to copy functionality
+              ipDiv.addEventListener('click', async () => {
+                try {
+                  await navigator.clipboard.writeText(ip);
+                  window.showMessage(`IP ${ip} copied to clipboard`);
+                } catch (e) {
+                  window.showError('Failed to copy IP');
+                }
+              });
+              
+              const metaDiv = document.createElement('div');
+              metaDiv.className = 'geo-meta';
+              metaDiv.innerHTML = `
+                <div style="color:#ef4444;">انتظار: ${expectedCountry}</div>
+                <div style="color:#22c55e;">واقعی: ${actualCountry}</div>
+                ${geo?.city ? `<div>${geo.city}</div>` : ''}
+                ${geo?.isp ? `<div>${geo.isp}</div>` : ''}
+              `;
+              
+              geoCard.appendChild(ipDiv);
+              geoCard.appendChild(metaDiv);
+              mismatchList.appendChild(geoCard);
+            }
+            
+            mismatchRow.appendChild(mismatchList);
+            histList.appendChild(mismatchRow);
           }
         }catch(e){ 
           console.error('History render error:', e);

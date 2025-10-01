@@ -175,6 +175,40 @@
     </div>
     <div id="redeem_result" class="muted" style="margin-top:.5rem"></div>
   </section>
+  
+  <!-- Gift Code List Management -->
+  <section id="giftListSection" style="display:none; margin-top:1rem;">
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem;">
+      <h3 style="margin:0;">مدیریت گیفت کدها</h3>
+      <button type="button" id="refresh_gift_list" class="primary-btn">
+        <span style="margin-left:0.5rem;">🔄</span>
+        بروزرسانی لیست
+      </button>
+    </div>
+    
+    <div class="glass-card" style="overflow:auto; max-height:500px;">
+      <table id="giftCodesTable" style="width:100%; border-collapse:collapse; font-size:0.9rem;">
+        <thead>
+          <tr style="background:rgba(255,255,255,0.1);">
+            <th style="text-align:left; padding:0.75rem 0.5rem; border-bottom:2px solid rgba(255,255,255,0.2); font-weight:600;">وضعیت</th>
+            <th style="text-align:left; padding:0.75rem 0.5rem; border-bottom:2px solid rgba(255,255,255,0.2); font-weight:600;">کد</th>
+            <th style="text-align:right; padding:0.75rem 0.5rem; border-bottom:2px solid rgba(255,255,255,0.2); font-weight:600;">مبلغ</th>
+            <th style="text-align:center; padding:0.75rem 0.5rem; border-bottom:2px solid rgba(255,255,255,0.2); font-weight:600;">استفاده شده</th>
+            <th style="text-align:center; padding:0.75rem 0.5rem; border-bottom:2px solid rgba(255,255,255,0.2); font-weight:600;">حداکثر</th>
+            <th style="text-align:center; padding:0.75rem 0.5rem; border-bottom:2px solid rgba(255,255,255,0.2); font-weight:600;">محدودیت کاربر</th>
+            <th style="text-align:center; padding:0.75rem 0.5rem; border-bottom:2px solid rgba(255,255,255,0.2); font-weight:600;">عملیات</th>
+          </tr>
+        </thead>
+        <tbody id="giftCodesTbody">
+          <tr><td style="padding:1rem; text-align:center;" colspan="7" class="muted">در حال بارگذاری...</td></tr>
+        </tbody>
+      </table>
+    </div>
+    
+    <div id="gift_list_stats" class="muted" style="margin-top:0.5rem; padding:0.5rem; background:rgba(255,255,255,0.05); border-radius:8px;">
+      آمار: - کد فعال | - کد غیرفعال | - کل مبلغ
+    </div>
+  </section>
   <!-- Admin Stats Section -->
   <section id="adminStatsSection" style="display:none">
     <div class="form-grid" style="align-items:flex-end">
@@ -311,6 +345,181 @@
           if(res){ res.textContent = 'خطای شبکه'; }
         }
       });
+    })();
+    
+    // Gift Code List Management
+    (function(){
+      const listSection = document.getElementById('giftListSection');
+      const refreshBtn = document.getElementById('refresh_gift_list');
+      const tbody = document.getElementById('giftCodesTbody');
+      const statsDiv = document.getElementById('gift_list_stats');
+      
+      async function loadGiftCodes(){
+        const session = localStorage.getItem('adminSession');
+        if(!session){ window.showError('Admin session missing'); return; }
+        
+        try{
+          if(tbody) tbody.innerHTML = '<tr><td style="padding:1rem; text-align:center;" colspan="7" class="muted">در حال بارگذاری...</td></tr>';
+          
+          const r = await fetch('/admin/gift-list', { 
+            headers: { 
+              'Authorization': `Bearer ${session}`,
+              'Content-Type': 'application/json'
+            } 
+          });
+          
+          if(!r.ok){
+            if(r.status === 401){ 
+              invalidateAdminSession(); 
+              window.showError(UNAUTH_MSG); 
+              return; 
+            }
+            window.showError('Failed to load gift codes');
+            return;
+          }
+          
+          const data = await r.json();
+          const codes = Array.isArray(data.codes) ? data.codes : [];
+          
+          if(codes.length === 0){
+            tbody.innerHTML = '<tr><td style="padding:1rem; text-align:center;" colspan="7" class="muted">هیچ گیفت کدی یافت نشد</td></tr>';
+            if(statsDiv) statsDiv.textContent = 'آمار: 0 کد فعال | 0 کد غیرفعال | $0.00 کل مبلغ';
+            return;
+          }
+          
+          // Calculate stats
+          let activeCount = 0;
+          let inactiveCount = 0;
+          let totalAmount = 0;
+          
+          // Sort codes by creation date (newest first) and then by status
+          codes.sort((a, b) => {
+            const aActive = isGiftCodeActive(a);
+            const bActive = isGiftCodeActive(b);
+            if(aActive !== bActive) return bActive - aActive; // Active first
+            return new Date(b.created_at || 0) - new Date(a.created_at || 0);
+          });
+          
+          const rows = codes.map(code => {
+            const isActive = isGiftCodeActive(code);
+            if(isActive) activeCount++;
+            else inactiveCount++;
+            totalAmount += Number(code.amount || 0);
+            
+            const statusIcon = isActive 
+              ? '<span style="color:#22c55e; font-size:1.2em;" title="فعال">●</span>'
+              : '<span style="color:#ef4444; font-size:1.2em;" title="غیرفعال">●</span>';
+            
+            const usedCount = Number(code.used_count || 0);
+            const maxUses = Number(code.max_uses || 0);
+            const maxUsesText = maxUses === 0 ? 'نامحدود' : maxUses.toString();
+            const perUserOnce = code.per_user_once ? 'بله' : 'خیر';
+            
+            const usageText = maxUses === 0 ? usedCount.toString() : `${usedCount}/${maxUses}`;
+            const usageColor = (maxUses > 0 && usedCount >= maxUses) ? 'color:#ef4444;' : '';
+            
+            return `
+              <tr style="border-bottom:1px solid rgba(255,255,255,0.1);">
+                <td style="padding:0.5rem; text-align:center;">${statusIcon}</td>
+                <td style="padding:0.5rem; font-family:monospace; font-weight:600; color:#7fd1ff;">${code.code || ''}</td>
+                <td style="padding:0.5rem; text-align:right; font-weight:600;">$${Number(code.amount || 0).toFixed(2)}</td>
+                <td style="padding:0.5rem; text-align:center; ${usageColor}">${usageText}</td>
+                <td style="padding:0.5rem; text-align:center;">${maxUsesText}</td>
+                <td style="padding:0.5rem; text-align:center;">${perUserOnce}</td>
+                <td style="padding:0.5rem; text-align:center;">
+                  <button onclick="copyGiftCode('${code.code}')" style="padding:0.25rem 0.5rem; font-size:0.8rem; border-radius:4px; background:rgba(255,255,255,0.1); border:1px solid rgba(255,255,255,0.2); color:white; cursor:pointer;" title="کپی کد">📋</button>
+                  ${isActive ? `<button onclick="deactivateGiftCode('${code.code}')" style="padding:0.25rem 0.5rem; font-size:0.8rem; border-radius:4px; background:#ef4444; border:1px solid #dc2626; color:white; cursor:pointer; margin-left:0.25rem;" title="غیرفعال کردن">🚫</button>` : ''}
+                </td>
+              </tr>
+            `;
+          }).join('');
+          
+          tbody.innerHTML = rows;
+          
+          // Update stats
+          if(statsDiv){
+            statsDiv.innerHTML = `
+              آمار: 
+              <span style="color:#22c55e; font-weight:600;">${activeCount} کد فعال</span> | 
+              <span style="color:#ef4444; font-weight:600;">${inactiveCount} کد غیرفعال</span> | 
+              <span style="color:#7fd1ff; font-weight:600;">$${totalAmount.toFixed(2)} کل مبلغ</span>
+            `;
+          }
+          
+        }catch(e){
+          console.error('Gift codes load error:', e);
+          if(tbody) tbody.innerHTML = '<tr><td style="padding:1rem; text-align:center;" colspan="7" class="muted">خطا در بارگذاری</td></tr>';
+          window.showError('Network error');
+        }
+      }
+      
+      function isGiftCodeActive(code){
+        const maxUses = Number(code.max_uses || 0);
+        const usedCount = Number(code.used_count || 0);
+        
+        // If max_uses is 0, it's unlimited
+        if(maxUses === 0) return true;
+        
+        // If used count has reached max uses, it's inactive
+        return usedCount < maxUses;
+      }
+      
+      // Global functions for button actions
+      window.copyGiftCode = async function(code){
+        try{
+          await navigator.clipboard.writeText(code);
+          window.showMessage(`کد ${code} کپی شد`);
+        }catch(e){
+          window.showError('خطا در کپی کردن');
+        }
+      };
+      
+      window.deactivateGiftCode = async function(code){
+        if(!confirm(`آیا از غیرفعال کردن کد ${code} اطمینان دارید؟`)) return;
+        
+        const session = localStorage.getItem('adminSession');
+        if(!session){ window.showError('Admin session missing'); return; }
+        
+        try{
+          const r = await fetch('/admin/gift-deactivate', {
+            method: 'POST',
+            headers: {
+              'Authorization': `Bearer ${session}`,
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ session, code })
+          });
+          
+          if(r.ok){
+            window.showMessage(`کد ${code} غیرفعال شد`);
+            loadGiftCodes(); // Refresh list
+          } else {
+            if(r.status === 401){ 
+              invalidateAdminSession(); 
+              window.showError(UNAUTH_MSG); 
+            } else {
+              window.showError('خطا در غیرفعال کردن کد');
+            }
+          }
+        }catch(e){
+          window.showError('Network error');
+        }
+      };
+      
+      if(refreshBtn){
+        refreshBtn.addEventListener('click', loadGiftCodes);
+      }
+      
+      // Auto-load when admin session is available
+      const observer = new MutationObserver(()=>{
+        const visible = listSection && listSection.style.display !== 'none';
+        if(visible && localStorage.getItem('adminSession')){
+          loadGiftCodes();
+          observer.disconnect();
+        }
+      });
+      if(listSection) observer.observe(listSection, { attributes: true, attributeFilter: ['style'] });
+      
     })();
       function showError(message, title){
         open(title || 'خطا', message, false);
@@ -514,6 +723,9 @@
         // show redeem section once admin logged in
         const redeemSec = document.getElementById('redeemSection');
         if(redeemSec) redeemSec.style.display='block';
+        // show gift list section once admin logged in
+        const giftListSec = document.getElementById('giftListSection');
+        if(giftListSec) giftListSec.style.display='block';
         // populate countries select
         await populateCountries();
         // notify owner about admin login
@@ -894,6 +1106,8 @@
         if(giftSec) giftSec.style.display='block';
         const redeemSec = document.getElementById('redeemSection');
         if(redeemSec) redeemSec.style.display='block';
+        const giftListSec = document.getElementById('giftListSection');
+        if(giftListSec) giftListSec.style.display='block';
         await populateCountries();
         updateFormMode();
         // notify owner silently if admin reopened panel (optional)
