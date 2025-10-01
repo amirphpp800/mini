@@ -36,7 +36,7 @@
       width: 60px;
       height: 60px;
       border-radius: 50%;
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      background: #22c55e;
       border: none;
       color: white;
       cursor: pointer;
@@ -67,7 +67,8 @@
       font-weight: 600;
     }
     .row button {
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      background: #fff;
+      color: #000;
       cursor: pointer;
       transition: all 0.3s ease;
     }
@@ -76,7 +77,8 @@
       box-shadow: 0 8px 16px rgba(0,0,0,0.3);
     }
     .danger-btn {
-      background: linear-gradient(135deg, #ff6b6b 0%, #ee5a52 100%) !important;
+      background: #ff3b30 !important;
+      color: #fff !important;
     }
     .alt-btn {
       background: transparent !important;
@@ -625,15 +627,19 @@
               'qatar': 'qa', 'bahrain': 'bh',
               'italy': 'it', 'spain': 'es', 'belgium': 'be',
               'sweden': 'se', 'finland': 'fi', 'denmark': 'dk',
-              'switzerland': 'ch', 'austria': 'at', 'norway': 'no'
+              'switzerland': 'ch', 'austria': 'at', 'norway': 'no',
+              'bulgaria': 'bg'
             };
             
             const key = countryName.toLowerCase();
             return countryCodeMap[key] || 'xx'; // xx for unknown
           }
           
+          // Sort country groups alphabetically
+          const sortedCountries = Array.from(countryGroups.entries()).sort((a, b) => a[0].localeCompare(b[0]));
+          
           // Render each country group
-          for(const [countryName, group] of countryGroups){
+          for(const [countryName, group] of sortedCountries){
             const row = document.createElement('div');
             row.className = 'hist-row country-group';
             
@@ -656,6 +662,12 @@
             flag.style.objectFit = 'cover';
             flag.style.boxShadow = '0 2px 8px rgba(0,0,0,0.2)';
             flag.loading = 'lazy';
+            
+            // Handle flag loading errors
+            flag.onerror = function() {
+              this.src = `https://flagcdn.com/w40/xx.png`;
+              this.onerror = null;
+            };
             
             // Country name and count
             const nameDiv = document.createElement('div');
@@ -732,6 +744,18 @@
                 const ipDiv = document.createElement('div');
                 ipDiv.className = 'geo-ip';
                 ipDiv.textContent = ip;
+                ipDiv.style.cursor = 'pointer';
+                ipDiv.title = 'Click to copy';
+                
+                // Add click to copy functionality
+                ipDiv.addEventListener('click', async () => {
+                  try {
+                    await navigator.clipboard.writeText(ip);
+                    window.showMessage(`IP ${ip} copied to clipboard`);
+                  } catch (e) {
+                    window.showError('Failed to copy IP');
+                  }
+                });
                 
                 const metaDiv = document.createElement('div');
                 metaDiv.className = 'geo-meta';

@@ -156,6 +156,25 @@
     </div>
     <div id="gift_result" class="muted" style="margin-top:.5rem"></div>
   </section>
+  
+  <!-- Gift Code Redeem Section -->
+  <section id="redeemSection" style="display:none; margin-top:1rem;">
+    <h3 style="margin:.25rem 0 .5rem;">تست ریدیم کد</h3>
+    <div class="form-grid">
+      <div class="form-col">
+        <label class="lbl" for="redeem_chat">chat_id کاربر (برای تست)</label>
+        <input type="number" id="redeem_chat" placeholder="مثال: 123456789" />
+      </div>
+      <div class="form-col">
+        <label class="lbl" for="redeem_code">کد گیفت</label>
+        <input type="text" id="redeem_code" placeholder="مثال: WELCOME2025" />
+      </div>
+    </div>
+    <div class="row end" style="margin-top:.5rem">
+      <button type="button" id="redeem_test_btn">تست ریدیم کد</button>
+    </div>
+    <div id="redeem_result" class="muted" style="margin-top:.5rem"></div>
+  </section>
   <!-- Admin Stats Section -->
   <section id="adminStatsSection" style="display:none">
     <div class="form-grid" style="align-items:flex-end">
@@ -225,6 +244,72 @@
           if(res){ res.textContent = `کد ساخته شد: ${j.gift && j.gift.code ? j.gift.code : ''} | مبلغ: $${(j.gift && j.gift.amount!=null? j.gift.amount.toFixed(2):'0.00')} | محدودیت: ${j.gift && j.gift.max_uses? j.gift.max_uses : 'نامحدود'}`; }
           window.showMessage('گیفت کد ساخته شد','پیام');
         }catch(e){ window.showError('Network error'); }
+      });
+    })();
+    
+    // Gift Redeem wiring
+    (function(){
+      const btn = document.getElementById('redeem_test_btn');
+      if(!btn) return;
+      btn.addEventListener('click', async ()=>{
+        const chat_id = (document.getElementById('redeem_chat').value||'').trim();
+        const code = (document.getElementById('redeem_code').value||'').trim();
+        if(!chat_id){ window.showError('chat_id کاربر را وارد کنید'); return; }
+        if(!code){ window.showError('کد گیفت را وارد کنید'); return; }
+        
+        // Create a temporary session for the user to test redeem
+        const adminSession = localStorage.getItem('adminSession');
+        if(!adminSession){ window.showError('Admin session missing'); return; }
+        
+        try{
+          // First create a temporary session for the test user
+          const sessionRes = await fetch('/admin/create-temp-session', {
+            method: 'POST',
+            headers: adminHeaders(),
+            body: JSON.stringify({ session: adminSession, chat_id })
+          });
+          
+          let tempSession;
+          if(sessionRes.ok){
+            const sessionData = await sessionRes.json();
+            tempSession = sessionData.temp_session;
+          } else {
+            // Fallback: use admin session but with different approach
+            tempSession = adminSession;
+          }
+          
+          // Now try to redeem the gift code
+          const r = await fetch('/gift/redeem', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${tempSession}`
+            },
+            body: JSON.stringify({ code })
+          });
+          
+          const res = document.getElementById('redeem_result');
+          if(r.ok){
+            const j = await r.json();
+            if(res){ res.textContent = `ریدیم موفق: مبلغ $${(j.amount||0).toFixed(2)} به حساب کاربر ${chat_id} اضافه شد. موجودی جدید: $${(j.balance||0).toFixed(2)}`; }
+            window.showMessage('کد گیفت با موفقیت ریدیم شد','پیام');
+          } else {
+            let msg = 'ریدیم ناموفق';
+            try{ 
+              const j = await r.json(); 
+              if(j && (j.message||j.error)) msg = j.message || j.error;
+              if(j.error === 'already_used') msg = 'این کد قبلاً استفاده شده است';
+              if(j.error === 'not_found') msg = 'کد گیفت یافت نشد';
+              if(j.error === 'exhausted') msg = 'حد استفاده از این کد تمام شده است';
+            }catch(_){ }
+            if(res){ res.textContent = `خطا: ${msg}`; }
+            window.showError(msg);
+          }
+        }catch(e){ 
+          window.showError('Network error');
+          const res = document.getElementById('redeem_result');
+          if(res){ res.textContent = 'خطای شبکه'; }
+        }
       });
     })();
       function showError(message, title){
@@ -426,6 +511,9 @@
         // show gift section once admin logged in
         const giftSec = document.getElementById('giftSection');
         if(giftSec) giftSec.style.display='block';
+        // show redeem section once admin logged in
+        const redeemSec = document.getElementById('redeemSection');
+        if(redeemSec) redeemSec.style.display='block';
         // populate countries select
         await populateCountries();
         // notify owner about admin login
@@ -801,6 +889,11 @@
         if(countryForm) countryForm.style.display='block';
         if(statsSection) statsSection.style.display='none';
         if(logoutBtn) logoutBtn.style.display='inline-block';
+        // show gift and redeem sections
+        const giftSec = document.getElementById('giftSection');
+        if(giftSec) giftSec.style.display='block';
+        const redeemSec = document.getElementById('redeemSection');
+        if(redeemSec) redeemSec.style.display='block';
         await populateCountries();
         updateFormMode();
         // notify owner silently if admin reopened panel (optional)
