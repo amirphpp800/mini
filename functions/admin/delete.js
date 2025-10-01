@@ -1,5 +1,13 @@
+import { verifyAdminSession, createAdminErrorResponse } from '../_admin-auth.js';
+
 export const onRequestPost = async ({ request, env }) => {
   try {
+    // Verify admin authorization
+    const authResult = await verifyAdminSession(request, env);
+    if (!authResult.success) {
+      return createAdminErrorResponse(authResult);
+    }
+
     // Helper function to normalize country names
     function normalizeCountryName(country) {
       const normalized = String(country || '').toLowerCase().trim();
@@ -16,21 +24,12 @@ export const onRequestPost = async ({ request, env }) => {
       return normalized;
     }
 
-    const url = new URL(request.url);
     const body = await request.json();
-    const { session: bodySession, country: rawCountry } = body || {};
+    const { country: rawCountry } = body || {};
     const country = normalizeCountryName(rawCountry);
-    const auth = request.headers.get('Authorization') || '';
-    const m = /^Bearer\s+(.+)/i.exec(auth);
-    const session = bodySession || (m && m[1]) || url.searchParams.get('session') || '';
-    if (!session || !country) {
+    
+    if (!country) {
       return new Response(JSON.stringify({ error: 'invalid_input' }), { status: 400, headers: { 'Content-Type': 'application/json' } });
-    }
-
-    // Verify session
-    const chat_id = await env.KV.get(`session:${session}`);
-    if (!chat_id) {
-      return new Response(JSON.stringify({ error: 'unauthorized' }), { status: 401, headers: { 'Content-Type': 'application/json' } });
     }
 
     const key = String(country).trim().toLowerCase();

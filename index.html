@@ -478,20 +478,36 @@
         row.className = 'row';
         row.style.justifyContent='center';
         row.style.gap = '.5rem';
+        
+        // Create optimized country select with better UX
+        const selectWrapper = document.createElement('div');
+        selectWrapper.className = 'apn-select-wrapper';
+        
         const sel = document.createElement('select');
         sel.id = 'apnCountry';
-        sel.style.minWidth='220px';
-        sel.style.background = '#000';
-        sel.style.color = '#fff';
-        sel.style.border = '1px solid rgba(255,255,255,0.3)';
-        sel.style.borderRadius = '12px';
-        sel.style.padding = '.65rem 1rem';
-        sel.style.fontWeight = '600';
-        row.appendChild(sel);
-        // placeholder
+        sel.className = 'persian-text'; // Apply Vazirmatn font
+        
+        // Add search icon before select
+        const searchIcon = document.createElement('div');
+        searchIcon.innerHTML = `
+          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/>
+            <circle cx="12" cy="12" r="3"/>
+          </svg>
+        `;
+        searchIcon.style.color = 'rgba(255, 255, 255, 0.6)';
+        searchIcon.style.display = 'flex';
+        searchIcon.style.alignItems = 'center';
+        
+        selectWrapper.appendChild(searchIcon);
+        selectWrapper.appendChild(sel);
+        row.appendChild(selectWrapper);
+        
+        // placeholder with better styling
         const ph = document.createElement('option');
         ph.value = '';
         ph.textContent = '— انتخاب کشور —';
+        ph.className = 'persian-text';
         sel.appendChild(ph);
         let apnCountries = [];
         card.appendChild(row);
@@ -521,6 +537,20 @@
         function flagUrl(code){
           const cc = String(code||'gb').toLowerCase();
           return `https://flagcdn.com/w40/${cc}.png`;
+        }
+        
+        // Helper function to get flag emoji for country codes
+        function getFlagEmoji(countryCode) {
+          const code = String(countryCode || '').toLowerCase();
+          const flagMap = {
+            'ae': '🇦🇪', 'cn': '🇨🇳', 'de': '🇩🇪', 'gb': '🇬🇧', 
+            'qa': '🇶🇦', 'tr': '🇹🇷', 'us': '🇺🇸', 'fr': '🇫🇷',
+            'it': '🇮🇹', 'es': '🇪🇸', 'nl': '🇳🇱', 'se': '🇸🇪',
+            'ch': '🇨🇭', 'at': '🇦🇹', 'be': '🇧🇪', 'dk': '🇩🇰',
+            'fi': '🇫🇮', 'no': '🇳🇴', 'jp': '🇯🇵', 'kr': '🇰🇷',
+            'sg': '🇸🇬', 'hk': '🇭🇰', 'au': '🇦🇺', 'ca': '🇨🇦'
+          };
+          return flagMap[code] || '';
         }
         function renderDetails(){
           const cval = sel.value;
@@ -606,15 +636,37 @@
             const rLocal = await fetch('public/country-apn.json');
             apnCountries = rLocal.ok ? await rLocal.json() : [];
           }catch(_){ apnCountries = []; }
-          // fill select
+          // fill select with optimized options
           sel.innerHTML = '';
           const ph2 = document.createElement('option');
-          ph2.value=''; ph2.textContent='— انتخاب کشور —';
+          ph2.value=''; 
+          ph2.textContent='— انتخاب کشور —';
+          ph2.className = 'persian-text';
+          ph2.style.fontStyle = 'italic';
+          ph2.style.color = 'rgba(255, 255, 255, 0.6)';
           sel.appendChild(ph2);
-          (apnCountries||[]).forEach(c=>{
-            const opt=document.createElement('option');
-            opt.value=c.name;
-            opt.textContent=(c.faName&&c.faName.trim())? c.faName : c.name;
+          
+          // Sort countries by Persian name for better UX
+          const sortedCountries = (apnCountries||[]).sort((a, b) => {
+            const nameA = (a.faName && a.faName.trim()) ? a.faName : a.name;
+            const nameB = (b.faName && b.faName.trim()) ? b.faName : b.name;
+            return nameA.localeCompare(nameB, 'fa');
+          });
+          
+          sortedCountries.forEach(c=>{
+            const opt = document.createElement('option');
+            opt.value = c.name;
+            opt.className = 'persian-text';
+            
+            // Create formatted display text with flag emoji if available
+            const displayName = (c.faName && c.faName.trim()) ? c.faName : c.name;
+            const flagEmoji = getFlagEmoji(c.code);
+            opt.textContent = flagEmoji ? `${flagEmoji} ${displayName}` : displayName;
+            
+            // Add data attributes for better accessibility
+            opt.setAttribute('data-country-code', c.code);
+            opt.setAttribute('data-english-name', c.name);
+            
             sel.appendChild(opt);
           });
           // auto-select first country if available

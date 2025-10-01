@@ -1,18 +1,14 @@
+import { verifyAdminSession, createAdminErrorResponse } from '../_admin-auth.js';
+
 export const onRequestGet = async ({ request, env }) => {
   try {
-    const url = new URL(request.url);
-    // Admin session may come from Authorization: Bearer <token> or ?session=
-    const auth = request.headers.get('authorization') || '';
-    let session = '';
-    if (auth.toLowerCase().startsWith('bearer ')) {
-      session = auth.slice(7).trim();
-    } else {
-      session = url.searchParams.get('session') || '';
+    // Verify admin authorization
+    const authResult = await verifyAdminSession(request, env);
+    if (!authResult.success) {
+      return createAdminErrorResponse(authResult);
     }
-    if (!session) return new Response('Unauthorized', { status: 401 });
 
-    const admin_chat = await env.KV.get(`session:${session}`);
-    if (!admin_chat) return new Response('Unauthorized', { status: 401 });
+    const admin_chat = authResult.chat_id;
 
     // Build users list by merging balances and verified flags
     const usersMap = new Map();

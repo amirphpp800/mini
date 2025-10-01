@@ -1,16 +1,15 @@
+import { verifyAdminSession, createAdminErrorResponse } from '../_admin-auth.js';
+
 export const onRequestPost = async ({ request, env }) => {
   try {
-    const url = new URL(request.url);
+    // Verify admin authorization
+    const authResult = await verifyAdminSession(request, env);
+    if (!authResult.success) {
+      return createAdminErrorResponse(authResult);
+    }
+
     const body = await request.json().catch(() => ({}));
-    const { session: bodySession, code, amount, per_user_once = true, max_uses = 0 } = body || {};
-
-    const auth = request.headers.get('Authorization') || '';
-    const m = /^Bearer\s+(.+)/i.exec(auth);
-    const session = bodySession || (m && m[1]) || url.searchParams.get('session') || '';
-    if (!session) return new Response(JSON.stringify({ error: 'unauthorized' }), { status: 401, headers: { 'Content-Type': 'application/json' } });
-
-    const chat_id = await env.KV.get(`session:${session}`);
-    if (!chat_id) return new Response(JSON.stringify({ error: 'unauthorized' }), { status: 401, headers: { 'Content-Type': 'application/json' } });
+    const { code, amount, per_user_once = true, max_uses = 0 } = body || {};
 
     // Basic validations
     const amt = Number(amount);

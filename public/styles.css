@@ -1100,6 +1100,101 @@ button:hover {
   color: #fff;
  }
 
+/* APN Country Select Optimization */
+#apnCountry {
+  background: rgba(0, 0, 0, 0.8) !important;
+  color: #fff !important;
+  border: 1px solid rgba(255, 255, 255, 0.2) !important;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border-radius: 12px !important;
+  padding: 0.75rem 1rem !important;
+  font-family: 'Vazirmatn', 'Poppins', sans-serif !important;
+  font-size: 1rem !important;
+  font-weight: 400 !important;
+  min-width: 280px !important;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+#apnCountry:hover {
+  border-color: rgba(255, 255, 255, 0.4);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.4);
+}
+
+#apnCountry:focus {
+  outline: none;
+  border-color: #7fd1ff;
+  box-shadow: 0 0 0 3px rgba(127, 209, 255, 0.2);
+}
+
+/* APN Country Select Options */
+#apnCountry option {
+  background: rgba(0, 0, 0, 0.95) !important;
+  color: #fff !important;
+  font-family: 'Vazirmatn', 'Poppins', sans-serif !important;
+  font-size: 1rem !important;
+  padding: 0.5rem 1rem !important;
+  border: none !important;
+}
+
+#apnCountry option:hover {
+  background: rgba(127, 209, 255, 0.2) !important;
+}
+
+#apnCountry option:checked {
+  background: rgba(127, 209, 255, 0.3) !important;
+}
+
+/* APN Country Select Placeholder */
+#apnCountry option[value=""] {
+  color: rgba(255, 255, 255, 0.6) !important;
+  font-style: italic;
+}
+
+/* APN Mobile Responsiveness */
+@media (max-width: 768px) {
+  #apnCountry {
+    min-width: 260px !important;
+    font-size: 0.9rem !important;
+  }
+}
+
+@media (max-width: 480px) {
+  #apnCountry {
+    min-width: 240px !important;
+    font-size: 0.85rem !important;
+    padding: 0.65rem 0.8rem !important;
+  }
+}
+
+/* APN Select Wrapper Styling */
+.apn-select-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: rgba(0, 0, 0, 0.3);
+  border-radius: 12px;
+  padding: 0.25rem 0.5rem;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  transition: all 0.3s ease;
+}
+
+.apn-select-wrapper:hover {
+  border-color: rgba(255, 255, 255, 0.2);
+  background: rgba(0, 0, 0, 0.4);
+}
+
+.apn-select-wrapper svg {
+  transition: color 0.3s ease;
+}
+
+.apn-select-wrapper:hover svg {
+  color: rgba(255, 255, 255, 0.8) !important;
+}
+
 /* Address modal: responsive long list handling + sticky actions (Copy button) */
 #addrContainer .alert-card{
   max-height: 82vh;              /* keep the card within viewport */

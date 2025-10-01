@@ -1,18 +1,21 @@
+import { verifyAdminSession, createAdminErrorResponse } from '../_admin-auth.js';
+
 export const onRequestPost = async ({ request, env }) => {
   try {
-    const url = new URL(request.url);
+    // Verify admin authorization
+    const authResult = await verifyAdminSession(request, env);
+    if (!authResult.success) {
+      return createAdminErrorResponse(authResult);
+    }
+
     const body = await request.json();
-    const { session: bodySession, target_chat_id, delta } = body || {};
-    const auth = request.headers.get('Authorization') || '';
-    const m = /^Bearer\s+(.+)/i.exec(auth);
-    const session = bodySession || (m && m[1]) || url.searchParams.get('session') || '';
-    if (!session || !target_chat_id || typeof delta !== 'number') {
+    const { target_chat_id, delta } = body || {};
+    
+    if (!target_chat_id || typeof delta !== 'number') {
       return new Response(JSON.stringify({ error: 'invalid_input' }), { status: 400, headers: { 'Content-Type': 'application/json' } });
     }
 
-    // verify admin session
-    const admin_chat = await env.KV.get(`session:${session}`);
-    if (!admin_chat) return new Response(JSON.stringify({ error: 'unauthorized' }), { status: 401, headers: { 'Content-Type': 'application/json' } });
+    const admin_chat = authResult.chat_id;
 
     // Update balance
     const key = `balance:${target_chat_id}`;
