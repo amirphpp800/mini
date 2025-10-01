@@ -3,9 +3,10 @@ export const onRequestPost = async ({ request, env }) => {
     // Helper function to normalize country names
     function normalizeCountryName(country) {
       const normalized = String(country || '').toLowerCase().trim();
-      // Normalize England, UK, United Kingdom to a single name
-      if (normalized === 'england' || normalized === 'uk' || normalized === 'united kingdom' || normalized === 'great britain') {
-        return 'United Kingdom';
+      // Normalize England, UK, United Kingdom, Great Britain, GB to England
+      if (normalized === 'england' || normalized === 'uk' || normalized === 'united kingdom' || 
+          normalized === 'great britain' || normalized === 'gb' || normalized === 'انگلیس') {
+        return 'England';
       }
       // Normalize America, USA, United States to a single name
       if (normalized === 'america' || normalized === 'usa' || normalized === 'united states' || normalized === 'united states of america') {

@@ -3,9 +3,10 @@ export const onRequestPost = async ({ request, env }) => {
     // Helper function to normalize country names
     function normalizeCountryName(country) {
       const normalized = String(country || '').toLowerCase().trim();
-      // Normalize England, UK, United Kingdom to a single name
-      if (normalized === 'england' || normalized === 'uk' || normalized === 'united kingdom' || normalized === 'great britain') {
-        return 'united kingdom';
+      // Normalize England, UK, United Kingdom, Great Britain, GB to england
+      if (normalized === 'england' || normalized === 'uk' || normalized === 'united kingdom' || 
+          normalized === 'great britain' || normalized === 'gb' || normalized === 'انگلیس') {
+        return 'england';
       }
       // Normalize America, USA, United States to a single name
       if (normalized === 'america' || normalized === 'usa' || normalized === 'united states' || normalized === 'united states of america') {
@@ -19,7 +20,6 @@ export const onRequestPost = async ({ request, env }) => {
     const body = await request.json();
     const { session: bodySession, country: rawCountry } = body || {};
     const country = normalizeCountryName(rawCountry);
-    const auth = request.headers.get('Authorization') || '';
     const m = /^Bearer\s+(.+)/i.exec(auth);
     const session = bodySession || (m && m[1]) || url.searchParams.get('session') || '';
     if (!session || !country) return new Response(JSON.stringify({ error: 'invalid_input' }), { status: 400, headers: { 'Content-Type': 'application/json' } });

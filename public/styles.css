@@ -1014,49 +1014,70 @@ button:hover {
 }
   .dns-tunnel-list .dns-items{
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-  gap: .15rem; /* tighter grid gap to reduce overall height */
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: .5rem; /* better spacing between cards */
   }
   .dns-tunnel-list .dns-item{
-  background: rgba(255,255,255,0.04);
-  border: 1px solid rgba(255,255,255,0.14);
-  border-radius: 10px;
-  padding: .35rem .5rem; /* slightly larger for better tap targets */
+  background: rgba(255,255,255,0.08);
+  border: 1px solid rgba(255,255,255,0.2);
+  border-radius: 12px;
+  padding: .75rem 1rem; /* more comfortable padding */
   display: flex;               /* place name and chips in a row */
   align-items: center;         /* vertical centering */
   justify-content: space-between; /* name right, chips left */
-  gap: .5rem;                  /* consistent spacing */
-  min-height: 40px;            /* stable height to avoid cramped look */
+  gap: .75rem;                 /* better spacing */
+  min-height: 52px;            /* taller for better appearance */
   direction: rtl;              /* keep Persian title on the right */
+  transition: all 0.2s ease;  /* smooth hover effects */
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  }
+  .dns-tunnel-list .dns-item:hover{
+  background: rgba(255,255,255,0.12);
+  border-color: rgba(255,255,255,0.3);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
   }
   .dns-tunnel-list .dns-name{
   font-weight: 800;
   margin: 0;                   /* no extra vertical space */
-  font-size: .9rem;            /* slightly clearer title */
+  font-size: 1rem;             /* larger, more readable title */
   }
   .dns-tunnel-list .dns-ips{ 
   display: flex; 
   flex-wrap: wrap; 
-  gap: .22rem;                 /* clearer spacing between chips */
+  gap: .35rem;                 /* better spacing between chips */
   }
   .dns-tunnel-list .dns-ips code{
-  background: rgba(0,0,0,0.65);
-  border: 1px solid rgba(255,255,255,0.18);
+  background: rgba(0,0,0,0.7);
+  border: 1px solid rgba(255,255,255,0.25);
   border-radius: 8px;
-  padding: .08rem .28rem;      /* readable chip size */
+  padding: .25rem .5rem;       /* more comfortable chip size */
   font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
-  font-size: .72rem;      /* smaller text */
-  line-height: 1;       /* tighter line height */
+  font-size: .8rem;            /* larger, more readable text */
+  line-height: 1.2;            /* better line height */
   color: #fff;
+  font-weight: 600;
+  transition: all 0.2s ease;
   }
-@media (max-width: 420px){
-  .dns-tunnel-list .dns-items{ grid-template-columns: 1fr; }
-  /* Stack name above chips on very small screens for readability */
+  .dns-tunnel-list .dns-ips code:hover{
+  background: rgba(0,0,0,0.8);
+  border-color: rgba(255,255,255,0.4);
+  transform: scale(1.05);
+  }
+@media (max-width: 520px){
+  .dns-tunnel-list .dns-items{ 
+    grid-template-columns: 1fr; 
+  }
+  /* Stack name above chips on small screens for readability */
   .dns-tunnel-list .dns-item{ 
     flex-direction: column; 
     align-items: flex-start; 
-    gap: .25rem; 
+    gap: .5rem; 
     min-height: auto;
+    padding: .75rem;
+  }
+  .dns-tunnel-list .dns-name{
+    font-size: 1.1rem; /* slightly larger on mobile */
   }
 }
 
@@ -1120,27 +1141,28 @@ button:hover {
   justify-content: flex-end;     /* align to end */
 }
 
-/* Copy buttons - white background with black text and icon */
+/* Copy buttons - blue background with white text and icon */
 #addrCopy,
 button[id*="copy"],
 button[class*="copy"],
 .copy-btn{
   font-weight: 700;
-  background: #fff !important;
-  color: #000 !important;
+  background: #007AFF !important;
+  color: #fff !important;
   border: none !important;
   display: inline-flex;
   align-items: center;
   gap: .4rem;
+  box-shadow: 0 4px 14px rgba(0, 122, 255, 0.3);
 }
 /* Copy button hover effects */
 #addrCopy:hover,
 button[id*="copy"]:hover,
 button[class*="copy"]:hover,
 .copy-btn:hover{ 
-  filter: brightness(0.95); 
+  filter: brightness(1.1); 
   transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+  box-shadow: 0 6px 20px rgba(0, 122, 255, 0.4);
 }
 /* Ping Check as amber accent */
 #addrCheck{
